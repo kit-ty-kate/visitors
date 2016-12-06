@@ -1,39 +1,52 @@
-type foo = A
+module Test0 = struct
 
-and point = { x: foo; y: foo }
+  type u = U
+   and point = u * u
+    [@@deriving visitors]
 
-and clac = { mutable a: alternative }
-
-and alternative =
-  | Nothing
-  | Foo of point * point
-  | Bar of alternative * int
-  | Quux of (foo * foo)
-  | Pschitt of { foo: foo; point: point }
-  [@@deriving visitors]
-
-let f : foo = A
-
-let p : point = { x = f; y = f }
-
-let a1: alternative = Foo (p, p)
-let a2: alternative = Bar (a1, 42)
-let a3: alternative = Quux (f, f)
-let a4: alternative = Pschitt { foo = f; point = p }
-
-let v = object
-  inherit visitors
-  method int x = Printf.printf "Visited %d\n%!" x
 end
 
-let () =
-  v # foo f
+module Test1 = struct
 
-let () =
-  v # point p
+  type point =
+    { x: int; y: int; mutable color: bool }
+    [@@deriving visitors]
 
-let () =
-  v # alternative a1;
-  v # alternative a2;
-  v # alternative a3;
-  v # alternative a4;
+end
+
+module Test2 = struct
+
+  type name =
+    string
+
+  type binder =
+    string
+
+  type term =
+    | TUnit
+    | TIntLiteral of int
+    | TVar of name
+    | TLambda of binder * term
+    | TApp of term * term
+    | TPair of { fst: term; snd: term }
+    | TTuple of term_list
+
+  and term_list =
+    | TLNil
+    | TLCons of (term * term_list)
+    [@@deriving visitors]
+
+  let iter = object
+    inherit visitors
+    method int x = Printf.printf "int: %d\n%!" x
+    method name x = Printf.printf "name: %s\n%!" x
+    method binder x = Printf.printf "binder: %s\n%!" x
+  end
+
+  let identity : term =
+    TLambda ("x", TVar "x")
+
+  let () =
+    iter#term identity
+
+end
