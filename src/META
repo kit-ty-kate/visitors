@@ -1,0 +1,14 @@
+description = "A visitor generation facility"
+version = "(development)"
+requires = ""
+
+package "ppx" (
+  description = "[@@deriving visitors]"
+  version = "(development)"
+  exists_if = "ppx_deriving_visitors.cma"
+  requires(-ppx_driver) = "ppx_deriving"
+  ppxopt(-ppx_driver) = "ppx_deriving,./ppx_deriving_visitors.cma"
+  requires(ppx_driver) = "ppx_deriving.api"
+  archive(ppx_driver, byte) = "ppx_deriving_visitors.cma"
+  archive(ppx_driver, native) = "ppx_deriving_visitors.cmxa"
+)
