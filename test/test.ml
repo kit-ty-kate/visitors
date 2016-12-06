@@ -1,6 +1,6 @@
 module Test0 = struct
 
-  type u = U
+  type u = Uber
    and point = u * u
     [@@deriving visitors]
 
