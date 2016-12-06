@@ -45,6 +45,18 @@ let defined (decls : type_declaration list) : string list =
 
 (* Helper functions for code generation. *)
 
+(* [lambda x e] constructs a function [fun x -> e]. *)
+
+let lambda (x : string) (e : expression) : expression =
+  Exp.function_ [ Exp.case (pvar x) e ]
+
+(* [lambdas xs e] constructs a multi-argument function [fun xs -> e]. *)
+
+let lambdas (xs : string list) (e : expression) : expression =
+  List.fold_right lambda xs e
+
+(* [sequence es] constructs a sequence of the expressions in the list [es]. *)
+
 let fold_right1 f xs accu =
   match List.rev xs with
   | [] ->
@@ -55,8 +67,6 @@ let fold_right1 f xs accu =
          ignore [accu] and use [x] as the initial accumulator in our
          right-to-left sweep of the list. *)
       List.fold_right f xs x
-
-(* [sequence es] constructs a sequence of the expressions in the list [es]. *)
 
 let sequence (es : expression list) : expression =
   (* Using [fold_right1] instead of [List.fold_right] allows us to get
@@ -112,6 +122,11 @@ let visitor (tycon : Longident.t) : string =
   | Lapply _ ->
       assert false (* should not happen...? *)
 
+(* The name of the visitor method associated with a data constructor [datacon]. *)
+
+let datacon_visitor (datacon : string) : string =
+  String.lowercase_ascii datacon
+
 (* -------------------------------------------------------------------------- *)
 
 (* Private naming conventions. *)
@@ -154,6 +169,41 @@ let is_local (tycon : Longident.t) : bool =
   | Lapply _ ->
       false (* should not happen? *)
 
+(* [auxiliary_methods] holds a list of auxiliary methods that are generated as
+   we go. *)
+
+let auxiliary_methods : class_field list ref =
+  ref []
+
+let generate_auxiliary_method (cf : class_field) =
+  auxiliary_methods := cf :: !auxiliary_methods
+
+let auxiliary_methods () =
+  List.rev !auxiliary_methods
+
+(* Suppose [e] is an expression whose free variables are [xs]. If the optional
+   method name [om] is absent, then [hook om xs e] is just the expression [e].
+   If [om] is [Some m], on the other hand, then [hook om xs e] produces a call
+   of the form [self#m xs], and (as a side effect) defines an auxiliary method
+   [method m xs = e]. The behavior is the same, but, in the latter case, we
+   offer the user a hook, named [m], which allows this behavior to be
+   overridden. *)
+
+let hook (om : string option) (xs : string list) (e : expression) : expression =
+  match om with
+  | None ->
+      e
+  | Some m ->
+      generate_auxiliary_method (
+        Cf.method_
+          (mknoloc m)
+          Public
+          (Cf.concrete Fresh (lambdas xs e))
+      );
+      app
+        (Exp.send (eself()) m)
+        (List.map (fun x -> evar x) xs)
+
 (* -------------------------------------------------------------------------- *)
 
 (* [core_type ty] builds a small expression, typically a variable or a function
@@ -179,7 +229,7 @@ let rec core_type (ty : core_type) : expression =
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
       (* Construct a function. *)
       let ptuple (ps : pattern list) : pattern = ptuple ps in
-      Exp.function_ [ tuple_type ptuple tys ]
+      Exp.function_ [ tuple_type None ptuple tys ]
 
   (* An unsupported construct. *)
   | { ptyp_loc; _ } ->
@@ -192,18 +242,19 @@ let rec core_type (ty : core_type) : expression =
 and core_types (tys : core_type list) : expression list =
   List.map core_type tys
 
-and tuple_type (pat : pattern list -> pattern) (tys : core_type list) : case =
+and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_type list) : case =
   (* Set up a naming convention for the tuple components. Each component must
      receive a distinct name. The simplest convention is to use a fixed
      prefix followed with a numeric index. *)
-  let evar, pvar = convention (fun i -> Printf.sprintf "c%d" i) in
+  let x i = Printf.sprintf "c%d" i in
   (* Construct a pattern and expression. *)
-  let ps = List.mapi (fun i _ty ->                     pvar i ) tys
-  and es = List.mapi (fun i  ty -> app (core_type ty) [evar i]) tys in
+  let xs = List.mapi (fun i _ty -> x i) tys in
+  let ps = List.map  (fun x -> pvar x) xs
+  and es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
   (* Construct a case, that is, a pattern/expression pair. We are parametric
      in the pattern constructor [pat], which can be instantiated with [ptuple]
      and with [pconstr datacon]. *)
-  Exp.case (pat ps) (sequence es)
+  Exp.case (pat ps) (hook om xs (sequence es))
 
 (* -------------------------------------------------------------------------- *)
 
@@ -218,7 +269,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
-      tuple_type (pconstr datacon) tys
+      tuple_type (Some (datacon_visitor datacon)) (pconstr datacon) tys
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
@@ -322,7 +373,9 @@ let type_decls (decls : type_declaration list) : class_field list =
   (* Then, produce virtual methods for the nonlocal types that have been
      encountered along the way. *)
   let virtual_methods = R.nonlocal_types() in
-  concrete_methods @ virtual_methods
+  (* Also include any auxiliary methods that may have been generated along
+     the way. *)
+  concrete_methods @ R.auxiliary_methods() @ virtual_methods
 
 (* -------------------------------------------------------------------------- *)
 
