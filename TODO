@@ -1,3 +1,6 @@
+Should we eliminate all quotations and remove our dependency on ppx_tools?
+  (or at least the syntax extension provided by ppx_tools)
+
 Document that we are creating hooks for data constructors.
 
 Move all of the naming conventions that could clash to a single place.
