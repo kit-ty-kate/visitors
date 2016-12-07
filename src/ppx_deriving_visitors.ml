@@ -45,10 +45,15 @@ let defined (decls : type_declaration list) : string list =
 
 (* Helper functions for code generation. *)
 
+(* [plambda p e] constructs a function [fun p -> e]. *)
+
+let plambda (p : pattern) (e : expression) : expression =
+  Exp.fun_ Nolabel None p e
+
 (* [lambda x e] constructs a function [fun x -> e]. *)
 
 let lambda (x : string) (e : expression) : expression =
-  Exp.fun_ Nolabel None (pvar x) e
+  plambda (pvar x) e
 
 (* [lambdas xs e] constructs a multi-argument function [fun xs -> e]. *)
 
@@ -321,7 +326,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
         app (core_type ty) [ Exp.field (evar ()) (mknoloc (Lident label)) ]
       ) ltys in
       (* Construct a sequence of these calls, and place it in a function body. *)
-      Exp.function_ [ Exp.case (pvar ()) (sequence es) ]
+      plambda (pvar ()) (sequence es)
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->
@@ -347,7 +352,7 @@ let type_decl (decl : type_declaration) : class_field =
   Cf.method_
     (mknoloc (visitor (Lident decl.ptype_name.txt)))
     Public
-    (Cf.concrete Fresh (Exp.function_ [ Exp.case penv (type_decl_rhs decl) ]))
+    (Cf.concrete Fresh (plambda penv (type_decl_rhs decl)))
 
 (* -------------------------------------------------------------------------- *)
 
