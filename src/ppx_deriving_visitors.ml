@@ -250,7 +250,8 @@ let rec core_type (ty : core_type) : expression =
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
       (* Construct a function. *)
       let ptuple (ps : pattern list) : pattern = ptuple ps in
-      Exp.function_ [ tuple_type None ptuple tys ]
+      let p, e = tuple_type None ptuple tys in
+      plambda p e
 
   (* An unsupported construct. *)
   | { ptyp_loc; _ } ->
@@ -263,7 +264,7 @@ let rec core_type (ty : core_type) : expression =
 and core_types (tys : core_type list) : expression list =
   List.map core_type tys
 
-and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_type list) : case =
+and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_type list) : pattern * expression =
   (* Set up a naming convention for the tuple components. Each component must
      receive a distinct name. The simplest convention is to use a fixed
      prefix followed with a numeric index. *)
@@ -275,7 +276,8 @@ and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_
   (* Construct a case, that is, a pattern/expression pair. We are parametric
      in the pattern constructor [pat], which can be instantiated with [ptuple]
      and with [pconstr datacon]. *)
-  Exp.case (pat ps) (hook om (env :: xs) (sequence es))
+  pat ps,
+  hook om (env :: xs) (sequence es)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -290,7 +292,8 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
-      tuple_type (Some (datacon_visitor datacon)) (pconstr datacon) tys
+      let p, e = tuple_type (Some (datacon_visitor datacon)) (pconstr datacon) tys in
+      Exp.case p e
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
