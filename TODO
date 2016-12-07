@@ -1,0 +1,28 @@
+Simplify [tuple_type], which is a bit complicated,
+  and document that we are creating hooks for data constructors.
+
+Move all of the naming conventions that could clash to a single place.
+
+Deal with parameterized type definitions.
+  Both local and nonlocal.
+  Requires polymorphic methods.
+
+Generate iter, fold, map, iter2, fold2, map2.
+
+Think about compositionality.
+  By multiple inheritance?
+
+Think about transforming a closed recursive type definition into an open one.
+
+Inline records cannot be supported in a satisfactory way,
+  since there is no way of writing an auxiliary method
+  whose argument is known to have a certain tag.
+
+There could be a clash between the name of a type and the name of a data
+  constructor, leading to the generation of two methods by the same name.
+
+Write a README.
+
+Show to François Bobot.
+
+Add a LICENSE. Announce.
