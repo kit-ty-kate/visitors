@@ -45,6 +45,12 @@ let defined (decls : type_declaration list) : string list =
 
 (* Helper functions for code generation. *)
 
+let pvars (xs : string list) : pattern list =
+  List.map (fun x -> pvar x) xs
+
+let evars (xs : string list) : expression list =
+  List.map (fun x -> evar x) xs
+
 (* [plambda p e] constructs a function [fun p -> e]. *)
 
 let plambda (p : pattern) (e : expression) : expression =
@@ -214,7 +220,7 @@ let hook (om : string option) (xs : string list) (e : expression) : expression =
       );
       app
         (Exp.send (evar self) m)
-        (List.map (fun x -> evar x) xs)
+        (evars xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -263,12 +269,11 @@ and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_
   let x i = Printf.sprintf "c%d" i in
   (* Construct a pattern and expression. *)
   let xs = List.mapi (fun i _ty -> x i) tys in
-  let ps = List.map  (fun x -> pvar x) xs
-  and es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
+  let es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
   (* Construct a case, that is, a pattern/expression pair. We are parametric
      in the pattern constructor [pat], which can be instantiated with [ptuple]
      and with [pconstr datacon]. *)
-  pat ps,
+  pat (pvars xs),
   hook om (env :: xs) (sequence es)
 
 (* -------------------------------------------------------------------------- *)
