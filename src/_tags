@@ -2,5 +2,6 @@ true: \
   safe_string, \
   warn(A-4-44), \
   package(compiler-libs.common), \
-  package(ppx_tools.metaquot), \
   package(ppx_deriving.api)
+
+# If you wish to use quotations and antiquotations, add package(ppx_tools.metaquot).
