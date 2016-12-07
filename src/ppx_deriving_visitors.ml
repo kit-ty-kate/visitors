@@ -410,21 +410,6 @@ let type_decl (decl : type_declaration) : class_field =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [method_type tycon] constructs the type of the virtual method associated
-   with the nonlocal type [tycon]. *)
-
-let ty_unit : core_type =
-  tconstr "unit" []
-
-let arrow ty1 ty2 =
-  Typ.arrow Nolabel ty1 ty2
-
-let method_type (tycon : string) : core_type =
-  let ty = tconstr tycon [] in
-  arrow ty_env (arrow ty ty_unit)
-
-(* -------------------------------------------------------------------------- *)
-
 (* [nonlocal_type tycon] produces a class field (e.g., a virtual method)
    associated with a reference to a nonlocal type [tycon]. *)
 
@@ -432,7 +417,7 @@ let nonlocal_type (tycon : string) : class_field =
   Cf.method_
     (mknoloc (visitor_method (Lident tycon)))
     Public
-    (Cf.virtual_ (method_type tycon))
+    (Cf.virtual_ (Typ.any()))
 
 let nonlocal_types () : class_field list =
   List.map nonlocal_type !nonlocal
