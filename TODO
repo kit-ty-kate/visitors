@@ -1,12 +1,18 @@
-Document that we are creating hooks for data constructors.
+Document everything.
 
 Move all of the naming conventions that could clash to a single place.
+Check that no clashes are possible.
 
 Deal with parameterized type definitions.
   Both local and nonlocal.
-  Requires polymorphic methods.
 
-Generate iter, fold, map, iter2, fold2, map2.
+Generate iter, based on the generic visitor,
+  by instantiating the ascending methods to always return ().
+
+Generate map, based on the generic visitor,
+  by instantiating the ascending methods to always reconstruct a tree node.
+
+Reproduce everything at arity 2 (visitor2, iter2, map2).
 
 Think about compositionality.
   By multiple inheritance?
@@ -14,11 +20,15 @@ Think about compositionality.
 Think about transforming a closed recursive type definition into an open one.
 
 Inline records cannot be supported in a satisfactory way,
-  since there is no way of writing an auxiliary method
+  since there is no way of writing a descending auxiliary method
   whose argument is known to have a certain tag.
 
-There could be a clash between the name of a type and the name of a data
-  constructor, leading to the generation of two methods by the same name.
+Tuples cannot be supported in a satisfactory way,
+  as we would need to generate ascending method names
+  based on the types of the tuple components. Ugly.
+At least, they cannot be supported in the generic visitor.
+  They could be supported directly in iter and map,
+  if they do not inherit from the generic visitor.
 
 Write a README.
 
