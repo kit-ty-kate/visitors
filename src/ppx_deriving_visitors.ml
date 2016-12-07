@@ -242,7 +242,7 @@ let rec core_type (ty : core_type) : expression =
          the environment [env]. *)
       app
         (Exp.send (evar self) (visitor tycon))
-        ((core_types tys) @ [evar env])
+        (List.map core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
@@ -258,9 +258,6 @@ let rec core_type (ty : core_type) : expression =
         "%s cannot be derived for %s"
         plugin
         (string_of_core_type ty)
-
-and core_types (tys : core_type list) : expression list =
-  List.map core_type tys
 
 and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_type list) : pattern * expression =
   (* Set up a naming convention for the tuple components. Each component must
