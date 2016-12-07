@@ -83,9 +83,9 @@ let sequence (es : expression list) : expression =
   (* Using [fold_right1] instead of [List.fold_right] allows us to get
      rid of a final [()] constant at the end of the sequence. Cosmetic. *)
   fold_right1
-    (fun e accu -> [%expr [%e e]; [%e accu]])
+    (fun e accu -> Exp.sequence e accu)
     es
-     [%expr ()]
+    (unit())
 
 (* [pconstrrec datacon lps] produces a pattern for an ``inline record''.
    [datacon] is the data constructor; [lps] is the label-pattern list. *)
