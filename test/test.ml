@@ -45,16 +45,16 @@ module Test2 = struct
     method binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
 
     (* Ascending methods for data constructors. *)
-    method buildTUnit = ()
-    method buildTIntLiteral _ = ()
-    method buildTVar _ = ()
-    method buildTLambda _ _ = ()
-    method buildTApp _ _ = ()
-    method buildTPair _ _ = ()
-    method buildTTuple _ = ()
-    method buildTLNil = ()
-    method buildTLCons _ = ()
-    method buildtuple _ _ = ()
+    method build_TUnit = ()
+    method build_TIntLiteral _ = ()
+    method build_TVar _ = ()
+    method build_TLambda _ _ = ()
+    method build_TApp _ _ = ()
+    method build_TPair _ _ = ()
+    method build_TTuple _ = ()
+    method build_TLNil = ()
+    method build_TLCons _ = ()
+    method build_tuple _ _ = ()
 
   end
 

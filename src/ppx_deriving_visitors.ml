@@ -150,17 +150,17 @@ let visitor (tycon : Longident.t) : string =
 (* The name of the descending method associated with a data constructor [datacon]. *)
 
 let datacon_visitor (datacon : string) : string =
-  "match" ^ datacon
+  "match_" ^ datacon
 
 (* The name of the constructor method associated with a data constructor [datacon]. *)
 
 let datacon_constructor (datacon : string) : string =
-  "build" ^ datacon
+  "build_" ^ datacon
 
 (* The name of the constructor method associated with a tuple. TEMPORARY this cannot work *)
 
 let tuple_constructor =
-  "buildtuple"
+  "build_tuple"
 
 (* -------------------------------------------------------------------------- *)
 
