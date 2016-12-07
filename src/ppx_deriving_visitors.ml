@@ -81,14 +81,6 @@ let sequence (es : expression list) : expression =
     es
      [%expr ()]
 
-(* [convention] expects a function [f] that produces names (strings), and
-   turns into a pair of functions which respectively produce expressions
-   and patterns. *)
-
-let convention (f : 'a -> string) : ('a -> expression) * ('a -> pattern) =
-  (fun x -> evar (f x)),
-  (fun x -> pvar (f x))
-
 (* [pconstrrec datacon lps] produces a pattern for an ``inline record''.
    [datacon] is the data constructor; [lps] is the label-pattern list. *)
 
@@ -141,8 +133,8 @@ let datacon_visitor (datacon : string) : string =
 
 (* The variable [self] refers to the visitor object we are constructing. *)
 
-let eself, pself =
-  convention (fun () -> "self")
+let self =
+  "self"
 
 (* The variable [env] refers to the environment that is carried down into
    recursive calls. The type variable [ty_env] denotes its type. *)
@@ -221,7 +213,7 @@ let hook (om : string option) (xs : string list) (e : expression) : expression =
           (Cf.concrete Fresh (lambdas xs e))
       );
       app
-        (Exp.send (eself()) m)
+        (Exp.send (evar self) m)
         (List.map (fun x -> evar x) xs)
 
 (* -------------------------------------------------------------------------- *)
@@ -243,7 +235,7 @@ let rec core_type (ty : core_type) : expression =
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
       app
-        (Exp.send (eself()) (visitor tycon))
+        (Exp.send (evar self) (visitor tycon))
         ((core_types tys) @ [evar env])
 
   (* A tuple type. *)
@@ -300,10 +292,10 @@ let constructor_declaration (cd : constructor_declaration) : case =
       let ltys = List.map ld_to_lty lds in
       (* Set up a naming convention for the fields. The simplest convention
          is to use a fixed prefix followed with the field name. *)
-      let evar, pvar = convention (fun label -> Printf.sprintf "f%s" label) in
+      let x label = Printf.sprintf "f%s" label in
       (* Construct the pattern and expression. *)
-      let lps = List.map (fun (label, _ty) -> label,              pvar label ) ltys
-      and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar label]) ltys in
+      let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
+      and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
       Exp.case (pconstrrec datacon lps) (sequence es)
 
 (* -------------------------------------------------------------------------- *)
@@ -323,13 +315,13 @@ let type_decl_rhs (decl : type_declaration) : expression =
       let ltys = List.map ld_to_lty lds in
       (* Set up a naming convention for the record itself. Any name would do,
          but we choose to use the name of the type that is being declared. *)
-      let evar, pvar = convention (fun () -> decl.ptype_name.txt) in
+      let x = decl.ptype_name.txt in
       (* Generate one function call for each field. *)
       let es : expression list = List.map (fun (label, ty) ->
-        app (core_type ty) [ Exp.field (evar ()) (mknoloc (Lident label)) ]
+        app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
       ) ltys in
       (* Construct a sequence of these calls, and place it in a function body. *)
-      plambda (pvar ()) (sequence es)
+      plambda (pvar x) (sequence es)
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->
@@ -414,7 +406,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   (* Produce one class definition. It is parameterized over the type of the
      environment parameter [env]. *)
   let params = [ ty_env, Contravariant ] in
-  [ Str.class_ [ mkclass params plugin (pself()) (type_decls decls) ] ]
+  [ Str.class_ [ mkclass params plugin (pvar self) (type_decls decls) ] ]
 
 (* -------------------------------------------------------------------------- *)
 
