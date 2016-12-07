@@ -37,10 +37,25 @@ module Test2 = struct
     [@@deriving visitors]
 
   let iter = object
-    inherit [int] visitors
+    inherit [_, int] visitors
+
+    (* Descending methods for nonlocal types. *)
     method int env x = Printf.printf "(env=%d) int: %d\n%!" env x
     method name env x = Printf.printf "(env=%d) name: %s\n%!" env x
     method binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
+
+    (* Ascending methods for data constructors. *)
+    method buildTUnit = ()
+    method buildTIntLiteral _ = ()
+    method buildTVar _ = ()
+    method buildTLambda _ _ = ()
+    method buildTApp _ _ = ()
+    method buildTPair _ _ = ()
+    method buildTTuple _ = ()
+    method buildTLNil = ()
+    method buildTLCons _ = ()
+    method buildtuple _ _ = ()
+
   end
 
   let identity : term =

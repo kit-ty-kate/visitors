@@ -92,18 +92,19 @@ let sequence (es : expression list) : expression =
    bound to some variable, say [x i]; then, the expression [e], which
    is allowed to depend on these variables, is evaluated. *)
 
-let mlet (es : expression list) (e : (int -> string) -> expression) : expression =
+let mlet (es : expression list) (e : expression list -> expression) : expression =
   (* Set up a naming convention for the intermediate results. Each result must
      receive a distinct name. The simplest convention is to use a fixed prefix
      followed with a numeric index. *)
   let x i = Printf.sprintf "r%d" i in
   (* Construct a list of value bindings. *)
   let bindings = List.mapi (fun i e -> Vb.mk (pvar (x i)) e) es in
+  let xs = List.mapi (fun i _ -> evar (x i)) es in
   (* Create a series of [let] bindings around the expression [e]. *)
   List.fold_right
     (fun vb k -> Exp.let_ Nonrecursive [vb] k)
     bindings
-    (e x)
+    (e xs)
 
 (* [pconstrrec datacon lps] produces a pattern for an ``inline record''.
    [datacon] is the data constructor; [lps] is the label-pattern list. *)
@@ -146,19 +147,41 @@ let visitor (tycon : Longident.t) : string =
   | Lapply _ ->
       assert false (* should not happen...? *)
 
-(* The name of the visitor method associated with a data constructor [datacon]. *)
+(* The name of the descending method associated with a data constructor [datacon]. *)
 
 let datacon_visitor (datacon : string) : string =
-  String.lowercase_ascii datacon
+  "match" ^ datacon
+
+(* The name of the constructor method associated with a data constructor [datacon]. *)
+
+let datacon_constructor (datacon : string) : string =
+  "build" ^ datacon
+
+(* The name of the constructor method associated with a tuple. TEMPORARY this cannot work *)
+
+let tuple_constructor =
+  "buildtuple"
 
 (* -------------------------------------------------------------------------- *)
 
 (* Private naming conventions. *)
 
-(* The variable [self] refers to the visitor object we are constructing. *)
+(* The variable [self] refers to the visitor object we are constructing.
+   The type variable [ty_self] denotes its type. *)
 
 let self =
   "self"
+
+let ty_self =
+  Typ.var "self"
+
+let pself =
+  Pat.constraint_ (pvar self) ty_self
+
+(* [call m es] produces a self-call to the method [m] with arguments [es]. *)
+
+let call (m : string) (es : expression list) : expression =
+  app (Exp.send (evar self) m) es
 
 (* The variable [env] refers to the environment that is carried down into
    recursive calls. The type variable [ty_env] denotes its type. *)
@@ -234,9 +257,28 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
       (Cf.concrete Fresh (lambdas xs e))
   );
   (* Generate a method call. *)
-  app
-    (Exp.send (evar self) m)
-    (evars xs)
+  call m (evars xs)
+
+(* [postprocess m es] evaluates the expressions [es] in turn, binding their
+   results to some variables [xs], then makes a self call to the method [m],
+   passing the variables [xs] as arguments. This is used in the ascending
+   phase of the visitor: the variables [xs] represent the results of the
+   recursive calls and the method call [self#m xs] is in charge of
+   reconstructing a tree node (or some other result). *)
+
+let postprocess (m : string) (es : expression list) : expression =
+  (* Generate a declaration of [m] as an auxiliary virtual method. We note
+     that it does not need a type annotation: because we have used the trick
+     of parameterizing the class over its ['self] type, no annotations at all
+     are needed. *)
+  generate_auxiliary_method (
+    Cf.method_
+      (mknoloc m)
+      Public
+      (Cf.virtual_ (Typ.any()))
+  );
+  (* Generate a method call. *)
+  mlet es (fun xs -> call m xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -256,14 +298,12 @@ let rec core_type (ty : core_type) : expression =
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
-      app
-        (Exp.send (evar self) (visitor tycon))
-        (List.map core_type tys @ [evar env])
+      call (visitor tycon) (List.map core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
       (* Construct a function. *)
-      let xs, e = tuple_type tys in
+      let xs, e = tuple_type tuple_constructor tys in (* TEMPORARY remove support for tuples? *)
       plambda (ptuple (pvars xs)) e
 
   (* An unsupported construct. *)
@@ -274,7 +314,7 @@ let rec core_type (ty : core_type) : expression =
         plugin
         (string_of_core_type ty)
 
-and tuple_type (tys : core_type list) : string list * expression =
+and tuple_type postm (tys : core_type list) : string list * expression =
   (* Set up a naming convention for the tuple components. Each component must
      receive a distinct name. The simplest convention is to use a fixed
      prefix followed with a numeric index. *)
@@ -282,7 +322,7 @@ and tuple_type (tys : core_type list) : string list * expression =
   (* Construct a pattern and expression. *)
   let xs = List.mapi (fun i _ty -> x i) tys in
   let es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
-  xs, sequence es
+  xs, postprocess postm es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -297,7 +337,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
-      let xs, e = tuple_type tys in
+      let xs, e = tuple_type (datacon_constructor datacon) tys in
       Exp.case
         (pconstr datacon (pvars xs))
         (hook (datacon_visitor datacon) (env :: xs) e)
@@ -311,7 +351,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
       (* Construct the pattern and expression. *)
       let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
       and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
-      Exp.case (pconstrrec datacon lps) (sequence es)
+      Exp.case (pconstrrec datacon lps) (postprocess (datacon_constructor datacon) es)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -418,10 +458,16 @@ let type_decls (decls : type_declaration list) : class_field list =
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  (* Produce one class definition. It is parameterized over the type of the
-     environment parameter [env]. *)
-  let params = [ ty_env, Contravariant ] in
-  [ Str.class_ [ mkclass params plugin (pvar self) (type_decls decls) ] ]
+  (* Produce one class definition. It is parameterized over the type variable
+     ['env]. It is also parameterized over the type variable ['self], with a
+     constraint that this is the type of [self]. This trick allows us to omit
+     the declaration of the types of the virtual methods, even if these types
+     include type variables. *)
+  let params = [
+    ty_self, Invariant;
+    ty_env, Contravariant
+  ] in
+  [ Str.class_ [ mkclass params plugin pself (type_decls decls) ] ]
 
 (* -------------------------------------------------------------------------- *)
 
