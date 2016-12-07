@@ -134,16 +134,21 @@ let mkclass
 
 (* Public naming conventions. *)
 
+(* The name of the visitor base class. *)
+
+let visitor =
+  "visitor"
+
 (* The name of the visitor method associated with a type constructor [tycon]. *)
 
-let visitor (tycon : string) : string =
+let visitor_method (tycon : string) : string =
   tycon
 
-let visitor (tycon : Longident.t) : string =
+let visitor_method (tycon : Longident.t) : string =
   match tycon with
   | Lident tycon
   | Ldot (_, tycon) ->
-      visitor tycon
+      visitor_method tycon
   | Lapply _ ->
       assert false (* should not happen...? *)
 
@@ -293,7 +298,7 @@ let rec core_type (ty : core_type) : expression =
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
-      call (visitor tycon) (List.map core_type tys @ [evar env])
+      call (visitor_method tycon) (List.map core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
@@ -399,7 +404,7 @@ let type_decl (decl : type_declaration) : class_field =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
   Cf.method_
-    (mknoloc (visitor (Lident decl.ptype_name.txt)))
+    (mknoloc (visitor_method (Lident decl.ptype_name.txt)))
     Public
     (Cf.concrete Fresh (plambda penv (type_decl_rhs decl)))
 
@@ -425,7 +430,7 @@ let method_type (tycon : string) : core_type =
 
 let nonlocal_type (tycon : string) : class_field =
   Cf.method_
-    (mknoloc (visitor (Lident tycon)))
+    (mknoloc (visitor_method (Lident tycon)))
     Public
     (Cf.virtual_ (method_type tycon))
 
@@ -466,7 +471,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
     ty_self, Invariant;
     ty_env, Contravariant
   ] in
-  [ Str.class_ [ mkclass params plugin pself (type_decls decls) ] ]
+  [ Str.class_ [ mkclass params visitor pself (type_decls decls) ] ]
 
 (* -------------------------------------------------------------------------- *)
 
