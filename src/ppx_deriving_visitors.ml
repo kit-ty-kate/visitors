@@ -199,28 +199,22 @@ let generate_auxiliary_method (cf : class_field) =
 let auxiliary_methods () =
   List.rev !auxiliary_methods
 
-(* Suppose [e] is an expression whose free variables are [xs]. If the optional
-   method name [om] is absent, then [hook om xs e] is just the expression [e].
-   If [om] is [Some m], on the other hand, then [hook om xs e] produces a call
-   of the form [self#m xs], and (as a side effect) defines an auxiliary method
-   [method m xs = e]. The behavior is the same, but, in the latter case, we
-   offer the user a hook, named [m], which allows this behavior to be
-   overridden. *)
+(* Suppose [e] is an expression whose free variables are [xs]. [hook m xs e]
+   produces a call of the form [self#m xs], and (as a side effect) defines an
+   auxiliary method [method m xs = e]. The default behavior of this expression
+   is the behavior of [e], but we offer the user a hook, named [m], which
+   allows this default to be overridden. *)
 
-let hook (om : string option) (xs : string list) (e : expression) : expression =
-  match om with
-  | None ->
-      e
-  | Some m ->
-      generate_auxiliary_method (
-        Cf.method_
-          (mknoloc m)
-          Public
-          (Cf.concrete Fresh (lambdas xs e))
-      );
-      app
-        (Exp.send (evar self) m)
-        (evars xs)
+let hook (m : string) (xs : string list) (e : expression) : expression =
+  generate_auxiliary_method (
+    Cf.method_
+      (mknoloc m)
+      Public
+      (Cf.concrete Fresh (lambdas xs e))
+  );
+  app
+    (Exp.send (evar self) m)
+    (evars xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -247,9 +241,8 @@ let rec core_type (ty : core_type) : expression =
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
       (* Construct a function. *)
-      let ptuple (ps : pattern list) : pattern = ptuple ps in
-      let p, e = tuple_type None ptuple tys in
-      plambda p e
+      let xs, e = tuple_type tys in
+      plambda (ptuple (pvars xs)) e
 
   (* An unsupported construct. *)
   | { ptyp_loc; _ } ->
@@ -259,7 +252,7 @@ let rec core_type (ty : core_type) : expression =
         plugin
         (string_of_core_type ty)
 
-and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_type list) : pattern * expression =
+and tuple_type (tys : core_type list) : string list * expression =
   (* Set up a naming convention for the tuple components. Each component must
      receive a distinct name. The simplest convention is to use a fixed
      prefix followed with a numeric index. *)
@@ -267,11 +260,7 @@ and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_
   (* Construct a pattern and expression. *)
   let xs = List.mapi (fun i _ty -> x i) tys in
   let es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
-  (* Construct a case, that is, a pattern/expression pair. We are parametric
-     in the pattern constructor [pat], which can be instantiated with [ptuple]
-     and with [pconstr datacon]. *)
-  pat (pvars xs),
-  hook om (env :: xs) (sequence es)
+  xs, sequence es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -286,8 +275,10 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
-      let p, e = tuple_type (Some (datacon_visitor datacon)) (pconstr datacon) tys in
-      Exp.case p e
+      let xs, e = tuple_type tys in
+      Exp.case
+        (pconstr datacon (pvars xs))
+        (hook (datacon_visitor datacon) (env :: xs) e)
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->

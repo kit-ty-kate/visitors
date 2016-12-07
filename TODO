@@ -1,5 +1,4 @@
-Simplify [tuple_type], which is a bit complicated,
-  and document that we are creating hooks for data constructors.
+Document that we are creating hooks for data constructors.
 
 Move all of the naming conventions that could clash to a single place.
 
