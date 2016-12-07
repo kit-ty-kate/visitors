@@ -87,6 +87,24 @@ let sequence (es : expression list) : expression =
     es
     (unit())
 
+(* [mlet es e] creates a series of [let] bindings so that each of the
+   expressions in the list [es] is evaluated in turn and its result is
+   bound to some variable, say [x i]; then, the expression [e], which
+   is allowed to depend on these variables, is evaluated. *)
+
+let mlet (es : expression list) (e : (int -> string) -> expression) : expression =
+  (* Set up a naming convention for the intermediate results. Each result must
+     receive a distinct name. The simplest convention is to use a fixed prefix
+     followed with a numeric index. *)
+  let x i = Printf.sprintf "r%d" i in
+  (* Construct a list of value bindings. *)
+  let bindings = List.mapi (fun i e -> Vb.mk (pvar (x i)) e) es in
+  (* Create a series of [let] bindings around the expression [e]. *)
+  List.fold_right
+    (fun vb k -> Exp.let_ Nonrecursive [vb] k)
+    bindings
+    (e x)
+
 (* [pconstrrec datacon lps] produces a pattern for an ``inline record''.
    [datacon] is the data constructor; [lps] is the label-pattern list. *)
 
