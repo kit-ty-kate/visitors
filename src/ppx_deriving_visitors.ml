@@ -107,7 +107,7 @@ let mkclass
     pci_params = params;
     pci_name = mknoloc name;
     pci_expr = Cl.structure (Cstr.mk self fields);
-    pci_loc = Location.none;
+    pci_loc = !default_loc;
     pci_attributes = [];
   }
 
