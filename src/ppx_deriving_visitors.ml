@@ -321,7 +321,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
         app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
       ) ltys in
       (* Construct a sequence of these calls, and place it in a function body. *)
-      plambda (pvar x) (sequence es)
+      lambda x (sequence es)
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->
