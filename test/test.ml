@@ -54,7 +54,6 @@ module Test2 = struct
     method build_TTuple _ = ()
     method build_TLNil = ()
     method build_TLCons _ = ()
-    method build_tuple _ _ = ()
 
   end
 

@@ -23,13 +23,6 @@ Inline records cannot be supported in a satisfactory way,
   since there is no way of writing a descending auxiliary method
   whose argument is known to have a certain tag.
 
-Tuples cannot be supported in a satisfactory way,
-  as we would need to generate ascending method names
-  based on the types of the tuple components. Ugly.
-At least, they cannot be supported in the generic visitor.
-  They could be supported directly in iter and map,
-  if they do not inherit from the generic visitor.
-
 Write a README.
 
 Show to François Bobot.

@@ -157,11 +157,6 @@ let datacon_visitor (datacon : string) : string =
 let datacon_constructor (datacon : string) : string =
   "build_" ^ datacon
 
-(* The name of the constructor method associated with a tuple. TEMPORARY this cannot work *)
-
-let tuple_constructor =
-  "build_tuple"
-
 (* -------------------------------------------------------------------------- *)
 
 (* Private naming conventions. *)
@@ -302,9 +297,13 @@ let rec core_type (ty : core_type) : expression =
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
-      (* Construct a function. *)
-      let xs, e = tuple_type tuple_constructor tys in (* TEMPORARY remove support for tuples? *)
-      plambda (ptuple (pvars xs)) e
+      (* Construct a function. In the case of tuples, we do not call an
+         ascending auxiliary method, as we would need one method name
+         per tuple type, and that would be messy. Instead, we make the
+         most general choice of ascending computation, which is to rebuild
+         a tuple on the way up. Happily, this is always well-typed. *)
+      let xs, es = tuple_type tys in
+      plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
   | { ptyp_loc; _ } ->
@@ -314,7 +313,7 @@ let rec core_type (ty : core_type) : expression =
         plugin
         (string_of_core_type ty)
 
-and tuple_type postm (tys : core_type list) : string list * expression =
+and tuple_type (tys : core_type list) : string list * expression list =
   (* Set up a naming convention for the tuple components. Each component must
      receive a distinct name. The simplest convention is to use a fixed
      prefix followed with a numeric index. *)
@@ -322,7 +321,7 @@ and tuple_type postm (tys : core_type list) : string list * expression =
   (* Construct a pattern and expression. *)
   let xs = List.mapi (fun i _ty -> x i) tys in
   let es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
-  xs, postprocess postm es
+  xs, es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -337,10 +336,10 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
-      let xs, e = tuple_type (datacon_constructor datacon) tys in
+      let xs, es = tuple_type tys in
       Exp.case
         (pconstr datacon (pvars xs))
-        (hook (datacon_visitor datacon) (env :: xs) e)
+        (hook (datacon_visitor datacon) (env :: xs) (postprocess (datacon_constructor datacon) es))
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
