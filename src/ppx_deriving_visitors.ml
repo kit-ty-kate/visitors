@@ -206,12 +206,16 @@ let auxiliary_methods () =
    allows this default to be overridden. *)
 
 let hook (m : string) (xs : string list) (e : expression) : expression =
+  (* Generate an auxiliary method. We note that its parameters [xs] don't
+     need a type annotation: because this method has a call site, its type
+     can be inferred. *)
   generate_auxiliary_method (
     Cf.method_
       (mknoloc m)
       Public
       (Cf.concrete Fresh (lambdas xs e))
   );
+  (* Generate a method call. *)
   app
     (Exp.send (evar self) m)
     (evars xs)
