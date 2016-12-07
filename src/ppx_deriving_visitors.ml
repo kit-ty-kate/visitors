@@ -94,11 +94,14 @@ let pconstrrec (datacon : string) (lps : (string * pattern) list) =
    our classes virtual, because it does not make sense to use them without
    overriding any methods. *)
 
-let mkclass (name : string) (self : pattern) (fields : class_field list)
-: class_declaration =
+let mkclass
+  (params : (core_type * variance) list)
+  (name : string) (self : pattern)
+  (fields : class_field list)
+  : class_declaration =
   {
     pci_virt = Virtual;
-    pci_params = [];
+    pci_params = params;
     pci_name = mknoloc name;
     pci_expr = Cl.structure (Cstr.mk self fields);
     pci_loc = Location.none;
@@ -131,10 +134,22 @@ let datacon_visitor (datacon : string) : string =
 
 (* Private naming conventions. *)
 
-(* We refer to [self] under the name [self]. *)
+(* The variable [self] refers to the visitor object we are constructing. *)
 
 let eself, pself =
   convention (fun () -> "self")
+
+(* The variable [env] refers to the environment that is carried down into
+   recursive calls. The type variable [ty_env] denotes its type. *)
+
+let env =
+  "env"
+
+let ty_env : core_type =
+  Typ.var "env"
+
+let penv : pattern =
+  Pat.constraint_ (pvar env) ty_env
 
 (* -------------------------------------------------------------------------- *)
 
@@ -219,11 +234,12 @@ let rec core_type (ty : core_type) : expression =
       (* Check if this is a local type constructor. If not, then we need
          to generate a virtual method for it. *)
       let (_ : bool) = is_local tycon in
-      (* Construct the name of the [visit] method associated with [tycon],
-         and apply it to the derived functions associated with [tys]. *)
+      (* Construct the name of the [visit] method associated with [tycon].
+         Apply it to the derived functions associated with [tys] and to
+         the environment [env]. *)
       app
         (Exp.send (eself()) (visitor tycon))
-        (core_types tys)
+        ((core_types tys) @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
@@ -254,7 +270,7 @@ and tuple_type (om : string option) (pat : pattern list -> pattern) (tys : core_
   (* Construct a case, that is, a pattern/expression pair. We are parametric
      in the pattern constructor [pat], which can be instantiated with [ptuple]
      and with [pconstr datacon]. *)
-  Exp.case (pat ps) (hook om xs (sequence es))
+  Exp.case (pat ps) (hook om (env :: xs) (sequence es))
 
 (* -------------------------------------------------------------------------- *)
 
@@ -331,7 +347,7 @@ let type_decl (decl : type_declaration) : class_field =
   Cf.method_
     (mknoloc (visitor (Lident decl.ptype_name.txt)))
     Public
-    (Cf.concrete Fresh (type_decl_rhs decl))
+    (Cf.concrete Fresh (Exp.function_ [ Exp.case penv (type_decl_rhs decl) ]))
 
 (* -------------------------------------------------------------------------- *)
 
@@ -341,9 +357,12 @@ let type_decl (decl : type_declaration) : class_field =
 let ty_unit : core_type =
   tconstr "unit" []
 
+let arrow ty1 ty2 =
+  Typ.arrow Nolabel ty1 ty2
+
 let method_type (tycon : string) : core_type =
   let ty = tconstr tycon [] in
-  Typ.arrow Nolabel ty ty_unit
+  arrow ty_env (arrow ty ty_unit)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -384,8 +403,10 @@ let type_decls (decls : type_declaration list) : class_field list =
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  (* Produce one class definition. *)
-  [ Str.class_ [ mkclass plugin (pself()) (type_decls decls) ] ]
+  (* Produce one class definition. It is parameterized over the type of the
+     environment parameter [env]. *)
+  let params = [ ty_env, Contravariant ] in
+  [ Str.class_ [ mkclass params plugin (pself()) (type_decls decls) ] ]
 
 (* -------------------------------------------------------------------------- *)
 

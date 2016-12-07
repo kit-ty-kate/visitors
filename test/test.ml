@@ -37,16 +37,16 @@ module Test2 = struct
     [@@deriving visitors]
 
   let iter = object
-    inherit visitors
-    method int x = Printf.printf "int: %d\n%!" x
-    method name x = Printf.printf "name: %s\n%!" x
-    method binder x = Printf.printf "binder: %s\n%!" x
+    inherit [int] visitors
+    method int env x = Printf.printf "(env=%d) int: %d\n%!" env x
+    method name env x = Printf.printf "(env=%d) name: %s\n%!" env x
+    method binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
   end
 
   let identity : term =
     TLambda ("x", TVar "x")
 
   let () =
-    iter#term identity
+    iter#term 33 identity
 
 end
