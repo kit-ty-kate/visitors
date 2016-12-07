@@ -48,7 +48,7 @@ let defined (decls : type_declaration list) : string list =
 (* [lambda x e] constructs a function [fun x -> e]. *)
 
 let lambda (x : string) (e : expression) : expression =
-  Exp.function_ [ Exp.case (pvar x) e ]
+  Exp.fun_ Nolabel None (pvar x) e
 
 (* [lambdas xs e] constructs a multi-argument function [fun xs -> e]. *)
 
