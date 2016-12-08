@@ -22,24 +22,29 @@ let idy =
 module StringSet =
   Set.Make(String)
 
-class ['self] fv accu = object(self : 'self)
+class ['a] accu (init : 'a) = object
+  val mutable accu = init
+  method accu = accu
+end
+
+class ['self] fv = object (self : 'self)
+  inherit [_] accu StringSet.empty
   method name env x =
     if not (StringSet.mem x env) then
-      accu := StringSet.add x !accu
+      accu <- StringSet.add x accu
   method binder term env (x, t) =
     let env = StringSet.add x env in
     term env t
 end
 
 let fv (t : term) : StringSet.t =
-  let accu = ref StringSet.empty in
   let fv = object
-    inherit [_] fv accu
     inherit [_, _] iter
+    inherit [_] fv
   end in
   let env = StringSet.empty in
   fv#term env t;
-  !accu
+  fv#accu
 
 let print (xs : StringSet.t) =
   StringSet.iter (fun x ->
