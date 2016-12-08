@@ -6,12 +6,6 @@ Check that no clashes are possible.
 Deal with parameterized type definitions.
   Both local and nonlocal.
 
-Generate iter, based on the generic visitor,
-  by instantiating the ascending methods to always return ().
-
-Generate map, based on the generic visitor,
-  by instantiating the ascending methods to always reconstruct a tree node.
-
 Reproduce everything at arity 2 (visitor2, iter2, map2).
 
 Think about compositionality.
@@ -22,8 +16,6 @@ Think about transforming a closed recursive type definition into an open one.
 Inline records cannot be supported in a satisfactory way,
   since there is no way of writing a descending auxiliary method
   whose argument is known to have a certain tag.
-
-Write a README.
 
 Show to François Bobot.
 
