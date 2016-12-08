@@ -1,5 +1,12 @@
 Document everything.
 
+Maybe iter and map should not inherit from visitor; the user could mix
+  them by herself.
+
+The tuple trick of always reconstructing a tuple may not work as desired?
+It may force the user to also reconstruct a tuple when implementing his own
+folds.
+
 Move all of the naming conventions that could clash to a single place.
 Check that no clashes are possible.
 
