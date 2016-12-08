@@ -157,6 +157,14 @@ let mkvirtualmethod (m : string) : class_field =
 let visitor =
   "visitor"
 
+(* The names of the subclasses [iter] and [map]. *)
+
+let iter =
+  "iter"
+
+let map =
+  "map"
+
 (* The name of the visitor method associated with a type constructor [tycon]. *)
 
 let visitor_method (tycon : string) : string =
@@ -219,15 +227,44 @@ let penv : pattern =
 
 module Run (Current : sig val decls : type_declaration list end) = struct
 
+(* As we generate several classes at the same time, we maintain, for each
+   generated class, a list of methods that we generate as we go. *)
+
+module S : sig
+
+  val generate: string -> class_field -> unit
+  val dump: string -> class_field list
+
+end = struct
+
+  module StringMap =
+    Map.Make(String)
+
+  let store : class_field list StringMap.t ref =
+    ref StringMap.empty
+
+  let get (c : string) : class_field list =
+    try StringMap.find c !store with Not_found -> []
+
+  let generate (c : string) (cf : class_field) =
+    store := StringMap.add c (cf :: get c) !store
+
+  let dump (c : string) =
+    List.rev (get c)
+
+end
+
 (* [nonlocal] records the set of nonlocal type constructors that have been
    encountered as we go. *)
 
-let nonlocal : string list ref =
-  ref []
+module StringSet =
+  Set.Make(String)
+
+let nonlocal =
+  ref StringSet.empty
 
 let insert_nonlocal (s : string) =
-  if not (List.mem s !nonlocal) then
-    nonlocal := s :: !nonlocal
+  nonlocal := StringSet.add s !nonlocal
 
 (* [is_local tycon] tests whether the type constructor [tycon] is local,
    that is, whether it is declared by the current set of type declarations.
@@ -246,18 +283,6 @@ let is_local (tycon : Longident.t) : bool =
   | Lapply _ ->
       false (* should not happen? *)
 
-(* [auxiliary_methods] holds a list of auxiliary methods that are generated as
-   we go. *)
-
-let auxiliary_methods : class_field list ref =
-  ref []
-
-let generate_auxiliary_method (cf : class_field) =
-  auxiliary_methods := cf :: !auxiliary_methods
-
-let auxiliary_methods () =
-  List.rev !auxiliary_methods
-
 (* Suppose [e] is an expression whose free variables are [xs]. [hook m xs e]
    produces a call of the form [self#m xs], and (as a side effect) defines an
    auxiliary method [method m xs = e]. The default behavior of this expression
@@ -268,7 +293,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate an auxiliary method. We note that its parameters [xs] don't
      need a type annotation: because this method has a call site, its type
      can be inferred. *)
-  generate_auxiliary_method (
+  S.generate visitor (
     mkconcretemethod m (lambdas xs e)
   );
   (* Generate a method call. *)
@@ -286,7 +311,7 @@ let postprocess (m : string) (es : expression list) : expression =
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
      are needed. *)
-  generate_auxiliary_method (
+  S.generate visitor (
     mkvirtualmethod m
   );
   (* Generate a method call. *)
@@ -304,9 +329,12 @@ let rec core_type (ty : core_type) : expression =
   | { ptyp_desc = Ptyp_constr ({ txt = tycon; _ }, tys); _ } ->
       let tycon : Longident.t = tycon
       and tys : core_type list = tys in
-      (* Check if this is a local type constructor. If not, then we need
-         to generate a virtual method for it. *)
-      let (_ : bool) = is_local tycon in
+      (* Check if this is a local type constructor. If not, generate a
+         virtual method for it. *)
+      if not (is_local tycon) then
+        S.generate visitor (
+          mkvirtualmethod (visitor_method tycon)
+        );
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
@@ -412,41 +440,16 @@ let type_decl_rhs (decl : type_declaration) : expression =
 (* [type_decl decl] produces a class field (e.g., a method) associated with
    the type declaration [decl]. *)
 
-let type_decl (decl : type_declaration) : class_field =
+let type_decl (decl : type_declaration) =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
-  mkconcretemethod
-    (visitor_method (Lident decl.ptype_name.txt))
-    (plambda penv (type_decl_rhs decl))
-
-(* -------------------------------------------------------------------------- *)
-
-(* [nonlocal_type tycon] produces a class field (e.g., a virtual method)
-   associated with a reference to a nonlocal type [tycon]. *)
-
-let nonlocal_type (tycon : string) : class_field =
-  mkvirtualmethod (visitor_method (Lident tycon))
-
-let nonlocal_types () : class_field list =
-  List.map nonlocal_type !nonlocal
+  S.generate visitor (
+    mkconcretemethod
+      (visitor_method (Lident decl.ptype_name.txt))
+      (plambda penv (type_decl_rhs decl))
+  )
 
 end
-
-(* -------------------------------------------------------------------------- *)
-
-(* [type_decls decls] produces class fields (that is, mainly methods)
-   associated with the type declarations [decls]. *)
-
-let type_decls (decls : type_declaration list) : class_field list =
-  let module R = Run(struct let decls = decls end) in
-  (* Traverse the type declarations, producing methods for the local types. *)
-  let concrete_methods = List.map R.type_decl decls in
-  (* Then, produce virtual methods for the nonlocal types that have been
-     encountered along the way. *)
-  let virtual_methods = R.nonlocal_types() in
-  (* Also include any auxiliary methods that may have been generated along
-     the way. *)
-  concrete_methods @ R.auxiliary_methods() @ virtual_methods
 
 (* -------------------------------------------------------------------------- *)
 
@@ -455,16 +458,21 @@ let type_decls (decls : type_declaration list) : class_field list =
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  (* Produce one class definition. It is parameterized over the type variable
-     ['env]. It is also parameterized over the type variable ['self], with a
-     constraint that this is the type of [self]. This trick allows us to omit
-     the declaration of the types of the virtual methods, even if these types
-     include type variables. *)
+  (* Analyze the type definitions. *)
+  let module R = Run(struct let decls = decls end) in
+  List.iter R.type_decl decls;
+  (* Produce class definitions. Our classes are parameterized over the type
+     variable ['env]. They are also parameterized over the type variable
+     ['self], with a constraint that this is the type of [self]. This trick
+     allows us to omit the declaration of the types of the virtual methods,
+     even if these types include type variables. *)
   let params = [
     ty_self, Invariant;
     ty_env, Contravariant
   ] in
-  [ Str.class_ [ mkclass params visitor pself (type_decls decls) ] ]
+  [ Str.class_ [
+    mkclass params visitor pself (R.S.dump visitor)
+  ]]
 
 (* -------------------------------------------------------------------------- *)
 
