@@ -36,14 +36,8 @@ module Test2 = struct
     | TLCons of (term * term_list)
     [@@deriving visitors]
 
-  let iter = object
-    inherit [_, int] visitor
-
-    (* Descending methods for nonlocal types. *)
-    method int env x = Printf.printf "(env=%d) int: %d\n%!" env x
-    method name env x = Printf.printf "(env=%d) name: %s\n%!" env x
-    method binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
-
+  class virtual ['self, 'env] iter = object
+    inherit ['self, 'env] visitor
     (* Ascending methods for data constructors. *)
     method build_TUnit = ()
     method build_TIntLiteral _ = ()
@@ -54,23 +48,10 @@ module Test2 = struct
     method build_TTuple _ = ()
     method build_TLNil = ()
     method build_TLCons _ = ()
-
   end
 
-  let identity : term =
-    TLambda ("x", TVar "x")
-
-  let () =
-    iter#term 33 identity
-
-  let map = object
-    inherit [_, unit] visitor
-
-    (* Descending methods for nonlocal types. *)
-    method int () x = x
-    method name () x = "a" (* change name occurrences to [a], for fun *)
-    method binder () x = x
-
+  class virtual ['self, 'env] map = object
+    inherit ['self, 'env] visitor
     (* Ascending methods for data constructors. *)
     method build_TUnit = TUnit
     method build_TIntLiteral x = TIntLiteral x
@@ -81,7 +62,29 @@ module Test2 = struct
     method build_TTuple ts = TTuple ts
     method build_TLNil = TLNil
     method build_TLCons x = TLCons x
+  end
 
+  let iter = object
+    inherit [_, int] iter
+    (* Descending methods for nonlocal types. *)
+    method int env x = Printf.printf "(env=%d) int: %d\n%!" env x
+    method name env x = Printf.printf "(env=%d) name: %s\n%!" env x
+    method binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
+
+  end
+
+  let identity : term =
+    TLambda ("x", TVar "x")
+
+  let () =
+    iter#term 33 identity
+
+  let map = object
+    inherit [_, unit] map
+    (* Descending methods for nonlocal types. *)
+    method int () x = x
+    method name () x = "a" (* change name occurrences to [a], for fun *)
+    method binder () x = x
   end
 
   let () =
