@@ -2,6 +2,9 @@ description = "A visitor generation facility"
 version = "(development)"
 requires = "compiler-libs ppx_tools ppx_deriving"
 
+# I don't really understand any of the following.
+# See https://github.com/whitequark/ppx_deriving
+
 package "ppx" (
   description = "[@@deriving visitors]"
   version = "(development)"
