@@ -1,6 +1,6 @@
 description = "A visitor generation facility"
 version = "(development)"
-requires = ""
+requires = "compiler-libs ppx_tools ppx_deriving"
 
 package "ppx" (
   description = "[@@deriving visitors]"
