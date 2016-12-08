@@ -1,12 +1,12 @@
 type name =
   string
 
-type binder =
-  string
+type 'a binder =
+  string * 'a
 
 type term =
   | TVar of name
-  | TLambda of binder * term
+  | TLambda of term binder
   | TApp of term * term
   [@@deriving visitors]
 
@@ -22,26 +22,24 @@ let idy =
 module StringSet =
   Set.Make(String)
 
-type void
-
-class fv = object(self)
-  inherit [_, _] iter
-  val mutable accu = StringSet.empty
-  method accu = accu
+class ['self] fv accu = object(self : 'self)
   method name env x =
     if not (StringSet.mem x env) then
-      accu <- StringSet.add x accu
-  method binder env x : void =
-    assert false
-  method match_TLambda env x t =
+      accu := StringSet.add x !accu
+  method binder term env (x, t) =
     let env = StringSet.add x env in
-    self#term env t
+    term env t
 end
 
 let fv (t : term) : StringSet.t =
-  let fv = new fv in
-  fv#term StringSet.empty t;
-  fv#accu
+  let accu = ref StringSet.empty in
+  let fv = object
+    inherit [_] fv accu
+    inherit [_, _] iter
+  end in
+  let env = StringSet.empty in
+  fv#term env t;
+  !accu
 
 let print (xs : StringSet.t) =
   StringSet.iter (fun x ->
