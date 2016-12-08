@@ -244,7 +244,7 @@ let rec core_type (ty : core_type) : expression =
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
-      call (visitor_method tycon) (List.map core_type tys @ [evar env])
+      call (visitor_method tycon) (List.map env_core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
@@ -263,6 +263,9 @@ let rec core_type (ty : core_type) : expression =
         "%s cannot be derived for %s"
         plugin
         (string_of_core_type ty)
+
+and env_core_type ty =
+  lambda env (core_type ty)
 
 and tuple_type (tys : core_type list) : string list * expression list =
   (* Set up a naming convention for the tuple components. Each component must
@@ -382,7 +385,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
      even if these types include type variables. *)
   let params = [
     ty_self, Invariant;
-    ty_env, Contravariant
+    ty_env, Invariant;
   ] in
   [
     Str.class_ [ mkclass params visitor pself (R.S.dump visitor) ];
