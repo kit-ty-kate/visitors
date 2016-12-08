@@ -22,10 +22,11 @@ OCAMLBUILD_FLAGS := \
 
 .PHONY: all clean install uninstall
 
-all:
+all: $(PLUGIN).mllib $(PLUGIN).mldylib
 	ocamlbuild $(OCAMLBUILD_FLAGS) $(OCAMLBUILD_TARGET)
 
 clean:
+	rm -f $(PLUGIN).mllib $(PLUGIN).mldylib
 	rm -f *~
 	ocamlbuild $(OCAMLBUILD_FLAGS) -clean
 
@@ -34,3 +35,9 @@ install: all
 
 uninstall:
 	ocamlfind remove $(PACKAGE)
+
+$(PLUGIN).mllib: manifest
+	cp -f $< $@
+
+$(PLUGIN).mldylib: manifest
+	cp -f $< $@
