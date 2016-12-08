@@ -36,34 +36,6 @@ module Test2 = struct
     | TLCons of (term * term_list)
     [@@deriving visitors]
 
-  class virtual ['self, 'env] iter = object
-    inherit ['self, 'env] visitor
-    (* Ascending methods for data constructors. *)
-    method build_TUnit = ()
-    method build_TIntLiteral _ = ()
-    method build_TVar _ = ()
-    method build_TLambda _ _ = ()
-    method build_TApp _ _ = ()
-    method build_TPair _ _ = ()
-    method build_TTuple _ = ()
-    method build_TLNil = ()
-    method build_TLCons _ = ()
-  end
-
-  class virtual ['self, 'env] map = object
-    inherit ['self, 'env] visitor
-    (* Ascending methods for data constructors. *)
-    method build_TUnit = TUnit
-    method build_TIntLiteral x = TIntLiteral x
-    method build_TVar x = TVar x
-    method build_TLambda x t = TLambda (x, t)
-    method build_TApp t u = TApp (t, u)
-    method build_TPair t u = TPair { fst = t; snd = u }
-    method build_TTuple ts = TTuple ts
-    method build_TLNil = TLNil
-    method build_TLCons x = TLCons x
-  end
-
   let iter = object
     inherit [_, int] iter
     (* Descending methods for nonlocal types. *)

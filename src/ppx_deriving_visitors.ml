@@ -61,6 +61,11 @@ let plambda (p : pattern) (e : expression) : expression =
 let lambda (x : string) (e : expression) : expression =
   plambda (pvar x) e
 
+(* [plambdas ps e] constructs a multi-argument function [fun ps -> e]. *)
+
+let plambdas (ps : pattern list) (e : expression) : expression =
+  List.fold_right plambda ps e
+
 (* [lambdas xs e] constructs a multi-argument function [fun xs -> e]. *)
 
 let lambdas (xs : string list) (e : expression) : expression =
@@ -92,19 +97,25 @@ let sequence (es : expression list) : expression =
    bound to some variable, say [x i]; then, the expression [e], which
    is allowed to depend on these variables, is evaluated. *)
 
-let mlet (es : expression list) (e : expression list -> expression) : expression =
+let mlet (es : expression list) (e : string list -> expression) : expression =
   (* Set up a naming convention for the intermediate results. Each result must
      receive a distinct name. The simplest convention is to use a fixed prefix
      followed with a numeric index. *)
   let x i = Printf.sprintf "r%d" i in
   (* Construct a list of value bindings. *)
   let bindings = List.mapi (fun i e -> Vb.mk (pvar (x i)) e) es in
-  let xs = List.mapi (fun i _ -> evar (x i)) es in
+  let xs = List.mapi (fun i _ -> x i) es in
   (* Create a series of [let] bindings around the expression [e]. *)
   List.fold_right
     (fun vb k -> Exp.let_ Nonrecursive [vb] k)
     bindings
     (e xs)
+
+(* [constrrec datacon les] produces an expression for an ``inline record''.
+   [datacon] is the data constructor; [les] is the label-expression list. *)
+
+let constrrec (datacon : string) (les : (string * expression) list) =
+  constr datacon [record les]
 
 (* [pconstrrec datacon lps] produces a pattern for an ``inline record''.
    [datacon] is the data constructor; [lps] is the label-pattern list. *)
@@ -306,7 +317,9 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
    recursive calls and the method call [self#m xs] is in charge of
    reconstructing a tree node (or some other result). *)
 
-let postprocess (m : string) (es : expression list) : expression =
+(* TEMPORARY needs cleaning up *)
+
+let postprocess reconstruct (m : string) (es : expression list) : expression =
   (* Generate a declaration of [m] as an auxiliary virtual method. We note
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
@@ -314,8 +327,18 @@ let postprocess (m : string) (es : expression list) : expression =
   S.generate visitor (
     mkvirtualmethod m
   );
+  (* This virtual method is defined in the subclass [iter] to always return
+     unit. *)
+  let wildcards = List.map (fun _ -> Pat.any()) es in
+  S.generate iter (
+    mkconcretemethod m (plambdas wildcards (unit()))
+  );
+  (* It is defined in the subclass [map] to always reconstruct a tree node. *)
   (* Generate a method call. *)
-  mlet es (fun xs -> call m xs)
+  mlet es (fun xs ->
+    S.generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
+    call m (evars xs)
+  )
 
 (* -------------------------------------------------------------------------- *)
 
@@ -382,9 +405,10 @@ let constructor_declaration (cd : constructor_declaration) : case =
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
       let xs, es = tuple_type tys in
+      let reconstruct (xs : string list) : expression = constr datacon (evars xs) in
       Exp.case
         (pconstr datacon (pvars xs))
-        (hook (datacon_visitor datacon) (env :: xs) (postprocess (datacon_constructor datacon) es))
+        (hook (datacon_visitor datacon) (env :: xs) (postprocess reconstruct (datacon_constructor datacon) es))
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
@@ -395,7 +419,12 @@ let constructor_declaration (cd : constructor_declaration) : case =
       (* Construct the pattern and expression. *)
       let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
       and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
-      Exp.case (pconstrrec datacon lps) (postprocess (datacon_constructor datacon) es)
+      let reconstruct (xs : string list) : expression =
+        assert (List.length xs = List.length ltys);
+        let lxs = List.map2 (fun (label, _ty) x -> (label, evar x)) ltys xs in
+        constrrec datacon lxs
+      in
+      Exp.case (pconstrrec datacon lps) (postprocess reconstruct (datacon_constructor datacon) es)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -460,6 +489,8 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
   (* Analyze the type definitions. *)
   let module R = Run(struct let decls = decls end) in
+  R.S.generate iter (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
+  R.S.generate map (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
   List.iter R.type_decl decls;
   (* Produce class definitions. Our classes are parameterized over the type
      variable ['env]. They are also parameterized over the type variable
@@ -470,9 +501,11 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
     ty_self, Invariant;
     ty_env, Contravariant
   ] in
-  [ Str.class_ [
-    mkclass params visitor pself (R.S.dump visitor)
-  ]]
+  [
+    Str.class_ [ mkclass params visitor pself (R.S.dump visitor) ];
+    Str.class_ [ mkclass params iter pself (R.S.dump iter) ];
+    Str.class_ [ mkclass params map pself (R.S.dump map) ];
+  ]
 
 (* -------------------------------------------------------------------------- *)
 
