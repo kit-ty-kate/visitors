@@ -130,6 +130,24 @@ let mkclass
     pci_attributes = [];
   }
 
+(* [mkconcretemethod m e] produces a definition of a public method whose name
+   is [m] and whose body is [e]. *)
+
+let mkconcretemethod (m : string) (e : expression) : class_field =
+  Cf.method_
+    (mknoloc m)
+    Public
+    (Cf.concrete Fresh e)
+
+(* [mkvirtualmethod m e] produces a definition of a virtual public method
+   whose name is [m] and whose type is unspecified. *)
+
+let mkvirtualmethod (m : string) : class_field =
+  Cf.method_
+    (mknoloc m)
+    Public
+    (Cf.virtual_ (Typ.any()))
+
 (* -------------------------------------------------------------------------- *)
 
 (* Public naming conventions. *)
@@ -251,10 +269,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
      need a type annotation: because this method has a call site, its type
      can be inferred. *)
   generate_auxiliary_method (
-    Cf.method_
-      (mknoloc m)
-      Public
-      (Cf.concrete Fresh (lambdas xs e))
+    mkconcretemethod m (lambdas xs e)
   );
   (* Generate a method call. *)
   call m (evars xs)
@@ -272,10 +287,7 @@ let postprocess (m : string) (es : expression list) : expression =
      of parameterizing the class over its ['self] type, no annotations at all
      are needed. *)
   generate_auxiliary_method (
-    Cf.method_
-      (mknoloc m)
-      Public
-      (Cf.virtual_ (Typ.any()))
+    mkvirtualmethod m
   );
   (* Generate a method call. *)
   mlet es (fun xs -> call m xs)
@@ -403,10 +415,9 @@ let type_decl_rhs (decl : type_declaration) : expression =
 let type_decl (decl : type_declaration) : class_field =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
-  Cf.method_
-    (mknoloc (visitor_method (Lident decl.ptype_name.txt)))
-    Public
-    (Cf.concrete Fresh (plambda penv (type_decl_rhs decl)))
+  mkconcretemethod
+    (visitor_method (Lident decl.ptype_name.txt))
+    (plambda penv (type_decl_rhs decl))
 
 (* -------------------------------------------------------------------------- *)
 
@@ -414,10 +425,7 @@ let type_decl (decl : type_declaration) : class_field =
    associated with a reference to a nonlocal type [tycon]. *)
 
 let nonlocal_type (tycon : string) : class_field =
-  Cf.method_
-    (mknoloc (visitor_method (Lident tycon)))
-    Public
-    (Cf.virtual_ (Typ.any()))
+  mkvirtualmethod (visitor_method (Lident tycon))
 
 let nonlocal_types () : class_field list =
   List.map nonlocal_type !nonlocal
