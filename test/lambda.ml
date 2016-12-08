@@ -46,10 +46,32 @@ let fv (t : term) : StringSet.t =
   fv#term env t;
   fv#accu
 
+class ['self] subst (sigma : name -> name) = object (self : 'self)
+  (* TEMPORARY incorrect if [sigma x] is in [env]! need freshening *)
+  method name env x =
+    if StringSet.mem x env then x else sigma x
+  method binder term env (x, t) =
+    let env = StringSet.add x env in
+    x, term env t
+end
+
+let subst (sigma : name -> name) (t : term) : term =
+  let subst = object
+    inherit [_, _] map
+    inherit [_] subst sigma
+  end in
+  let env = StringSet.empty in
+  subst#term env t
+
 let print (xs : StringSet.t) =
   StringSet.iter (fun x ->
     Printf.printf "%s\n" x
   ) xs
 
+(* TEMPORARY need a term printer, too *)
+
 let () =
   print (fv idy)
+
+let () =
+  print (fv (subst (function "x" -> "z" | x -> x) idy))
