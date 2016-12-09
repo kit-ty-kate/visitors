@@ -153,3 +153,34 @@ let mkvirtualmethod (m : methode) : class_field =
 
 let send (o : variable) (m : methode) (es : expression list) : expression =
   app (Exp.send (evar o) m) es
+
+(* -------------------------------------------------------------------------- *)
+
+(* A facility for generating several classes at the same time. We maintain,
+   for each generated class, a list of class fields. The call [generate c cf]
+   adds the class field [cf] to the list associated with [c]. The call [dump c]
+   returns the list of class fields associated with [c]. *)
+
+module ClassFieldStore (X : sig end) : sig
+
+  val generate: classe -> class_field -> unit
+  val dump: classe -> class_field list
+
+end = struct
+
+  module StringMap =
+    Map.Make(String)
+
+  let store : class_field list StringMap.t ref =
+    ref StringMap.empty
+
+  let get c =
+    try StringMap.find c !store with Not_found -> []
+
+  let generate c cf =
+    store := StringMap.add c (cf :: get c) !store
+
+  let dump c =
+    List.rev (get c)
+
+end
