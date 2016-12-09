@@ -155,7 +155,11 @@ let postprocess reconstruct (m : string) (es : expression list) : expression =
   );
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
   (* Generate a method call. *)
-  mlet es (fun xs ->
+  (* Set up a naming convention for the intermediate results. Each result must
+     receive a distinct name. The simplest convention is to use a fixed prefix
+     followed with a numeric index. *)
+  let x i = Printf.sprintf "r%d" i in
+  mlet x es (fun xs ->
     generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
     send self m (evars xs)
   )
