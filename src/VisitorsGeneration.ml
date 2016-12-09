@@ -73,20 +73,27 @@ let sequence (es : expression list) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [let1 vb e] constructs a single [let] binding. *)
+
+let let1 (vb : value_binding) (e : expression) : expression =
+  Exp.let_ Nonrecursive [vb] e
+
+(* [letn vbs e] constructs a series of nested [let] bindings. *)
+
+let letn (vbs : value_binding list) (e : expression) : expression =
+  List.fold_right let1 vbs e
+
 (* [mlet x es e] creates a series of [let] bindings so that each of the
    expressions in the list [es] is evaluated in turn and its result is
    bound to a variable, named [x i]. Then, the expression [e], which
    is allowed to depend on the list of variables [x i], is evaluated. *)
 
-let mlet (x : int -> variable) (es : expression list) (e : variable list -> expression) : expression =
-  (* Construct a list of value bindings. *)
-  let bindings = List.mapi (fun i e -> Vb.mk (pvar (x i)) e) es in
-  let xs = List.mapi (fun i _ -> x i) es in
+let mlet (x : int -> variable) (es : expression list)
+         (e : variable list -> expression) : expression =
   (* Create a series of [let] bindings around the expression [e]. *)
-  List.fold_right
-    (fun vb k -> Exp.let_ Nonrecursive [vb] k)
-    bindings
-    (e xs)
+  let vbs = List.mapi (fun i e -> Vb.mk (pvar (x i)) e) es in
+  let xs = List.mapi (fun i _ -> x i) es in
+  letn vbs (e xs)
 
 (* -------------------------------------------------------------------------- *)
 
