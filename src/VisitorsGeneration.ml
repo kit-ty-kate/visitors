@@ -104,18 +104,6 @@ let mlet (x : int -> variable) (es : expression list)
 
 (* -------------------------------------------------------------------------- *)
 
-(* [constrrec datacon les] produces an expression for an ``inline record''. *)
-
-let constrrec (datacon : datacon) (les : (label * expression) list) =
-  constr datacon [record les]
-
-(* [pconstrrec datacon lps] produces a pattern for an ``inline record''. *)
-
-let pconstrrec (datacon : datacon) (lps : (label * pattern) list) =
-  pconstr datacon [precord ~closed:Closed lps]
-
-(* -------------------------------------------------------------------------- *)
-
 (* [class1 params name self fields] constructs a (virtual) class declaration
    and packages it as a structure item (so it cannot be recursive with other
    class declarations). *)

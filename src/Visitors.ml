@@ -261,10 +261,10 @@ let constructor_declaration (cd : constructor_declaration) : case =
       let reconstruct (xs : variable list) : expression =
         assert (List.length xs = List.length ltys);
         let lxs = List.map2 (fun (label, _ty) x -> (label, evar x)) ltys xs in
-        constrrec datacon lxs
+        constr datacon [Ast_convenience.record lxs]
       in
       Exp.case
-        (pconstrrec datacon lps)
+        (pconstr datacon [precord ~closed:Closed lps])
         (hook
           (datacon_descending_method datacon)
           (env :: xs)
