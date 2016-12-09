@@ -32,40 +32,41 @@ let parse_options options =
 
 (* Public naming conventions. *)
 
-(* The name of the visitor base class. *)
+(* We generate three classes: a [visitor] base class and two subclasses, [iter]
+   and [map]. *)
 
-let visitor =
+let visitor : classe =
   "visitor"
 
-(* The names of the subclasses [iter] and [map]. *)
-
-let iter =
+let iter : classe =
   "iter"
 
-let map =
+let map : classe =
   "map"
 
-(* The name of the visitor method associated with a type constructor [tycon]. *)
+(* For every type constructor [tycon], there is a visitor method, also called
+   a descending method, as it is invoked when going down into the tree. *)
 
-let visitor_method (tycon : string) : string =
-  tycon
+let tycon_visitor_method (tycon : Longident.t) : methode =
+  (* We support qualified names, and use the last part of the name as the name
+     of the visitor method. A qualified name is probably a nonlocal type, that
+     is, not part of the current set of type declarations. *)
+  last tycon
 
-let visitor_method (tycon : Longident.t) : string =
-  match tycon with
-  | Lident tycon
-  | Ldot (_, tycon) ->
-      visitor_method tycon
-  | Lapply _ ->
-      assert false (* should not happen...? *)
+(* For every data constructor [datacon], there is a descending visitor method,
+   which is invoked on the way down, when this data constructor is discovered. *)
 
-(* The name of the descending method associated with a data constructor [datacon]. *)
-
-let datacon_visitor (datacon : string) : string =
+let datacon_descending_method (datacon : datacon) : methode =
   "match_" ^ datacon
 
-(* The name of the constructor method associated with a data constructor [datacon]. *)
+(* For every data constructor [datacon], there is also an ascending visitor
+   method, which is invoked on the way up, after children have been processed,
+   in order to finish the processing of this node. In the base class, this
+   ascending method is virtual. In the class [iter], it is defined to return a
+   unit value. In the class [map], it is defined to reconstruct a new tree
+   node using [datacon]. *)
 
-let datacon_constructor (datacon : string) : string =
+let datacon_ascending_method (datacon : datacon) : methode =
   "build_" ^ datacon
 
 (* -------------------------------------------------------------------------- *)
@@ -75,7 +76,7 @@ let datacon_constructor (datacon : string) : string =
 (* The variable [self] refers to the visitor object we are constructing.
    The type variable [ty_self] denotes its type. *)
 
-let self =
+let self : variable =
   "self"
 
 let ty_self =
@@ -225,12 +226,12 @@ let rec core_type (ty : core_type) : expression =
          virtual method for it. *)
       if not (is_local tycon) then
         S.generate visitor (
-          mkvirtualmethod (visitor_method tycon)
+          mkvirtualmethod (tycon_visitor_method tycon)
         );
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
-      call (visitor_method tycon) (List.map env_core_type tys @ [evar env])
+      call (tycon_visitor_method tycon) (List.map env_core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
@@ -280,7 +281,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
       let reconstruct (xs : string list) : expression = constr datacon (evars xs) in
       Exp.case
         (pconstr datacon (pvars xs))
-        (hook (datacon_visitor datacon) (env :: xs) (postprocess reconstruct (datacon_constructor datacon) es))
+        (hook (datacon_descending_method datacon) (env :: xs) (postprocess reconstruct (datacon_ascending_method datacon) es))
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
@@ -296,7 +297,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
         let lxs = List.map2 (fun (label, _ty) x -> (label, evar x)) ltys xs in
         constrrec datacon lxs
       in
-      Exp.case (pconstrrec datacon lps) (postprocess reconstruct (datacon_constructor datacon) es)
+      Exp.case (pconstrrec datacon lps) (postprocess reconstruct (datacon_ascending_method datacon) es)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -346,7 +347,7 @@ let type_decl (decl : type_declaration) =
      declaration. *)
   S.generate visitor (
     mkconcretemethod
-      (visitor_method (Lident decl.ptype_name.txt))
+      (tycon_visitor_method (Lident decl.ptype_name.txt))
       (plambda penv (type_decl_rhs decl))
   )
 
