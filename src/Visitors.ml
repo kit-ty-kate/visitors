@@ -144,7 +144,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate a method in the class [visitor]. We note that the formal
      parameters [xs] don't need a type annotation: because this method has a
      call site, its type can be inferred. *)
-  generate visitor (mkconcretemethod m (lambdas xs e));
+  generate visitor (concrete_method m (lambdas xs e));
   (* Construct a method call. *)
   send self m (evars xs)
 
@@ -157,26 +157,18 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
    recursive calls and the method call [self#m xs] is in charge of
    reconstructing a tree node (or some other result). *)
 
-(* TEMPORARY needs cleaning up *)
-
 let postprocess reconstruct (m : string) (es : expression list) : expression =
   (* Generate a declaration of [m] as an auxiliary virtual method. We note
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
      are needed. *)
-  generate visitor (
-    mkvirtualmethod m
-  );
-  (* This virtual method is defined in the subclass [iter] to always return
-     unit. *)
-  let wildcards = List.map (fun _ -> Pat.any()) es in
-  generate iter (
-    mkconcretemethod m (plambdas wildcards (unit()))
-  );
+  generate visitor (virtual_method m);
+  (* This method is defined in the subclass [iter] to always return unit. *)
+  generate iter (concrete_method m (plambdas (wildcards es) (unit())));
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
   (* Generate a method call. *)
   mlet result es (fun xs ->
-    generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
+    generate map (concrete_method m (lambdas xs (reconstruct xs)));
     send self m (evars xs)
   )
 
@@ -197,7 +189,7 @@ let rec core_type (ty : core_type) : expression =
        for a virtual method to be declared several times. *)
       if not (is_local Current.decls tycon) then
         generate visitor (
-          mkvirtualmethod (tycon_visitor_method tycon)
+          virtual_method (tycon_visitor_method tycon)
         );
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
@@ -315,7 +307,7 @@ let type_decl (decl : type_declaration) =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
   generate visitor (
-    mkconcretemethod
+    concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
       (plambda penv (type_decl_rhs decl))
   )
@@ -344,9 +336,9 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
     ty_env, Invariant;
   ] in
   [
-    Str.class_ [ mkclass params visitor pself (R.dump visitor) ];
-    Str.class_ [ mkclass params iter pself (R.dump iter) ];
-    Str.class_ [ mkclass params map pself (R.dump map) ];
+    class1 params visitor pself (R.dump visitor);
+    class1 params iter pself (R.dump iter);
+    class1 params map pself (R.dump map);
   ]
 
 (* -------------------------------------------------------------------------- *)

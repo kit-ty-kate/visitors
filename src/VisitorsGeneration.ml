@@ -28,6 +28,13 @@ let evars (xs : variable list) : expression list =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [wildcards] converts a list of anything to a list of wildcard patterns. *)
+
+let wildcards xs =
+  List.map (fun _ -> Pat.any()) xs
+
+(* -------------------------------------------------------------------------- *)
+
 (* [plambda p e] constructs a function [fun p -> e]. *)
 
 let plambda (p : pattern) (e : expression) : expression =
@@ -109,29 +116,31 @@ let pconstrrec (datacon : datacon) (lps : (label * pattern) list) =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [mkclass params name self fields] constructs a virtual class declaration. *)
+(* [class1 params name self fields] constructs a (virtual) class declaration
+   and packages it as a structure item (so it cannot be recursive with other
+   class declarations). *)
 
-let mkclass
+let class1
   (params : (core_type * variance) list)
   (name : classe)
   (self : pattern)
   (fields : class_field list)
-  : class_declaration =
-  {
+  : structure_item =
+  Str.class_ [{
     pci_virt = Virtual;
     pci_params = params;
     pci_name = mknoloc name;
     pci_expr = Cl.structure (Cstr.mk self fields);
     pci_loc = !default_loc;
     pci_attributes = [];
-  }
+  }]
 
 (* -------------------------------------------------------------------------- *)
 
-(* [mkconcretemethod m e] constructs a public method whose name is [m] and
+(* [concrete_method m e] constructs a public method whose name is [m] and
    whose body is [e]. *)
 
-let mkconcretemethod (m : methode) (e : expression) : class_field =
+let concrete_method (m : methode) (e : expression) : class_field =
   Cf.method_
     (mknoloc m)
     Public
@@ -139,10 +148,10 @@ let mkconcretemethod (m : methode) (e : expression) : class_field =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [mkvirtualmethod m e] constructs a virtual public method whose name is [m]
+(* [virtual_method m e] constructs a virtual public method whose name is [m]
    and whose type is unspecified. *)
 
-let mkvirtualmethod (m : methode) : class_field =
+let virtual_method (m : methode) : class_field =
   Cf.method_
     (mknoloc m)
     Public
