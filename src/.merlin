@@ -1,1 +1,2 @@
-PKG compiler-libs.common ppx_tools.metaquot ppx_deriving.api
+PKG compiler-libs.common ppx_tools ppx_deriving.api
+B _build
