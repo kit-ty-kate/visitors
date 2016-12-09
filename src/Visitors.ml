@@ -5,6 +5,7 @@ open Parsetree
 open Ast_helper
 open Ast_convenience
 open Ppx_deriving
+open VisitorsAnalysis
 open VisitorsGeneration
 
 (* -------------------------------------------------------------------------- *)
@@ -26,21 +27,6 @@ let parse_options options =
          plugin
          name
   )
-
-(* -------------------------------------------------------------------------- *)
-
-(* Helper functions for abstract syntax tree analysis. *)
-
-let ld_to_lty (ld : label_declaration) : label * core_type =
-  (* Extract the label and type. *)
-  let { pld_name = { txt = label; _ }; pld_type = ty; _ } = ld in
-  label, ty
-
-(* [defined decls] extracts the list of types that are declared by the type
-   declarations [decls]. *)
-
-let defined (decls : type_declaration list) : string list =
-  List.map (fun decl -> decl.ptype_name.txt) decls
 
 (* -------------------------------------------------------------------------- *)
 
