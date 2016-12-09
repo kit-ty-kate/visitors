@@ -135,20 +135,20 @@ include ClassFieldStore(struct end)
 (* -------------------------------------------------------------------------- *)
 
 (* Suppose [e] is an expression whose free variables are [xs]. [hook m xs e]
-   produces a call of the form [self#m xs], and (as a side effect) defines an
-   auxiliary method [method m xs = e]. The default behavior of this expression
-   is the behavior of [e], but we offer the user a hook, named [m], which
-   allows this default to be overridden. *)
+   constructs a call of the form [self#m xs], and (as a side effect) defines a
+   method [method m xs = e]. The default behavior of this expression is the
+   behavior of [e], but we offer the user a hook, named [m], which allows this
+   default to be overridden. *)
 
 let hook (m : string) (xs : string list) (e : expression) : expression =
-  (* Generate an auxiliary method. We note that its parameters [xs] don't
-     need a type annotation: because this method has a call site, its type
-     can be inferred. *)
-  generate visitor (
-    mkconcretemethod m (lambdas xs e)
-  );
-  (* Generate a method call. *)
+  (* Generate a method in the class [visitor]. We note that the formal
+     parameters [xs] don't need a type annotation: because this method has a
+     call site, its type can be inferred. *)
+  generate visitor (mkconcretemethod m (lambdas xs e));
+  (* Construct a method call. *)
   send self m (evars xs)
+
+(* -------------------------------------------------------------------------- *)
 
 (* [postprocess m es] evaluates the expressions [es] in turn, binding their
    results to some variables [xs], then makes a self call to the method [m],
@@ -249,7 +249,11 @@ let constructor_declaration (cd : constructor_declaration) : case =
       let reconstruct (xs : string list) : expression = constr datacon (evars xs) in
       Exp.case
         (pconstr datacon (pvars xs))
-        (hook (datacon_descending_method datacon) (env :: xs) (postprocess reconstruct (datacon_ascending_method datacon) es))
+        (hook
+           (datacon_descending_method datacon)
+           (env :: xs)
+           (postprocess reconstruct (datacon_ascending_method datacon) es)
+        )
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
