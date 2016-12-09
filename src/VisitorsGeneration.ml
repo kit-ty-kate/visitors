@@ -146,3 +146,10 @@ let mkvirtualmethod (m : methode) : class_field =
     (mknoloc m)
     Public
     (Cf.virtual_ (Typ.any()))
+
+(* -------------------------------------------------------------------------- *)
+
+(* [send o m es] produces a call to the method [o#m] with arguments [es]. *)
+
+let send (o : variable) (m : methode) (es : expression list) : expression =
+  app (Exp.send (evar o) m) es

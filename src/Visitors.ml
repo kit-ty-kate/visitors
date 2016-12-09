@@ -73,27 +73,25 @@ let datacon_ascending_method (datacon : datacon) : methode =
 
 (* Private naming conventions. *)
 
-(* The variable [self] refers to the visitor object we are constructing.
+(* These conventions must be set up so as to avoid collisions within each name
+   space separately: e.g., variables, methods, type variables, and so on. *)
+
+(* In a class, the variable [self] refers to self.
    The type variable [ty_self] denotes its type. *)
 
 let self : variable =
   "self"
 
-let ty_self =
+let ty_self : core_type =
   Typ.var "self"
 
-let pself =
+let pself : pattern =
   Pat.constraint_ (pvar self) ty_self
-
-(* [call m es] produces a self-call to the method [m] with arguments [es]. *)
-
-let call (m : string) (es : expression list) : expression =
-  app (Exp.send (evar self) m) es
 
 (* The variable [env] refers to the environment that is carried down into
    recursive calls. The type variable [ty_env] denotes its type. *)
 
-let env =
+let env : variable =
   "env"
 
 let ty_env : core_type =
@@ -178,7 +176,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
     mkconcretemethod m (lambdas xs e)
   );
   (* Generate a method call. *)
-  call m (evars xs)
+  send self m (evars xs)
 
 (* [postprocess m es] evaluates the expressions [es] in turn, binding their
    results to some variables [xs], then makes a self call to the method [m],
@@ -207,7 +205,7 @@ let postprocess reconstruct (m : string) (es : expression list) : expression =
   (* Generate a method call. *)
   mlet es (fun xs ->
     S.generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
-    call m (evars xs)
+    send self m (evars xs)
   )
 
 (* -------------------------------------------------------------------------- *)
@@ -231,7 +229,7 @@ let rec core_type (ty : core_type) : expression =
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
-      call (tycon_visitor_method tycon) (List.map env_core_type tys @ [evar env])
+      send self (tycon_visitor_method tycon) (List.map env_core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
