@@ -34,7 +34,3 @@ It may force the user to also reconstruct a tuple when implementing his own
 folds.
 
 If A.t and B.t are nonlocal types, then we need two virtual methods named t.
-
-Inline records cannot be supported in a satisfactory way,
-  since there is no way of writing a descending auxiliary method
-  whose argument is known to have a certain tag.

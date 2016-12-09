@@ -1,0 +1,8 @@
+When the arguments of a data constructor are arranged in an inline record, we
+would ideally like the data constructor's descending method to receive named
+arguments. E.g., it could receive a record as an argument. But that does not
+work, because we would need to declare a record type, with the same fields.
+Or, it could take labeled arguments. That would work, I think, but we prefer
+to avoid labels. Our solution, for now, is to pass unnamed arguments to the
+descending method. The arguments appear in the same order as in the data
+constructor declaration.

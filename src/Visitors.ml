@@ -157,7 +157,9 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
    recursive calls and the method call [self#m xs] is in charge of
    reconstructing a tree node (or some other result). *)
 
-let postprocess reconstruct (m : string) (es : expression list) : expression =
+(* TEMPORARY more cleanup needed *)
+
+let postprocess (reconstruct : variable list -> expression) (m : string) (es : expression list) : expression =
   (* Generate a declaration of [m] as an auxiliary virtual method. We note
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
@@ -166,7 +168,6 @@ let postprocess reconstruct (m : string) (es : expression list) : expression =
   (* This method is defined in the subclass [iter] to always return unit. *)
   generate iter (concrete_method m (plambdas (wildcards es) (unit())));
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
-  (* Generate a method call. *)
   mlet result es (fun xs ->
     generate map (concrete_method m (lambdas xs (reconstruct xs)));
     send self m (evars xs)
@@ -238,7 +239,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
       let xs, es = tuple_type tys in
-      let reconstruct (xs : string list) : expression = constr datacon (evars xs) in
+      let reconstruct (xs : variable list) : expression = constr datacon (evars xs) in
       Exp.case
         (pconstr datacon (pvars xs))
         (hook
@@ -249,18 +250,26 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
-      let ltys = List.map ld_to_lty lds in
+      let ltys = List.map ld_to_lty lds in (* TEMPORARY maybe extract labels and types separately? *)
       let x = field in
       (* Construct the pattern and expression. *)
-      (* TEMPORARY use field access expressions and share code with normal records? *)
+      (* TEMPORARY use field access expressions and share code with normal records?
+         and/or share code with [Pcstr_tuple] above *)
       let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
       and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
-      let reconstruct (xs : string list) : expression =
+      let xs  = List.map (fun (label, _ty) -> x label) ltys in
+      let reconstruct (xs : variable list) : expression =
         assert (List.length xs = List.length ltys);
         let lxs = List.map2 (fun (label, _ty) x -> (label, evar x)) ltys xs in
         constrrec datacon lxs
       in
-      Exp.case (pconstrrec datacon lps) (postprocess reconstruct (datacon_ascending_method datacon) es)
+      Exp.case
+        (pconstrrec datacon lps)
+        (hook
+          (datacon_descending_method datacon)
+          (env :: xs)
+          (postprocess reconstruct (datacon_ascending_method datacon) es)
+        )
 
 (* -------------------------------------------------------------------------- *)
 
