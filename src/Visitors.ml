@@ -107,60 +107,12 @@ let penv : pattern =
 module Run (Current : sig val decls : type_declaration list end) = struct
 
 (* As we generate several classes at the same time, we maintain, for each
-   generated class, a list of methods that we generate as we go. *)
+   generated class, a list of methods that we generate as we go. The following
+   line brings [generate] and [dump] into scope. *)
 
-module S : sig
+include ClassFieldStore(struct end)
 
-  val generate: string -> class_field -> unit
-  val dump: string -> class_field list
-
-end = struct
-
-  module StringMap =
-    Map.Make(String)
-
-  let store : class_field list StringMap.t ref =
-    ref StringMap.empty
-
-  let get (c : string) : class_field list =
-    try StringMap.find c !store with Not_found -> []
-
-  let generate (c : string) (cf : class_field) =
-    store := StringMap.add c (cf :: get c) !store
-
-  let dump (c : string) =
-    List.rev (get c)
-
-end
-
-(* [nonlocal] records the set of nonlocal type constructors that have been
-   encountered as we go. *)
-
-module StringSet =
-  Set.Make(String)
-
-let nonlocal =
-  ref StringSet.empty
-
-let insert_nonlocal (s : string) =
-  nonlocal := StringSet.add s !nonlocal
-
-(* [is_local tycon] tests whether the type constructor [tycon] is local,
-   that is, whether it is declared by the current set of type declarations.
-   At the same time, if [tycon] is found to be non-local, then it is added
-   (in an unqualified form) to the set [nonlocal]. *)
-
-let is_local (tycon : Longident.t) : bool =
-  match tycon with
-  | Lident s ->
-      let is_local = List.mem s (defined Current.decls) in
-      if not is_local then insert_nonlocal s;
-      is_local
-  | Ldot (_, s) ->
-      insert_nonlocal s;
-      false
-  | Lapply _ ->
-      false (* should not happen? *)
+(* -------------------------------------------------------------------------- *)
 
 (* Suppose [e] is an expression whose free variables are [xs]. [hook m xs e]
    produces a call of the form [self#m xs], and (as a side effect) defines an
@@ -172,7 +124,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate an auxiliary method. We note that its parameters [xs] don't
      need a type annotation: because this method has a call site, its type
      can be inferred. *)
-  S.generate visitor (
+  generate visitor (
     mkconcretemethod m (lambdas xs e)
   );
   (* Generate a method call. *)
@@ -192,19 +144,19 @@ let postprocess reconstruct (m : string) (es : expression list) : expression =
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
      are needed. *)
-  S.generate visitor (
+  generate visitor (
     mkvirtualmethod m
   );
   (* This virtual method is defined in the subclass [iter] to always return
      unit. *)
   let wildcards = List.map (fun _ -> Pat.any()) es in
-  S.generate iter (
+  generate iter (
     mkconcretemethod m (plambdas wildcards (unit()))
   );
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
   (* Generate a method call. *)
   mlet es (fun xs ->
-    S.generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
+    generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
     send self m (evars xs)
   )
 
@@ -220,10 +172,11 @@ let rec core_type (ty : core_type) : expression =
   | { ptyp_desc = Ptyp_constr ({ txt = tycon; _ }, tys); _ } ->
       let tycon : Longident.t = tycon
       and tys : core_type list = tys in
-      (* Check if this is a local type constructor. If not, generate a
-         virtual method for it. *)
-      if not (is_local tycon) then
-        S.generate visitor (
+      (* Check if this is a local type constructor. If not, declare a
+         virtual method for it. We rely on the fact that it is permitted
+       for a virtual method to be declared several times. *)
+      if not (is_local Current.decls tycon) then
+        generate visitor (
           mkvirtualmethod (tycon_visitor_method tycon)
         );
       (* Construct the name of the [visit] method associated with [tycon].
@@ -343,7 +296,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
 let type_decl (decl : type_declaration) =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
-  S.generate visitor (
+  generate visitor (
     mkconcretemethod
       (tycon_visitor_method (Lident decl.ptype_name.txt))
       (plambda penv (type_decl_rhs decl))
@@ -360,8 +313,8 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
   (* Analyze the type definitions. *)
   let module R = Run(struct let decls = decls end) in
-  R.S.generate iter (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
-  R.S.generate map (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
+  R.generate iter (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
+  R.generate map (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
   List.iter R.type_decl decls;
   (* Produce class definitions. Our classes are parameterized over the type
      variable ['env]. They are also parameterized over the type variable
@@ -373,9 +326,9 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
     ty_env, Invariant;
   ] in
   [
-    Str.class_ [ mkclass params visitor pself (R.S.dump visitor) ];
-    Str.class_ [ mkclass params iter pself (R.S.dump iter) ];
-    Str.class_ [ mkclass params map pself (R.S.dump map) ];
+    Str.class_ [ mkclass params visitor pself (R.dump visitor) ];
+    Str.class_ [ mkclass params iter pself (R.dump iter) ];
+    Str.class_ [ mkclass params map pself (R.dump map) ];
   ]
 
 (* -------------------------------------------------------------------------- *)
