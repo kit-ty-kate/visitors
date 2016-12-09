@@ -100,6 +100,26 @@ let ty_env : core_type =
 let penv : pattern =
   Pat.constraint_ (pvar env) ty_env
 
+(* The variables [component i] denote tuple components. *)
+
+let component (i : int) : variable =
+  Printf.sprintf "c%d" i
+
+(* The variable [record tycon] denotes a record of type [tycon]. *)
+
+let record (tycon : tycon) : variable =
+  Printf.sprintf "_%s" tycon
+
+(* The variables [field label] denote record fields. *)
+
+let field (label : label) : variable =
+  Printf.sprintf "f%s" label
+
+(* The variables [result i] denote results of recursive calls. *)
+
+let result (i : int) : variable =
+  Printf.sprintf "r%d" i
+
 (* -------------------------------------------------------------------------- *)
 
 (* Per-run global state. *)
@@ -155,11 +175,7 @@ let postprocess reconstruct (m : string) (es : expression list) : expression =
   );
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
   (* Generate a method call. *)
-  (* Set up a naming convention for the intermediate results. Each result must
-     receive a distinct name. The simplest convention is to use a fixed prefix
-     followed with a numeric index. *)
-  let x i = Printf.sprintf "r%d" i in
-  mlet x es (fun xs ->
+  mlet result es (fun xs ->
     generate map (mkconcretemethod m (lambdas xs (reconstruct xs)));
     send self m (evars xs)
   )
@@ -210,10 +226,7 @@ and env_core_type ty =
   lambda env (core_type ty)
 
 and tuple_type (tys : core_type list) : string list * expression list =
-  (* Set up a naming convention for the tuple components. Each component must
-     receive a distinct name. The simplest convention is to use a fixed
-     prefix followed with a numeric index. *)
-  let x i = Printf.sprintf "c%d" i in
+  let x = component in
   (* Construct a pattern and expression. *)
   let xs = List.mapi (fun i _ty -> x i) tys in
   let es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
@@ -241,10 +254,9 @@ let constructor_declaration (cd : constructor_declaration) : case =
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
       let ltys = List.map ld_to_lty lds in
-      (* Set up a naming convention for the fields. The simplest convention
-         is to use a fixed prefix followed with the field name. *)
-      let x label = Printf.sprintf "f%s" label in
+      let x = field in
       (* Construct the pattern and expression. *)
+      (* TEMPORARY use field access expressions and share code with normal records? *)
       let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
       and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
       let reconstruct (xs : string list) : expression =
@@ -269,9 +281,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
       let ltys = List.map ld_to_lty lds in
-      (* Set up a naming convention for the record itself. Any name would do,
-         but we choose to use the name of the type that is being declared. *)
-      let x = decl.ptype_name.txt in
+      let x = record decl.ptype_name.txt in
       (* Generate one function call for each field. *)
       let es : expression list = List.map (fun (label, ty) ->
         app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
