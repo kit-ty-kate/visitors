@@ -231,42 +231,43 @@ and core_types tys =
    declaration of a sum type) into a case, that is, a branch in a case
    analysis construct. *)
 
+(* TEMPORARY keep working on this mess, and try to inline [postprocess] *)
+
 let constructor_declaration (cd : constructor_declaration) : case =
   (* Extract the data constructor name and arguments. *)
   let { pcd_name = { txt = datacon; _ }; pcd_args; _ } = cd in
 
-  let xs, pats, reconstruct, es =
+  let xs, pats, reconstruct, tys =
   match pcd_args with
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
       let xs = components tys in
-      let es = List.map2 app1 (core_types tys) (evars xs) in
       let reconstruct (xs : variable list) : expression = constr datacon (evars xs) in
       xs,
       (pvars xs),
       reconstruct,
-      es
+      tys
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
       let ltys = List.map ld_to_lty lds in (* TEMPORARY maybe extract labels and types separately? *)
-      let x = field in
-      (* Construct the pattern and expression. *)
-      let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
-      and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
-      let xs  = List.map (fun (label, _ty) -> x label) ltys in
+      let labels = List.map fst ltys
+      and tys = List.map snd ltys in
+      let xs  = List.map field labels in
+      let lps = List.combine labels (pvars xs) in
       let reconstruct (xs : variable list) : expression =
-        assert (List.length xs = List.length ltys);
-        let lxs = List.map2 (fun (label, _ty) x -> (label, evar x)) ltys xs in
+        assert (List.length xs = List.length labels);
+        let lxs = List.map2 (fun label x -> (label, evar x)) labels xs in
         constr datacon [record lxs]
       in
       xs,
       [precord ~closed:Closed lps],
       reconstruct,
-      es
+      tys
 
   in
+  let es = List.map2 app1 (core_types tys) (evars xs) in
 
   Exp.case
     (pconstr datacon pats)
