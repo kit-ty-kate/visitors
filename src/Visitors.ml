@@ -105,9 +105,12 @@ let penv : pattern =
 let component (i : int) : variable =
   Printf.sprintf "c%d" i
 
-(* The variable [record tycon] denotes a record of type [tycon]. *)
+let components (tys : _ list) : variable list =
+  List.mapi (fun i _ -> component i) tys
 
-let record (tycon : tycon) : variable =
+(* The variable [thing tycon] denotes a record of type [tycon]. *)
+
+let thing (tycon : tycon) : variable =
   Printf.sprintf "_%s" tycon
 
 (* The variables [field label] denote record fields. *)
@@ -204,7 +207,8 @@ let rec core_type (ty : core_type) : expression =
          per tuple type, and that would be messy. Instead, we make the
          most general choice of ascending computation, which is to rebuild
          a tuple on the way up. Happily, this is always well-typed. *)
-      let xs, es = tuple_type tys in
+      let xs = components tys in
+      let es = List.map2 app1 (core_types tys) (evars xs) in
       plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
@@ -218,12 +222,8 @@ let rec core_type (ty : core_type) : expression =
 and env_core_type ty =
   lambda env (core_type ty)
 
-and tuple_type (tys : core_type list) : string list * expression list =
-  let x = component in
-  (* Construct a pattern and expression. *)
-  let xs = List.mapi (fun i _ty -> x i) tys in
-  let es = List.mapi (fun i ty -> app (core_type ty) [evar (x i)]) tys in
-  xs, es
+and core_types tys =
+  List.map core_type tys
 
 (* -------------------------------------------------------------------------- *)
 
@@ -234,42 +234,47 @@ and tuple_type (tys : core_type list) : string list * expression list =
 let constructor_declaration (cd : constructor_declaration) : case =
   (* Extract the data constructor name and arguments. *)
   let { pcd_name = { txt = datacon; _ }; pcd_args; _ } = cd in
+
+  let xs, pats, reconstruct, es =
   match pcd_args with
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
-      let xs, es = tuple_type tys in
+      let xs = components tys in
+      let es = List.map2 app1 (core_types tys) (evars xs) in
       let reconstruct (xs : variable list) : expression = constr datacon (evars xs) in
-      Exp.case
-        (pconstr datacon (pvars xs))
-        (hook
-           (datacon_descending_method datacon)
-           (env :: xs)
-           (postprocess reconstruct (datacon_ascending_method datacon) es)
-        )
+      xs,
+      (pvars xs),
+      reconstruct,
+      es
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
       let ltys = List.map ld_to_lty lds in (* TEMPORARY maybe extract labels and types separately? *)
       let x = field in
       (* Construct the pattern and expression. *)
-      (* TEMPORARY use field access expressions and share code with normal records?
-         and/or share code with [Pcstr_tuple] above *)
       let lps = List.map (fun (label, _ty) -> label,              pvar (x label)) ltys
       and es  = List.map (fun (label,  ty) -> app (core_type ty) [evar (x label)]) ltys in
       let xs  = List.map (fun (label, _ty) -> x label) ltys in
       let reconstruct (xs : variable list) : expression =
         assert (List.length xs = List.length ltys);
         let lxs = List.map2 (fun (label, _ty) x -> (label, evar x)) ltys xs in
-        constr datacon [Ast_convenience.record lxs]
+        constr datacon [record lxs]
       in
-      Exp.case
-        (pconstr datacon [precord ~closed:Closed lps])
-        (hook
-          (datacon_descending_method datacon)
-          (env :: xs)
-          (postprocess reconstruct (datacon_ascending_method datacon) es)
-        )
+      xs,
+      [precord ~closed:Closed lps],
+      reconstruct,
+      es
+
+  in
+
+  Exp.case
+    (pconstr datacon pats)
+    (hook
+       (datacon_descending_method datacon)
+       (env :: xs)
+       (postprocess reconstruct (datacon_ascending_method datacon) es)
+    )
 
 (* -------------------------------------------------------------------------- *)
 
@@ -286,7 +291,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
       let ltys = List.map ld_to_lty lds in
-      let x = record decl.ptype_name.txt in
+      let x = thing decl.ptype_name.txt in
       (* Generate one function call for each field. *)
       let es : expression list = List.map (fun (label, ty) ->
         app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
