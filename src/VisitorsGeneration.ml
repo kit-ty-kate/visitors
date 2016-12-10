@@ -57,6 +57,13 @@ let lambdas (xs : variable list) (e : expression) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [app1 e1 e2] constructs the application of [e1] to [e2]. *)
+
+let app1 e1 e2 =
+  app e1 [e2]
+
+(* -------------------------------------------------------------------------- *)
+
 (* [sequence es] constructs a sequence of the expressions in the list [es]. *)
 
 let fold_right1 f xs accu =
