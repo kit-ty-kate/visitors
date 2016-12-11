@@ -256,8 +256,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
       let xs  = List.map field labels in
       let lps = List.combine labels (pvars xs) in
       let reconstruct (xs : variable list) : expression =
-        assert (List.length xs = List.length labels);
-        let lxs = List.map2 (fun label x -> (label, evar x)) labels xs in
+        let lxs = List.combine labels (evars xs) in
         constr datacon [record lxs]
       in
       xs,
