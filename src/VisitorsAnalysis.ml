@@ -10,13 +10,14 @@ type tycon = string
 
 (* -------------------------------------------------------------------------- *)
 
-(* [ld_to_lty] converts an OCaml label declaration to a pair of a label and
-   type. *)
+(* [ld_label] and [ld_ty] extract a label and type out of an OCaml record label
+   declaration. *)
 
-let ld_to_lty (ld : label_declaration) : label * core_type =
-  (* Extract the label and type. *)
-  let { pld_name = { txt = label; _ }; pld_type = ty; _ } = ld in
-  label, ty
+let ld_label (ld : label_declaration) : label =
+  ld.pld_name.txt
+
+let ld_ty (ld : label_declaration) : core_type =
+  ld.pld_type
 
 (* [local decls] extracts the list of type constructors that are declared by
    the type declarations [decls]. *)

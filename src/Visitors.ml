@@ -251,9 +251,8 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
-      let ltys = List.map ld_to_lty lds in (* TEMPORARY maybe extract labels and types separately? *)
-      let labels = List.map fst ltys
-      and tys = List.map snd ltys in
+      let labels = List.map ld_label lds
+      and tys = List.map ld_ty lds in
       let xs  = List.map field labels in
       let lps = List.combine labels (pvars xs) in
       let reconstruct (xs : variable list) : expression =
@@ -291,12 +290,13 @@ let type_decl_rhs (decl : type_declaration) : expression =
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
-      let ltys = List.map ld_to_lty lds in
+      let labels = List.map ld_label lds
+      and tys = List.map ld_ty lds in
       let x = thing decl.ptype_name.txt in
       (* Generate one function call for each field. *)
-      let es : expression list = List.map (fun (label, ty) ->
+      let es : expression list = List.map2 (fun label ty ->
         app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
-      ) ltys in
+      ) labels tys in
       (* Construct a sequence of these calls, and place it in a function body. *)
       lambda x (sequence es)
 
