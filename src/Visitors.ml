@@ -105,8 +105,8 @@ let penv : pattern =
 let component (i : int) : variable =
   Printf.sprintf "c%d" i
 
-let components (tys : _ list) : variable list =
-  List.mapi (fun i _ -> component i) tys
+let components (xs : _ list) : variable list =
+  List.mapi (fun i _ -> component i) xs
 
 (* The variable [thing tycon] denotes a record of type [tycon]. *)
 
@@ -122,6 +122,9 @@ let field (label : label) : variable =
 
 let result (i : int) : variable =
   Printf.sprintf "r%d" i
+
+let results (xs : _ list) : variable list =
+  List.mapi (fun i _ -> result i) xs
 
 (* -------------------------------------------------------------------------- *)
 
@@ -150,31 +153,6 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   generate visitor (concrete_method m (lambdas xs e));
   (* Construct a method call. *)
   send self m (evars xs)
-
-(* -------------------------------------------------------------------------- *)
-
-(* [postprocess m es] evaluates the expressions [es] in turn, binding their
-   results to some variables [xs], then makes a self call to the method [m],
-   passing the variables [xs] as arguments. This is used in the ascending
-   phase of the visitor: the variables [xs] represent the results of the
-   recursive calls and the method call [self#m xs] is in charge of
-   reconstructing a tree node (or some other result). *)
-
-(* TEMPORARY more cleanup needed *)
-
-let postprocess (reconstruct : variable list -> expression) (m : string) (es : expression list) : expression =
-  (* Generate a declaration of [m] as an auxiliary virtual method. We note
-     that it does not need a type annotation: because we have used the trick
-     of parameterizing the class over its ['self] type, no annotations at all
-     are needed. *)
-  generate visitor (virtual_method m);
-  (* This method is defined in the subclass [iter] to always return unit. *)
-  generate iter (concrete_method m (plambdas (wildcards es) (unit())));
-  (* It is defined in the subclass [map] to always reconstruct a tree node. *)
-  mlet result es (fun xs ->
-    generate map (concrete_method m (lambdas xs (reconstruct xs)));
-    send self m (evars xs)
-  )
 
 (* -------------------------------------------------------------------------- *)
 
@@ -231,22 +209,20 @@ and core_types tys =
    declaration of a sum type) into a case, that is, a branch in a case
    analysis construct. *)
 
-(* TEMPORARY keep working on this mess, and try to inline [postprocess] *)
+(* TEMPORARY ici clean up *)
 
 let constructor_declaration (cd : constructor_declaration) : case =
-  (* Extract the data constructor name and arguments. *)
-  let { pcd_name = { txt = datacon; _ }; pcd_args; _ } = cd in
+  let datacon = cd.pcd_name.txt in
 
   let xs, pats, reconstruct, tys =
-  match pcd_args with
+  match cd.pcd_args with
 
   (* A traditional constructor, whose arguments are anonymous. *)
   | Pcstr_tuple tys ->
       let xs = components tys in
-      let reconstruct (xs : variable list) : expression = constr datacon (evars xs) in
       xs,
-      (pvars xs),
-      reconstruct,
+      pvars xs,
+      evars,
       tys
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
@@ -254,25 +230,34 @@ let constructor_declaration (cd : constructor_declaration) : case =
       let labels = List.map ld_label lds
       and tys = List.map ld_ty lds in
       let xs  = List.map field labels in
-      let lps = List.combine labels (pvars xs) in
-      let reconstruct (xs : variable list) : expression =
-        let lxs = List.combine labels (evars xs) in
-        constr datacon [record lxs]
-      in
       xs,
-      [precord ~closed:Closed lps],
-      reconstruct,
+      [precord ~closed:Closed (List.combine labels (pvars xs))],
+      (fun xs -> [record (List.combine labels (evars xs))]),
       tys
 
   in
   let es = List.map2 app1 (core_types tys) (evars xs) in
+
+  let m = datacon_ascending_method datacon in
+  (* Generate a declaration of [m] as an auxiliary virtual method. We note
+     that it does not need a type annotation: because we have used the trick
+     of parameterizing the class over its ['self] type, no annotations at all
+     are needed. *)
+  generate visitor (virtual_method m);
+  (* This method is defined in the subclass [iter] to always return unit. *)
+  generate iter (concrete_method m (plambdas (wildcards es) (unit())));
+  (* It is defined in the subclass [map] to always reconstruct a tree node. *)
+  generate map (concrete_method m (lambdas (results es) (constr datacon (reconstruct (results es)))));
 
   Exp.case
     (pconstr datacon pats)
     (hook
        (datacon_descending_method datacon)
        (env :: xs)
-       (postprocess reconstruct (datacon_ascending_method datacon) es)
+       (mlet result es (fun _ -> (* TEMPORARY eliminate [mlet] *)
+          send self m (evars (results es))
+        )
+      )
     )
 
 (* -------------------------------------------------------------------------- *)
