@@ -1,3 +1,4 @@
+open List
 open Longident
 open Location
 open Asttypes
@@ -18,7 +19,7 @@ let plugin =
 (* No options are supported. *)
 
 let parse_options options =
-  options |> List.iter (fun (name, expr) ->
+  options |> iter (fun (name, expr) ->
     match name with
     | _ ->
        raise_errorf
@@ -35,13 +36,13 @@ let parse_options options =
 (* We generate three classes: a [visitor] base class and two subclasses, [iter]
    and [map]. *)
 
-let visitor : classe =
+let cvisitor : classe =
   "visitor"
 
-let iter : classe =
+let citer : classe =
   "iter"
 
-let map : classe =
+let cmap : classe =
   "map"
 
 (* For every type constructor [tycon], there is a visitor method, also called
@@ -106,7 +107,7 @@ let component (i : int) : variable =
   Printf.sprintf "c%d" i
 
 let components (xs : _ list) : variable list =
-  List.mapi (fun i _ -> component i) xs
+  mapi (fun i _ -> component i) xs
 
 (* The variable [thing tycon] denotes a record of type [tycon]. *)
 
@@ -124,7 +125,7 @@ let result (i : int) : variable =
   Printf.sprintf "r%d" i
 
 let results (xs : _ list) : variable list =
-  List.mapi (fun i _ -> result i) xs
+  mapi (fun i _ -> result i) xs
 
 (* -------------------------------------------------------------------------- *)
 
@@ -150,7 +151,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate a method in the class [visitor]. We note that the formal
      parameters [xs] don't need a type annotation: because this method has a
      call site, its type can be inferred. *)
-  generate visitor (concrete_method m (lambdas xs e));
+  generate cvisitor (concrete_method m (lambdas xs e));
   (* Construct a method call. *)
   send self m (evars xs)
 
@@ -170,13 +171,13 @@ let rec core_type (ty : core_type) : expression =
          virtual method for it. We rely on the fact that it is permitted
        for a virtual method to be declared several times. *)
       if not (is_local Current.decls tycon) then
-        generate visitor (
+        generate cvisitor (
           virtual_method (tycon_visitor_method tycon)
         );
       (* Construct the name of the [visit] method associated with [tycon].
          Apply it to the derived functions associated with [tys] and to
          the environment [env]. *)
-      send self (tycon_visitor_method tycon) (List.map env_core_type tys @ [evar env])
+      send self (tycon_visitor_method tycon) (map env_core_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
@@ -186,7 +187,7 @@ let rec core_type (ty : core_type) : expression =
          most general choice of ascending computation, which is to rebuild
          a tuple on the way up. Happily, this is always well-typed. *)
       let xs = components tys in
-      let es = List.map2 app1 (core_types tys) (evars xs) in
+      let es = map2 app1 (core_types tys) (evars xs) in
       plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
@@ -201,7 +202,7 @@ and env_core_type ty =
   lambda env (core_type ty)
 
 and core_types tys =
-  List.map core_type tys
+  map core_type tys
 
 (* -------------------------------------------------------------------------- *)
 
@@ -227,27 +228,27 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
-      let labels = List.map ld_label lds
-      and tys = List.map ld_ty lds in
-      let xs  = List.map field labels in
+      let labels = map ld_label lds
+      and tys = map ld_ty lds in
+      let xs  = map field labels in
       xs,
-      [precord ~closed:Closed (List.combine labels (pvars xs))],
-      (fun xs -> [record (List.combine labels (evars xs))]),
+      [precord ~closed:Closed (combine labels (pvars xs))],
+      (fun xs -> [record (combine labels (evars xs))]),
       tys
 
   in
-  let es = List.map2 app1 (core_types tys) (evars xs) in
+  let es = map2 app1 (core_types tys) (evars xs) in
 
   let m = datacon_ascending_method datacon in
   (* Generate a declaration of [m] as an auxiliary virtual method. We note
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
      are needed. *)
-  generate visitor (virtual_method m);
+  generate cvisitor (virtual_method m);
   (* This method is defined in the subclass [iter] to always return unit. *)
-  generate iter (concrete_method m (plambdas (wildcards es) (unit())));
+  generate citer (concrete_method m (plambdas (wildcards es) (unit())));
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
-  generate map (concrete_method m (lambdas (results es) (constr datacon (reconstruct (results es)))));
+  generate cmap (concrete_method m (lambdas (results es) (constr datacon (reconstruct (results es)))));
 
   Exp.case
     (pconstr datacon pats)
@@ -274,11 +275,11 @@ let type_decl_rhs (decl : type_declaration) : expression =
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
-      let labels = List.map ld_label lds
-      and tys = List.map ld_ty lds in
+      let labels = map ld_label lds
+      and tys = map ld_ty lds in
       let x = thing decl.ptype_name.txt in
       (* Generate one function call for each field. *)
-      let es : expression list = List.map2 (fun label ty ->
+      let es : expression list = map2 (fun label ty ->
         app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
       ) labels tys in
       (* Construct a sequence of these calls, and place it in a function body. *)
@@ -288,7 +289,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
   | Ptype_variant (cds : constructor_declaration list), _ ->
       (* Generate one case per constructor, and place them in a function
          body, whose formal parameter is anonymous. *)
-      Exp.function_ (List.map constructor_declaration cds)
+      Exp.function_ (map constructor_declaration cds)
 
   (* An unsupported construct. *)
   | _ ->
@@ -305,7 +306,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
 let type_decl (decl : type_declaration) =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
-  generate visitor (
+  generate cvisitor (
     concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
       (plambda penv (type_decl_rhs decl))
@@ -322,9 +323,9 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
   (* Analyze the type definitions. *)
   let module R = Run(struct let decls = decls end) in
-  R.generate iter (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
-  R.generate map (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident visitor)) [ ty_self; ty_env ]) None);
-  List.iter R.type_decl decls;
+  R.generate citer (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident cvisitor)) [ ty_self; ty_env ]) None);
+  R.generate cmap (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident cvisitor)) [ ty_self; ty_env ]) None);
+  iter R.type_decl decls;
   (* Produce class definitions. Our classes are parameterized over the type
      variable ['env]. They are also parameterized over the type variable
      ['self], with a constraint that this is the type of [self]. This trick
@@ -335,9 +336,9 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
     ty_env, Invariant;
   ] in
   [
-    class1 params visitor pself (R.dump visitor);
-    class1 params iter pself (R.dump iter);
-    class1 params map pself (R.dump map);
+    class1 params cvisitor pself (R.dump cvisitor);
+    class1 params citer pself (R.dump citer);
+    class1 params cmap pself (R.dump cmap);
   ]
 
 (* -------------------------------------------------------------------------- *)
