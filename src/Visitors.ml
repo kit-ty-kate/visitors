@@ -190,7 +190,7 @@ let rec core_type (ty : core_type) : expression =
          most general choice of ascending computation, which is to rebuild
          a tuple on the way up. Happily, this is always well-typed. *)
       let xs = components tys in
-      let es = map2 app1 (core_types tys) (evars xs) in
+      let es = core_types tys xs in
       plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
@@ -204,8 +204,8 @@ let rec core_type (ty : core_type) : expression =
 and env_core_type ty =
   lambda env (core_type ty)
 
-and core_types tys =
-  map core_type tys
+and core_types tys xs =
+  map2 app1 (map core_type tys) (evars xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -249,14 +249,13 @@ let constructor_declaration (cd : constructor_declaration) : case =
   let rs = results xs in
   let m = datacon_ascending_method datacon in
 
-  let es = map2 app1 (core_types tys) (evars xs) in
   let case =
     Exp.case
       (pconstr datacon ps)
       (hook
          (datacon_descending_method datacon)
          (env :: xs)
-         (letn rs es (send self m (evars rs)))
+         (letn rs (core_types tys xs) (send self m (evars rs)))
       )
   in
 
