@@ -158,6 +158,19 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Construct a method call. *)
   send self m (evars xs)
 
+let hook3 m rs eiter emap =
+  (* Generate a declaration of [m] as an auxiliary virtual method. We note
+     that it does not need a type annotation: because we have used the trick
+     of parameterizing the class over its ['self] type, no annotations at all
+     are needed. *)
+  generate cvisitor (virtual_method m);
+  (* Define this method in the subclass [iter]. *)
+  generate citer (concrete_method m (plambdas (wildcards rs) eiter));
+  (* Define this method in the subclass [map]. *)
+  generate cmap (concrete_method m (lambdas rs emap));
+  (* Construct a method call. *)
+  send self m (evars rs)
+
 (* -------------------------------------------------------------------------- *)
 
 (* [core_type ty] builds a small expression, typically a variable or a function
@@ -249,27 +262,21 @@ let constructor_declaration (cd : constructor_declaration) : case =
   let rs = results xs in
   let m = datacon_ascending_method datacon in
 
-  let case =
-    Exp.case
-      (pconstr datacon ps)
-      (hook
-         (datacon_descending_method datacon)
-         (env :: xs)
-         (letn rs (core_types tys xs) (send self m (evars rs)))
-      )
-  in
-
-  (* Generate a declaration of [m] as an auxiliary virtual method. We note
-     that it does not need a type annotation: because we have used the trick
-     of parameterizing the class over its ['self] type, no annotations at all
-     are needed. *)
-  generate cvisitor (virtual_method m);
-  (* This method is defined in the subclass [iter] to always return unit. *)
-  generate citer (concrete_method m (plambdas (wildcards xs) (unit())));
-  (* It is defined in the subclass [map] to always reconstruct a tree node. *)
-  generate cmap (concrete_method m (lambdas rs (constr datacon (build rs))));
-
-  case
+  Exp.case
+    (pconstr datacon ps)
+    (hook
+       (datacon_descending_method datacon)
+       (env :: xs)
+       (letn
+          rs (core_types tys xs)
+          (hook3 m rs
+            (* This method is defined in the subclass [iter] to always return unit. *)
+            (unit())
+            (* It is defined in the subclass [map] to always reconstruct a tree node. *)
+            (constr datacon (build rs))
+          )
+       )
+    )
 
 (* -------------------------------------------------------------------------- *)
 
