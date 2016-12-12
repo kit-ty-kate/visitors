@@ -144,11 +144,13 @@ include ClassFieldStore(struct end)
 
 (* -------------------------------------------------------------------------- *)
 
-(* Suppose [e] is an expression whose free variables are [xs]. [hook m xs e]
-   constructs a call of the form [self#m xs], and (as a side effect) defines a
-   method [method m xs = e]. The default behavior of this expression is the
-   behavior of [e], but we offer the user a hook, named [m], which allows this
-   default to be overridden. *)
+(* [hook m xs e] constructs a call of the form [self#m xs], and (as a side
+   effect) generates a method [method m xs = e]. The free variables of the
+   expression [e] must be (a subset of) [xs]. *)
+
+(* Thus, by default, the expression [hook m xs e] behaves in the same way
+   as the expression [e]. But a hook, named [m], allows this default to be
+   overridden. *)
 
 let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate a method in the class [visitor]. We note that the formal
@@ -158,18 +160,24 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Construct a method call. *)
   send self m (evars xs)
 
-let hook3 m rs eiter emap =
-  (* Generate a declaration of [m] as an auxiliary virtual method. We note
-     that it does not need a type annotation: because we have used the trick
-     of parameterizing the class over its ['self] type, no annotations at all
-     are needed. *)
+(* [hooks m xs e1 e2] constructs a call of the form [self#m xs], and (as a side
+   effect) generates a virtual method named [m] in the class [visitor]. It also
+   generates an implementation [method m xs = e1] in the subclass [iter] and an
+   implementation [method m xs = e2] in the subclass [map]. The free variables
+   of the expressions [e1] and [e2] must be (a subset of) [xs]. *)
+
+let hooks (m : string) (xs : variable list) (e1 : expression) (e2 : expression) : expression =
+  (* Generate a declaration of [m] as a virtual method in the class [visitor].
+     We note that it does not need a type annotation: because we have used the
+     trick of parameterizing the class over its ['self] type, no annotations
+     at all are needed. *)
   generate cvisitor (virtual_method m);
   (* Define this method in the subclass [iter]. *)
-  generate citer (concrete_method m (plambdas (wildcards rs) eiter));
+  generate citer (concrete_method m (plambdas (wildcards xs) e1));
   (* Define this method in the subclass [map]. *)
-  generate cmap (concrete_method m (lambdas rs emap));
+  generate cmap (concrete_method m (lambdas xs e2));
   (* Construct a method call. *)
-  send self m (evars rs)
+  send self m (evars xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -248,7 +256,6 @@ let constructor_declaration (cd : constructor_declaration) : case =
     | Pcstr_tuple tys ->
         let xs = components tys in
         xs, tys, pvars xs, evars
-
     (* An ``inline record'' data constructor. *)
     | Pcstr_record lds ->
         let labels, tys = ld_labels lds, ld_tys lds in
@@ -258,21 +265,29 @@ let constructor_declaration (cd : constructor_declaration) : case =
         fun rs -> [record (combine labels (evars rs))]
   in
 
+  (* Get the name of this data constructor. *)
   let datacon = cd.pcd_name.txt in
+  (* Create new names [rs] for the results of the recursive calls of visitor
+     methods on the components [xs]. *)
   let rs = results xs in
-  let m = datacon_ascending_method datacon in
 
+  (* Construct a case for this data constructor in the visitor method
+     associated with this sum type. After binding the components [xs], we call
+     the descending method associated with this data constructor, with
+     arguments [env] and [xs]. This method is implemented in the [visitor]
+     class. It binds the variables [rs] to the results of the recursive calls
+     to visitor methods, then calls the ascending method associated with this
+     data constructor, with arguments [rs]. This method is declared in the
+     [visitor] class and implemented in the subclasses [iter] and [map]. In
+     the subclass [iter], it always returns a unit value. In the subclass
+     [map], it reconstructs a tree node. *)
   Exp.case
     (pconstr datacon ps)
-    (hook
-       (datacon_descending_method datacon)
-       (env :: xs)
+    (hook (datacon_descending_method datacon) (env :: xs)
        (letn
           rs (core_types tys xs)
-          (hook3 m rs
-            (* This method is defined in the subclass [iter] to always return unit. *)
+          (hooks (datacon_ascending_method datacon) rs
             (unit())
-            (* It is defined in the subclass [map] to always reconstruct a tree node. *)
             (constr datacon (build rs))
           )
        )
