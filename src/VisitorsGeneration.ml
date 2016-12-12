@@ -1,3 +1,4 @@
+open Longident
 open Location
 open Asttypes
 open Parsetree
@@ -106,6 +107,18 @@ let vbletn (vbs : value_binding list) (e : expression) : expression =
 
 let letn (xs : variable list) (es : expression list) (e : expression) =
   List.fold_right2 let1 xs es e
+
+(* -------------------------------------------------------------------------- *)
+
+(* [access x label] constructs a record access expression [x.label]. *)
+
+let access (x : variable) (label : label) : expression =
+  Exp.field (evar x) (mknoloc (Lident label))
+
+(* [accesses x labels] constructs a list of record access expressions. *)
+
+let accesses (x : variable) (labels : label list) : expression list =
+  List.map (access x) labels
 
 (* -------------------------------------------------------------------------- *)
 
