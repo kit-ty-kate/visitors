@@ -166,7 +166,8 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
    implementation [method m xs = e2] in the subclass [map]. The free variables
    of the expressions [e1] and [e2] must be (a subset of) [xs]. *)
 
-let hooks (m : string) (xs : variable list) (e1 : expression) (e2 : expression) : expression =
+let hooks (m : string) (xs : variable list)
+          (e1 : expression) (e2 : expression) : expression =
   (* Generate a declaration of [m] as a virtual method in the class [visitor].
      We note that it does not need a type annotation: because we have used the
      trick of parameterizing the class over its ['self] type, no annotations
@@ -184,37 +185,40 @@ let hooks (m : string) (xs : variable list) (e1 : expression) (e2 : expression) 
 
 (* -------------------------------------------------------------------------- *)
 
-(* [core_type ty] builds a small expression, typically a variable or a function
-   call, which represents the derived function associated with the type [ty]. *)
+(* [visit_type ty] builds a small expression that represents the visiting code
+   associated with the OCaml type [ty]. For instance, if [ty] is a local type
+   constructor, this could be a call to the visitor method associated with
+   this type constructor. The expression constructed by [visit_type ty] may
+   refer to the variables [self] and [env]. *)
 
-let rec core_type (ty : core_type) : expression =
+let rec visit_type (ty : core_type) : expression =
   match ty with
 
   (* A type constructor [tycon] applied to type parameters [tys]. *)
-  | { ptyp_desc = Ptyp_constr ({ txt = tycon; _ }, tys); _ } ->
-      let tycon : Longident.t = tycon
-      and tys : core_type list = tys in
-      (* Check if this is a local type constructor. If not, declare a
-         virtual method for it. We rely on the fact that it is permitted
-       for a virtual method to be declared several times. *)
+  | { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
+     (* Check if this is a local type constructor. If not, declare a virtual
+        method for it. We rely on the fact that it is permitted for a virtual
+        method to be declared several times. *)
       if not (is_local Current.decls tycon) then
-        generate cvisitor (
-          virtual_method (tycon_visitor_method tycon)
-        );
-      (* Construct the name of the [visit] method associated with [tycon].
-         Apply it to the derived functions associated with [tys] and to
-         the environment [env]. *)
-      send self (tycon_visitor_method tycon) (map env_core_type tys @ [evar env])
+        generate cvisitor (virtual_method (tycon_visitor_method tycon));
+      (* Return the visitor method associated with [tycon]. It must be applied
+         to the visitor functions associated with [tys] and to the environment
+         [env]. *)
+      send self
+        (tycon_visitor_method tycon)
+        (map lambda_env_visit_type tys @ [evar env])
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
-      (* Construct a function. In the case of tuples, we do not call an
-         ascending auxiliary method, as we would need one method name
-         per tuple type, and that would be messy. Instead, we make the
-         most general choice of ascending computation, which is to rebuild
-         a tuple on the way up. Happily, this is always well-typed. *)
+      (* Construct a function. In the case of tuples, as opposed to data
+         constructors, we do not call an ascending method, as we would need
+         one method name per tuple type, and that would be messy. Instead, we
+         make the most general choice of ascending computation, which is to
+         rebuild a tuple on the way up. Fortunately, this should always be
+         well-typed, I believe. We do not need a descending method either
+         because there is no case analysis. *)
       let xs = components tys in
-      let es = core_types tys xs in
+      let es = visit_types tys xs in
       plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
@@ -225,11 +229,11 @@ let rec core_type (ty : core_type) : expression =
         plugin
         (string_of_core_type ty)
 
-and env_core_type ty =
-  lambda env (core_type ty)
+and lambda_env_visit_type ty =
+  lambda env (visit_type ty)
 
-and core_types tys xs =
-  map2 app1 (map core_type tys) (evars xs)
+and visit_types tys xs =
+  map2 app1 (map visit_type tys) (evars xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -288,7 +292,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
     (pconstr datacon ps)
     (hook (datacon_descending_method datacon) (env :: xs)
        (letn
-          rs (core_types tys xs)
+          rs (visit_types tys xs)
           (hooks (datacon_ascending_method datacon) rs
             (unit())
             (constr datacon (build rs))
@@ -306,7 +310,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
 
   (* A type abbreviation. *)
   | Ptype_abstract, Some ty ->
-      core_type ty
+      visit_type ty
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
@@ -315,7 +319,7 @@ let type_decl_rhs (decl : type_declaration) : expression =
       let x = thing decl.ptype_name.txt in
       (* Generate one function call for each field. *)
       let es : expression list = map2 (fun label ty ->
-        app (core_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
+        app (visit_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
       ) labels tys in
       (* Construct a sequence of these calls, and place it in a function body. *)
       lambda x (sequence es)
