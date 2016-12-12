@@ -173,6 +173,9 @@ let hooks (m : string) (xs : variable list) (e1 : expression) (e2 : expression) 
      at all are needed. *)
   generate cvisitor (virtual_method m);
   (* Define this method in the subclass [iter]. *)
+  (* An ad hoc detail: we assume that [e1] does not use its arguments [xs],
+     so, in order to avoid OCaml's warning about unused variables, we replace
+     them with wildcard patterns. *)
   generate citer (concrete_method m (plambdas (wildcards xs) e1));
   (* Define this method in the subclass [map]. *)
   generate cmap (concrete_method m (lambdas xs e2));
