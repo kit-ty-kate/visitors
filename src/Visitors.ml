@@ -218,7 +218,7 @@ let rec visit_type (ty : core_type) : expression =
          well-typed, I believe. We do not need a descending method either
          because there is no case analysis. *)
       let xs = components tys in
-      let es = visit_types tys xs in
+      let es = visit_types tys (evars xs) in
       plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
@@ -232,8 +232,8 @@ let rec visit_type (ty : core_type) : expression =
 and lambda_env_visit_type ty =
   lambda env (visit_type ty)
 
-and visit_types tys xs =
-  map2 app1 (map visit_type tys) (evars xs)
+and visit_types tys es =
+  map2 app1 (map visit_type tys) es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -292,7 +292,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
     (pconstr datacon ps)
     (hook (datacon_descending_method datacon) (env :: xs)
        (letn
-          rs (visit_types tys xs)
+          rs (visit_types tys (evars xs))
           (hooks (datacon_ascending_method datacon) rs
             (unit())
             (constr datacon (build rs))
@@ -302,10 +302,11 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decl_rhs decl] produces the right-hand side of the value binding
-   associated with the type declaration [decl]. *)
+(* [visit_decl decl] constructs an expression that represents the visiting
+   code associated with the type declaration [decl]. In other words, it is
+   the body of the visitor method associated with [decl]. *)
 
-let type_decl_rhs (decl : type_declaration) : expression =
+let visit_decl (decl : type_declaration) : expression =
   match decl.ptype_kind, decl.ptype_manifest with
 
   (* A type abbreviation. *)
@@ -314,14 +315,12 @@ let type_decl_rhs (decl : type_declaration) : expression =
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
-      let labels = ld_labels lds
-      and tys = ld_tys lds in
+      let labels, tys = ld_labels lds, ld_tys lds in
       let x = thing decl.ptype_name.txt in
       (* Generate one function call for each field. *)
-      let es : expression list = map2 (fun label ty ->
-        app (visit_type ty) [ Exp.field (evar x) (mknoloc (Lident label)) ]
-      ) labels tys in
+      let es = visit_types tys (accesses x labels) in
       (* Construct a sequence of these calls, and place it in a function body. *)
+      (* TEMPORARY need rebuilding code! *)
       lambda x (sequence es)
 
   (* A sum type. *)
@@ -339,16 +338,16 @@ let type_decl_rhs (decl : type_declaration) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decl decl] produces a class field (e.g., a method) associated with
+(* [type_decl decl] generates a class field (e.g., a method) associated with
    the type declaration [decl]. *)
 
-let type_decl (decl : type_declaration) =
+let type_decl (decl : type_declaration) : unit =
   (* Produce a single method definition, whose name is based on this type
      declaration. *)
   generate cvisitor (
     concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
-      (plambda penv (type_decl_rhs decl))
+      (plambda penv (visit_decl decl))
   )
 
 end
