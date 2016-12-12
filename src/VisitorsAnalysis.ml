@@ -16,8 +16,14 @@ type tycon = string
 let ld_label (ld : label_declaration) : label =
   ld.pld_name.txt
 
+let ld_labels =
+  List.map ld_label
+
 let ld_ty (ld : label_declaration) : core_type =
   ld.pld_type
+
+let ld_tys =
+  List.map ld_ty
 
 (* [local decls] extracts the list of type constructors that are declared by
    the type declarations [decls]. *)

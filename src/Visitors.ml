@@ -228,8 +228,8 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
   | Pcstr_record lds ->
-      let labels = map ld_label lds
-      and tys = map ld_ty lds in
+      let labels = ld_labels lds
+      and tys = ld_tys lds in
       let xs  = map field labels in
       xs,
       [precord ~closed:Closed (combine labels (pvars xs))],
@@ -248,17 +248,15 @@ let constructor_declaration (cd : constructor_declaration) : case =
   (* This method is defined in the subclass [iter] to always return unit. *)
   generate citer (concrete_method m (plambdas (wildcards es) (unit())));
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
-  generate cmap (concrete_method m (lambdas (results es) (constr datacon (reconstruct (results es)))));
+  let rs = results es in
+  generate cmap (concrete_method m (lambdas rs (constr datacon (reconstruct rs))));
 
   Exp.case
     (pconstr datacon pats)
     (hook
        (datacon_descending_method datacon)
        (env :: xs)
-       (mlet result es (fun _ -> (* TEMPORARY eliminate [mlet] *)
-          send self m (evars (results es))
-        )
-      )
+       (letn rs es (send self m (evars rs)))
     )
 
 (* -------------------------------------------------------------------------- *)
@@ -275,8 +273,8 @@ let type_decl_rhs (decl : type_declaration) : expression =
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
-      let labels = map ld_label lds
-      and tys = map ld_ty lds in
+      let labels = ld_labels lds
+      and tys = ld_tys lds in
       let x = thing decl.ptype_name.txt in
       (* Generate one function call for each field. *)
       let es : expression list = map2 (fun label ty ->
