@@ -119,6 +119,9 @@ let thing (tycon : tycon) : variable =
 let field (label : label) : variable =
   Printf.sprintf "f%s" label
 
+let fields (labels : label list) : variable list =
+  map field labels
+
 (* The variables [result i] denote results of recursive calls. *)
 
 let result (i : int) : variable =
@@ -207,57 +210,67 @@ and core_types tys =
 (* -------------------------------------------------------------------------- *)
 
 (* [constructor_declaration] turns a constructor declaration (as found in a
-   declaration of a sum type) into a case, that is, a branch in a case
-   analysis construct. *)
-
-(* TEMPORARY ici clean up *)
+   declaration of a sum type) into a case, that is, a branch in the case
+   analysis construct that forms the body of the visitor method for this sum
+   type. At the same time, it generates several auxiliary method declarations
+   and definitions. *)
 
 let constructor_declaration (cd : constructor_declaration) : case =
-  let datacon = cd.pcd_name.txt in
 
-  let xs, pats, reconstruct, tys =
+  (* This is either a traditional data constructor, whose components are
+     anonymous, or a data constructor whose components form an ``inline
+     record''. This is a new feature of OCaml 4.03. *)
+
+  (* In order to treat these two cases uniformly, we extract the following
+     information.
+     [xs]       the names under which the components are known.
+     [tys]      the types of the components
+     [ps]       the patterns that bind [xs], on the way down
+     [build]    the expressions that rebuild a data constructor, on the way up
+  *)
+
+  let xs, tys, ps, (build : variable list -> expression list) =
   match cd.pcd_args with
+    (* A traditional data constructor. *)
+    | Pcstr_tuple tys ->
+        let xs = components tys in
+        xs, tys, pvars xs, evars
 
-  (* A traditional constructor, whose arguments are anonymous. *)
-  | Pcstr_tuple tys ->
-      let xs = components tys in
-      xs,
-      pvars xs,
-      evars,
-      tys
-
-  (* An ``inline record'' constructor, whose arguments are named. (As of OCaml 4.03.) *)
-  | Pcstr_record lds ->
-      let labels = ld_labels lds
-      and tys = ld_tys lds in
-      let xs  = map field labels in
-      xs,
-      [precord ~closed:Closed (combine labels (pvars xs))],
-      (fun xs -> [record (combine labels (evars xs))]),
-      tys
-
+    (* An ``inline record'' data constructor. *)
+    | Pcstr_record lds ->
+        let labels, tys = ld_labels lds, ld_tys lds in
+        let xs = fields labels in
+        xs, tys,
+        [precord ~closed:Closed (combine labels (pvars xs))],
+        fun rs -> [record (combine labels (evars rs))]
   in
-  let es = map2 app1 (core_types tys) (evars xs) in
 
+  let datacon = cd.pcd_name.txt in
+  let rs = results xs in
   let m = datacon_ascending_method datacon in
+
+  let es = map2 app1 (core_types tys) (evars xs) in
+  let case =
+    Exp.case
+      (pconstr datacon ps)
+      (hook
+         (datacon_descending_method datacon)
+         (env :: xs)
+         (letn rs es (send self m (evars rs)))
+      )
+  in
+
   (* Generate a declaration of [m] as an auxiliary virtual method. We note
      that it does not need a type annotation: because we have used the trick
      of parameterizing the class over its ['self] type, no annotations at all
      are needed. *)
   generate cvisitor (virtual_method m);
   (* This method is defined in the subclass [iter] to always return unit. *)
-  generate citer (concrete_method m (plambdas (wildcards es) (unit())));
+  generate citer (concrete_method m (plambdas (wildcards xs) (unit())));
   (* It is defined in the subclass [map] to always reconstruct a tree node. *)
-  let rs = results es in
-  generate cmap (concrete_method m (lambdas rs (constr datacon (reconstruct rs))));
+  generate cmap (concrete_method m (lambdas rs (constr datacon (build rs))));
 
-  Exp.case
-    (pconstr datacon pats)
-    (hook
-       (datacon_descending_method datacon)
-       (env :: xs)
-       (letn rs es (send self m (evars rs)))
-    )
+  case
 
 (* -------------------------------------------------------------------------- *)
 
