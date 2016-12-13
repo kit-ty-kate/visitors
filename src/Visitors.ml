@@ -1,6 +1,5 @@
 open List
 open Longident
-open Location
 open Asttypes
 open Parsetree
 open Ast_helper
@@ -352,12 +351,10 @@ let visit_decl (decl : type_declaration) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decl decl] generates a class field (e.g., a method) associated with
-   the type declaration [decl]. *)
+(* [type_decl decl] generates the main visitor method associated with the type
+   declaration [decl], as well as the necessary auxiliary methods. *)
 
 let type_decl (decl : type_declaration) : unit =
-  (* Produce a single method definition, whose name is based on this type
-     declaration. *)
   generate cvisitor (
     concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
@@ -371,27 +368,25 @@ end
 (* [type_decls decls] produces structure items (that is, toplevel definitions)
    associated with the type declarations [decls]. *)
 
+(* Our classes are parameterized over the type variable ['env]. They are also
+   parameterized over the type variable ['self], with a constraint that this
+   is the type of [self]. This trick allows us to omit the types of the
+   virtual methods, even if these types include type variables. *)
+
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  (* Analyze the type definitions. *)
   let module R = Run(struct let decls = decls end) in
-  R.generate citer (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident cvisitor)) [ ty_self; ty_env ]) None);
-  R.generate cmap (Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident cvisitor)) [ ty_self; ty_env ]) None);
+  (* Generate [inherit] clauses for the subclasses. *)
+  let actuals = [ ty_self; ty_env ] in
+  R.generate citer (inherit_ cvisitor actuals);
+  R.generate cmap  (inherit_ cvisitor actuals);
+  (* Analyze the type definitions, and populate our classes with methods. *)
   iter R.type_decl decls;
-  (* Produce class definitions. Our classes are parameterized over the type
-     variable ['env]. They are also parameterized over the type variable
-     ['self], with a constraint that this is the type of [self]. This trick
-     allows us to omit the declaration of the types of the virtual methods,
-     even if these types include type variables. *)
-  let params = [
-    ty_self, Invariant;
-    ty_env, Invariant;
-  ] in
-  [
-    class1 params cvisitor pself (R.dump cvisitor);
-    class1 params citer pself (R.dump citer);
-    class1 params cmap pself (R.dump cmap);
-  ]
+  (* Produce class definitions. *)
+  let formals = [ ty_self, Invariant; ty_env, Invariant ] in
+  List.map
+    (fun c -> class1 formals c pself (R.dump c))
+    [ cvisitor; citer; cmap ]
 
 (* -------------------------------------------------------------------------- *)
 

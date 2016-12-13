@@ -143,6 +143,14 @@ let class1
 
 (* -------------------------------------------------------------------------- *)
 
+(* [inherit_ c tys] builds an [inherit] clause, where the superclass is [c]
+   and its actual type parameters are [tys]. No [super] identifier is bound. *)
+
+let inherit_ (c : classe) (tys : core_type list) : class_field =
+  Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident c)) tys) None
+
+(* -------------------------------------------------------------------------- *)
+
 (* [concrete_method m e] constructs a public method whose name is [m] and
    whose body is [e]. *)
 
