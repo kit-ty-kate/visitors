@@ -48,12 +48,15 @@ let cmap : classe =
    a descending method, as it is invoked when going down into the tree. *)
 
 let tycon_visitor_method (tycon : Longident.t) : methode =
-  (* We support qualified names, and use the last part of the name as the name
-     of the visitor method. A qualified name is probably a nonlocal type, that
-     is, not part of the current set of type declarations. *)
-  last tycon
-  (* TEMPORARY nice-looking convention, but can cause a conflict
-     if a tycon or datacon name begins with "build_" or "match_" *)
+  (* We support qualified names, and, in that case, use the last part of the
+     qualified name to obtain the name of the visitor method. A qualified name
+     is probably a nonlocal type, that is, not part of the current set of type
+     declarations. *)
+  (* I would like to use [last tycon] directly as the name of the method, but
+     that could (in theory) create a conflict with the names of other methods.
+     In order to guarantee the absence of conflicts, we must use a nonempty
+     prefix. *)
+  "visit_" ^ last tycon
 
 (* For every data constructor [datacon], there is a descending visitor method,
    which is invoked on the way down, when this data constructor is discovered. *)

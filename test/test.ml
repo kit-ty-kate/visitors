@@ -39,9 +39,9 @@ module Test2 = struct
   let iter = object
     inherit [_, int] iter
     (* Descending methods for nonlocal types. *)
-    method int env x = Printf.printf "(env=%d) int: %d\n%!" env x
-    method name env x = Printf.printf "(env=%d) name: %s\n%!" env x
-    method binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
+    method visit_int env x = Printf.printf "(env=%d) int: %d\n%!" env x
+    method visit_name env x = Printf.printf "(env=%d) name: %s\n%!" env x
+    method visit_binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
 
   end
 
@@ -49,17 +49,17 @@ module Test2 = struct
     TLambda ("x", TVar "x")
 
   let () =
-    iter#term 33 identity
+    iter#visit_term 33 identity
 
   let map = object
     inherit [_, unit] map
     (* Descending methods for nonlocal types. *)
-    method int () x = x
-    method name () x = "a" (* change name occurrences to [a], for fun *)
-    method binder () x = x
+    method visit_int () x = x
+    method visit_name () x = "a" (* change name occurrences to [a], for fun *)
+    method visit_binder () x = x
   end
 
   let () =
-    iter#term 33 (map#term () identity)
+    iter#visit_term 33 (map#visit_term () identity)
 
 end
