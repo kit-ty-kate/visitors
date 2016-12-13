@@ -1,3 +1,7 @@
+------------------------------------------------------------------------------
+
+On named method parameters
+
 When the arguments of a data constructor are arranged in an inline record, we
 would ideally like the data constructor's descending method to receive named
 arguments. E.g., it could receive a record as an argument. But that does not
@@ -9,3 +13,57 @@ constructor declaration.
 
 Similarly, the ascending methods for records and for inline records currently
 receive anonymous arguments.
+
+------------------------------------------------------------------------------
+
+On type variables
+
+Can we deal with parameterized type declarations? Yes, we can, but we should
+distinguish two approaches.
+
+The less ambitious approach assumes (requires) that a parameterized type is
+always applied to the same actual arguments. So, it is just as if we have a
+type \Lambda at the top level and, under that, we are dealing with ordinary
+unparameterized types. This approach naturally leads to generated code where
+every method has a monomorphic type, but our class declarations are
+parameterized (they have a type \Lambda at the top level). In fact, the
+quantification over 'self is probably sufficient to take care of this aspect;
+no extra type parameters are required.
+
+The more ambitious approach allows a type constructor (which could be local,
+say 'a term, or nonlocal, say 'a list) to be instantiated in multiple sites
+with distinct (vectors of) actual arguments. This approach requires
+polymorphic methods. In the subclass [iter], for example, a visitor method
+could have type ['a. 'env -> 'a term -> unit]. In the subclass [map], a
+visitor method could have type ['a 'b. 'env -> 'a term -> 'b term]. A
+difficulty with this approach is that the type of a visitor method in the
+base class [visitor] seems difficult to express, as we should abstract over
+the method's return type, while still allowing it to depend on a quantified
+type variable (see [unit] versus ['b term] above). This seems to require the
+expressive power of F_\omega, which we do not have.
+
+We adopt the less ambitious approach, for the time being at least.
+
+We note that, for nonlocal parameterized type constructors like "option" and
+"list", the less ambitious approach is restrictive: it prevents the user from
+using lists of apples and lists of oranges in a single group of type
+declarations. One could work around this problem by virtually duplicating
+these type constructors; that would lead to generating several virtual
+methods, like list_apple and list_orange, each of which would receive a
+monomorphic type. That might be somewhat unpleasant for the final user, but
+would be workable. (It would require defining a naming scheme, which would be
+slightly unpleasant for us.) This approach is not applicable to local type
+constructors, as it would lead to an infinite amount of duplication.
+
+What needs to be done in the less ambitious approach?
+
+* when hitting a type constructor, test if it is local
+  - if it is local, then treat it as if it were *not* parameterized,
+    i.e. do *not* apply the visitor function to visitor functions
+    for the type parameters
+  - if it is nonlocal, then treat it as parameterized
+
+* when hitting a type variable, declare and invoke a virtual visitor
+  method for it
+
+I believe that is all...?
