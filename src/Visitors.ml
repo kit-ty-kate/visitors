@@ -53,6 +53,8 @@ let tycon_visitor_method (tycon : Longident.t) : methode =
      of the visitor method. A qualified name is probably a nonlocal type, that
      is, not part of the current set of type declarations. *)
   last tycon
+  (* TEMPORARY nice-looking convention, but can cause a conflict
+     if a tycon or datacon name begins with "build_" or "match_" *)
 
 (* For every data constructor [datacon], there is a descending visitor method,
    which is invoked on the way down, when this data constructor is discovered. *)
@@ -69,6 +71,12 @@ let datacon_descending_method (datacon : datacon) : methode =
 
 let datacon_ascending_method (datacon : datacon) : methode =
   "build_" ^ datacon
+
+(* For every record type constructor [tycon], there is an ascending visitor
+   method. (See above description.) *)
+
+let record_ascending_method (tycon : tycon) : methode =
+  "build_" ^ tycon
 
 (* -------------------------------------------------------------------------- *)
 
@@ -316,12 +324,18 @@ let visit_decl (decl : type_declaration) : expression =
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
       let labels, tys = ld_labels lds, ld_tys lds in
-      let x = thing decl.ptype_name.txt in
-      (* Generate one function call for each field. *)
-      let es = visit_types tys (accesses x labels) in
-      (* Construct a sequence of these calls, and place it in a function body. *)
-      (* TEMPORARY need rebuilding code! *)
-      lambda x (sequence es)
+      (* Bind the record to a variable [x]. *)
+      let tycon = decl.ptype_name.txt in
+      let x = thing tycon in
+      (* See [constructor_declaration] for comments. *)
+      lambda x (
+        let rs = results labels in
+        letn rs (visit_types tys (accesses x labels))
+          (hooks (record_ascending_method tycon) rs
+            (unit())
+            (record (combine labels (evars rs)))
+          )
+      )
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->

@@ -6,3 +6,6 @@ Or, it could take labeled arguments. That would work, I think, but we prefer
 to avoid labels. Our solution, for now, is to pass unnamed arguments to the
 descending method. The arguments appear in the same order as in the data
 constructor declaration.
+
+Similarly, the ascending methods for records and for inline records currently
+receive anonymous arguments.
