@@ -8,9 +8,6 @@ of a virtual method.
 Maybe iter and map should not inherit from visitor; the user could mix
   them by herself.
 
-Move all of the naming conventions that could clash to a single place.
-Check that no clashes are possible.
-
 Deal with parameterized type definitions.
   Both local and nonlocal.
 
@@ -22,6 +19,7 @@ Think about compositionality.
 Think about transforming a closed recursive type definition into an open one.
 
 Show to François Bobot and Virgile Prevosto. Try the Frama-C AST.
+Show to Andrei and Jean-Christophe.
 
 Add a LICENSE. Announce.
 
@@ -31,6 +29,7 @@ BUGS
 
 The tuple trick of always reconstructing a tuple may not work as desired?
 It may force the user to also reconstruct a tuple when implementing his own
-folds.
+folds. Investigate.
 
-If A.t and B.t are nonlocal types, then we need two virtual methods named t.
+If A.t and B.t are nonlocal types, then (with our current naming convention)
+we have a name clash.
