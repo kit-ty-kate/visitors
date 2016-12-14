@@ -17,12 +17,32 @@ open VisitorsGeneration
 let plugin =
   "visitors"
 
-(* No options are supported. *)
+(* Option processing. *)
+
+(* The option [irregular = true] suppresses the regularity check and allows a
+   local parameterized type to be instantiated; e.g., the definition of ['a t]
+   can then refer to [int t]. However, in most situations, this will lead to
+   ill-typed generated code. The generated code should be well-typed if [t] is
+   always instantiated in the same manner, e.g., if there are references to
+   [int t] but not to other instances of [t]. *)
+
+let irregular =
+  ref false
 
 let parse_options options =
+  irregular := false;
   iter (fun (o, e) ->
-    let loc = e.pexp_loc in
-    raise_errorf ~loc "%s: option %s is not supported." plugin o
+    match o, e with
+    | "irregular", { pexp_desc = Pexp_construct ({ txt = Lident "true"; _}, None) ; _ } ->
+        irregular := true
+    | "irregular", { pexp_desc = Pexp_construct ({ txt = Lident "false"; _}, None) ; _ } ->
+        ()
+    | "irregular", _ ->
+        let loc = e.pexp_loc in
+        raise_errorf ~loc "%s: option %s expects a Boolean value." plugin o
+    | _ ->
+        let loc = e.pexp_loc in
+        raise_errorf ~loc "%s: option %s is not supported." plugin o
   ) options
 
 (* -------------------------------------------------------------------------- *)
@@ -45,7 +65,7 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
       (number (length formals) "type parameter")
       (number (length actuals) "type parameter");
   (* Check that the parameters match. *)
-  if not (
+  if not !irregular && not (
     fold_left2 (fun ok formal actual ->
       ok && actual.ptyp_desc = Ptyp_var formal
     ) true formals actuals
