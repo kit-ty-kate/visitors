@@ -1,4 +1,5 @@
 open List
+let sprintf = Printf.sprintf
 open Longident
 open Asttypes
 open Parsetree
@@ -65,6 +66,16 @@ let citer : classe =
 
 let cmap : classe =
   "map"
+
+(* We support multiple arities, e.g., we can also generate [visitor2], [iter2],
+   [map2]. Our naming scheme is as follows. *)
+
+let scheme (arity : int) (c : classe) : classe =
+  if arity = 1 then
+    (* No need for the suffix [1]. *)
+    c
+  else
+    sprintf "%s%d" c arity
 
 (* For every type constructor [tycon], there is a visitor method, also called
    a descending method, as it is invoked when going down into the tree. *)
@@ -140,10 +151,21 @@ let ty_env : core_type =
 let penv : pattern =
   Pat.constraint_ (pvar env) ty_env
 
+(* We sometimes need two (or more) copies of a variable, one for each
+   side (at arities greater than 1). *)
+
+let copy (side : int) (arity : int) (x : string) : string =
+  assert (0 <= side && side < arity);
+  if arity = 1 then
+    (* No alteration required. *)
+    x
+  else
+    sprintf "%s_%d" x side
+
 (* The variables [component i] denote tuple components. *)
 
 let component (i : int) : variable =
-  Printf.sprintf "c%d" i
+  sprintf "c%d" i
 
 let components (xs : _ list) : variable list =
   mapi (fun i _ -> component i) xs
@@ -151,12 +173,12 @@ let components (xs : _ list) : variable list =
 (* The variable [thing tycon] denotes a record of type [tycon]. *)
 
 let thing (tycon : tycon) : variable =
-  Printf.sprintf "_%s" tycon
+  sprintf "_%s" tycon
 
 (* The variables [field label] denote record fields. *)
 
 let field (label : label) : variable =
-  Printf.sprintf "f%s" label
+  sprintf "f%s" label
 
 let fields (labels : label list) : variable list =
   map field labels
@@ -164,7 +186,7 @@ let fields (labels : label list) : variable list =
 (* The variables [result i] denote results of recursive calls. *)
 
 let result (i : int) : variable =
-  Printf.sprintf "r%d" i
+  sprintf "r%d" i
 
 let results (xs : _ list) : variable list =
   mapi (fun i _ -> result i) xs
