@@ -7,6 +7,7 @@ open Parsetree
 (* -------------------------------------------------------------------------- *)
 
 type tycon = string
+type tyvar = string
 
 (* -------------------------------------------------------------------------- *)
 
@@ -32,15 +33,29 @@ let local (decls : type_declaration list) : tycon list =
   List.map (fun decl -> decl.ptype_name.txt) decls
 
 (* [is_local decls tycon] tests whether the type constructor [tycon] is
-   declared by the type declarations [decls]. *)
+   declared by the type declarations [decls]. If so, it returns the list
+   of its formal type parameters. *)
 
-let is_local (decls : type_declaration list) (tycon : tycon) : bool =
-  List.exists (fun decl -> decl.ptype_name.txt = tycon) decls
+let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list option =
+  match decls with
+  | [] ->
+      None
+  | decl :: decls ->
+      if decl.ptype_name.txt = tycon then
+        let extract : core_type * variance -> tyvar =
+          fun (ty, _) ->
+            match ty.ptyp_desc with
+            | Ptyp_var tv -> tv
+            | _ -> assert false
+        in
+        Some (List.map extract decl.ptype_params)
+      else
+        is_local decls tycon
 
-let is_local (decls : type_declaration list) (tycon : Longident.t) : bool =
+let is_local (decls : type_declaration list) (tycon : Longident.t) : tyvar list option =
   match tycon with
   | Lident tycon ->
       is_local decls tycon
   | Ldot _
   | Lapply _ ->
-      false
+      None

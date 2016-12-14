@@ -18,15 +18,37 @@ let plugin =
 (* No options are supported. *)
 
 let parse_options options =
-  options |> iter (fun (name, expr) ->
-    match name with
-    | _ ->
-       raise_errorf
-         ~loc:expr.pexp_loc
-         "%s does not support option %s"
-         plugin
-         name
-  )
+  iter (fun (o, e) ->
+    let loc = e.pexp_loc in
+    raise_errorf ~loc "%s: option %s is not supported." plugin o
+  ) options
+
+(* -------------------------------------------------------------------------- *)
+
+(* We support parameterized type declarations, we require them to be regular.
+   That is, for instance, if a type ['a term] is being defined, then every
+   use of [_ term] in the definition should be ['a term]; it cannot be, say,
+   [int term] or [('a * 'a) term]. *)
+
+(* To enforce this, we check that, in every use of a local type constructor,
+   the actual type parameters coincide with the formal type parameters. *)
+
+let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list) =
+  (* Check that the numbers of parameters match. *)
+  if List.length formals <> List.length actuals then
+    raise_errorf ~loc
+      "%s: the type constructor %s expects %s,\n\
+       but is applied to %s."
+      plugin tycon
+      (number (List.length formals) "type parameter")
+      (number (List.length actuals) "type parameter");
+  (* Check that the parameters match. *)
+  if not (
+    List.fold_left2 (fun ok formal actual ->
+      ok && actual.ptyp_desc = Ptyp_var formal
+    ) true formals actuals
+  ) then
+    raise_errorf ~loc "%s: the type constructor %s is irregular." plugin tycon
 
 (* -------------------------------------------------------------------------- *)
 
@@ -213,27 +235,30 @@ let rec visit_type (ty : core_type) : expression =
 
   (* A type constructor [tycon] applied to type parameters [tys]. *)
   | { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
-      if is_local Current.decls tycon then begin
-        (* [tycon] is a local type constructor. Return the visitor method
-           associated with [tycon], applied to the environment [env].
-           Contrary to the nonlocal case (below), this method must not be
-           applied to the visitor functions associated with [tys]. *)
-        (* TEMPORARY check that [tys] are just the formal parameters of [tycon];
-           otherwise, issue an error *)
-        send self
-          (tycon_visitor_method tycon)
-          [evar env]
-      end
-      else begin
-        (* [tycon] is a nonlocal type constructor. Declare a virtual method for
-           it. We rely on the fact that it is permitted for a virtual method to
-           be declared several times. *)
-        generate cvisitor (virtual_method (tycon_visitor_method tycon));
-        (* Return the visitor method associated with [tycon], applied to the
-           visitor functions associated with [tys] and to [env]. *)
-        send self
-          (tycon_visitor_method tycon)
-          (map lambda_env_visit_type tys @ [evar env])
+      begin match is_local Current.decls tycon with
+      | Some formals ->
+          (* [tycon] is a local type constructor, whose formal type parameters
+             are [formals]. *)
+          (* Check that [tys] and [formals] coincide. If they do not, we cannot
+             handle this type declaration. *)
+          check_regularity ty.ptyp_loc (last tycon) formals tys;
+          (* Return the visitor method associated with [tycon], applied to the
+             environment [env]. Contrary to the nonlocal case (below), this
+             method must not be applied to the visitor functions associated with
+             [tys]. *)
+          send self
+            (tycon_visitor_method tycon)
+            [evar env]
+      | None ->
+          (* [tycon] is a nonlocal type constructor. Declare a virtual method for
+             it. We rely on the fact that it is permitted for a virtual method to
+             be declared several times. *)
+          generate cvisitor (virtual_method (tycon_visitor_method tycon));
+          (* Return the visitor method associated with [tycon], applied to the
+             visitor functions associated with [tys] and to [env]. *)
+          send self
+            (tycon_visitor_method tycon)
+            (map lambda_env_visit_type tys @ [evar env])
       end
 
   (* A type variable [tv] is treated like a nonlocal type constructor. *)
@@ -257,11 +282,9 @@ let rec visit_type (ty : core_type) : expression =
       plambda (ptuple (pvars xs)) (tuple es)
 
   (* An unsupported construct. *)
-  | { ptyp_loc; _ } ->
-      raise_errorf
-        ~loc:ptyp_loc
-        "%s cannot be derived for %s"
-        plugin
+  | _ ->
+      let loc = ty.ptyp_loc in
+      raise_errorf ~loc "%s: cannot deal with the type %s." plugin
         (string_of_core_type ty)
 
 and lambda_env_visit_type ty =
@@ -370,12 +393,14 @@ let visit_decl (decl : type_declaration) : expression =
          body, whose formal parameter is anonymous. *)
       Exp.function_ (map constructor_declaration cds)
 
-  (* An unsupported construct. *)
-  | _ ->
-      raise_errorf
-        ~loc:decl.ptype_loc
-        "%s cannot be derived for this sort of type"
-        plugin
+  (* Unsupported constructs. *)
+  | Ptype_abstract, None ->
+      let loc = decl.ptype_loc in
+      raise_errorf ~loc "%s: cannot deal with abstract types." plugin
+
+  | Ptype_open, _ ->
+      let loc = decl.ptype_loc in
+      raise_errorf ~loc "%s: cannot deal with open types." plugin
 
 (* -------------------------------------------------------------------------- *)
 
@@ -425,10 +450,8 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
    one method in order to obtain a nontrivial visitor.) *)
 
 let disallowed ty =
-  raise_errorf
-    ~loc:ty.ptyp_loc
-    "The syntax [%%derive.%s] is disallowed."
-    plugin
+  let loc = ty.ptyp_loc in
+  raise_errorf ~loc "%s: the syntax [%%derive.%s] is disallowed." plugin plugin
 
 (* -------------------------------------------------------------------------- *)
 
