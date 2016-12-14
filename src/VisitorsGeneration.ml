@@ -41,6 +41,11 @@ let pvars (xs : variable list) : pattern list =
 let evars (xs : variable list) : expression list =
   List.map (fun x -> evar x) xs
 
+(* [pvarss] converts a matrix of variables to a matrix of patterns. *)
+
+let pvarss (xss : variable list list) : pattern list list =
+  List.map pvars xss
+
 (* [evarss] converts a matrix of variables to a matrix of expressions. *)
 
 let evarss (xss : variable list list) : expression list list =
@@ -131,6 +136,18 @@ let access (x : variable) (label : label) : expression =
 
 let accesses (x : variable) (labels : label list) : expression list =
   List.map (access x) labels
+
+(* -------------------------------------------------------------------------- *)
+
+(* [ptuple] is [Ast_convenience.ptuple], deprived of its optional arguments. *)
+
+let ptuple (ps : pattern list) : pattern =
+  ptuple ps
+
+(* [ptuples] is [map ptuple]. *)
+
+let ptuples (pss : pattern list list) : pattern list =
+  List.map ptuple pss
 
 (* -------------------------------------------------------------------------- *)
 
