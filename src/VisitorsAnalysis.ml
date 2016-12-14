@@ -26,12 +26,6 @@ let ld_ty (ld : label_declaration) : core_type =
 let ld_tys =
   List.map ld_ty
 
-(* [local decls] extracts the list of type constructors that are declared by
-   the type declarations [decls]. *)
-
-let local (decls : type_declaration list) : tycon list =
-  List.map (fun decl -> decl.ptype_name.txt) decls
-
 (* [is_local decls tycon] tests whether the type constructor [tycon] is
    declared by the type declarations [decls]. If so, it returns the list
    of its formal type parameters. *)
