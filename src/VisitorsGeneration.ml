@@ -36,7 +36,7 @@ let number i s =
 let pvars (xs : variable list) : pattern list =
   List.map (fun x -> pvar x) xs
 
-(* [evars] converts a list of expressions to a list of patterns. *)
+(* [evars] converts a list of variables to a list of expressions. *)
 
 let evars (xs : variable list) : expression list =
   List.map (fun x -> evar x) xs
