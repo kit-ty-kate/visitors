@@ -195,7 +195,25 @@ let results (xs : _ list) : variable list =
 
 (* Per-run global state. *)
 
-module Run (Current : sig val decls : type_declaration list end) = struct
+module Run (X : sig
+
+  (* The type declarations that we are processing. *)
+  val decls : type_declaration list
+
+  (* The arity of the generated code, e.g., 1 if one wishes to generate [visitor],
+     [iter] and [map], 2 if one wishes to generate [visitor2], [iter2] and [map2],
+     and so on. *)
+  val arity: int
+
+end) = struct
+
+let is_local =
+  is_local X.decls
+
+let cvisitor, citer, cmap =
+  scheme X.arity cvisitor,
+  scheme X.arity citer,
+  scheme X.arity cmap
 
 (* As we generate several classes at the same time, we maintain, for each
    generated class, a list of methods that we generate as we go. The following
@@ -257,7 +275,7 @@ let rec visit_type (ty : core_type) : expression =
 
   (* A type constructor [tycon] applied to type parameters [tys]. *)
   | { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
-      begin match is_local Current.decls tycon with
+      begin match is_local tycon with
       | Some formals ->
           (* [tycon] is a local type constructor, whose formal type parameters
              are [formals]. *)
@@ -450,7 +468,7 @@ end
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  let module R = Run(struct let decls = decls end) in
+  let module R = Run(struct let decls = decls let arity = 1 end) in
   (* Generate [inherit] clauses for the subclasses. *)
   let actuals = [ ty_self; ty_env ] in
   R.generate citer (inherit_ cvisitor actuals);
