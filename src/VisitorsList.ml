@@ -31,7 +31,7 @@ let transpose (xss : 'a list list) : 'a list list =
   assert (is_matrix m n xss);
   (* Convert [xss] to an array, for speed. *)
   let xss : 'a array array =
-    Array.map Array.of_list (Array.of_list xss)
+    Array.(map of_list (of_list xss))
   in
   (* We have an [m]-by-[n] matrix, and construct an [n]-by-[m] matrix. *)
   init 0 n (fun j ->
