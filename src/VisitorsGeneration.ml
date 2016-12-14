@@ -18,6 +18,19 @@ type tyvar = string
 
 (* -------------------------------------------------------------------------- *)
 
+(* [number i thing] constructs an English description of "[i] thing(s)". *)
+
+let number i s =
+  match i with
+  | 0 ->
+      Printf.sprintf "zero %s" s
+  | 1 ->
+      Printf.sprintf "one %s" s
+  | _ ->
+      Printf.sprintf "%d %ss" i s
+
+(* -------------------------------------------------------------------------- *)
+
 (* [pvars] converts a list of variables to a list of patterns. *)
 
 let pvars (xs : variable list) : pattern list =
