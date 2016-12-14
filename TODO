@@ -10,6 +10,8 @@ Maybe iter and map should not inherit from visitor; the user could mix
 
 Reproduce everything at arity 2 (visitor2, iter2, map2).
 
+Deal with abstract types just as if they were nonlocal.
+
 Optionally deal with builtin types.
 
 Think about compositionality.
