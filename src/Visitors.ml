@@ -1,11 +1,12 @@
+open Longident
 open List
 let sprintf = Printf.sprintf
-open Longident
 open Asttypes
 open Parsetree
 open Ast_helper
 open Ast_convenience
 open Ppx_deriving
+open VisitorsList
 open VisitorsAnalysis
 open VisitorsGeneration
 
@@ -36,16 +37,16 @@ let parse_options options =
 
 let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list) =
   (* Check that the numbers of parameters match. *)
-  if List.length formals <> List.length actuals then
+  if length formals <> length actuals then
     raise_errorf ~loc
       "%s: the type constructor %s expects %s,\n\
        but is applied to %s."
       plugin tycon
-      (number (List.length formals) "type parameter")
-      (number (List.length actuals) "type parameter");
+      (number (length formals) "type parameter")
+      (number (length actuals) "type parameter");
   (* Check that the parameters match. *)
   if not (
-    List.fold_left2 (fun ok formal actual ->
+    fold_left2 (fun ok formal actual ->
       ok && actual.ptyp_desc = Ptyp_var formal
     ) true formals actuals
   ) then
@@ -53,29 +54,57 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
 
 (* -------------------------------------------------------------------------- *)
 
+(* Per-run global state. *)
+
+module Run (X : sig
+
+  (* The type declarations that we are processing. *)
+  val decls : type_declaration list
+
+  (* The arity of the generated code, e.g., 1 if one wishes to generate [visitor],
+     [iter] and [map], 2 if one wishes to generate [visitor2], [iter2] and [map2],
+     and so on. *)
+  val arity: int
+
+end) = struct
+
+let is_local =
+  is_local X.decls
+
+let arity =
+  X.arity
+
+(* As we generate several classes at the same time, we maintain, for each
+   generated class, a list of methods that we generate as we go. The following
+   line brings [generate] and [dump] into scope. *)
+
+include ClassFieldStore(struct end)
+
+(* -------------------------------------------------------------------------- *)
+
 (* Public naming conventions. *)
-
-(* We generate three classes: a [visitor] base class and two subclasses, [iter]
-   and [map]. *)
-
-let cvisitor : classe =
-  "visitor"
-
-let citer : classe =
-  "iter"
-
-let cmap : classe =
-  "map"
 
 (* We support multiple arities, e.g., we can also generate [visitor2], [iter2],
    [map2]. Our naming scheme is as follows. *)
 
-let scheme (arity : int) (c : classe) : classe =
+let scheme (c : classe) : classe =
   if arity = 1 then
     (* No need for the suffix [1]. *)
     c
   else
     sprintf "%s%d" c arity
+
+(* We generate three classes: a [visitor] base class and two subclasses, [iter]
+   and [map]. *)
+
+let cvisitor : classe =
+  scheme "visitor"
+
+let citer : classe =
+  scheme "iter"
+
+let cmap : classe =
+  scheme "map"
 
 (* For every type constructor [tycon], there is a visitor method, also called
    a descending method, as it is invoked when going down into the tree. *)
@@ -120,6 +149,13 @@ let datacon_ascending_method (datacon : datacon) : methode =
 let record_ascending_method (tycon : tycon) : methode =
   "build_" ^ tycon
 
+(* At arity 2, for every sum type constructor [tycon] which has at least two
+   data constructors, there is a failure method, which is invoked when the
+   left-hand and right-hand arguments do not exhibit the same tags. *)
+
+let failure_method (tycon : tycon) : methode =
+  "fail_" ^ tycon
+
 (* -------------------------------------------------------------------------- *)
 
 (* Private naming conventions. *)
@@ -151,37 +187,47 @@ let ty_env : core_type =
 let penv : pattern =
   Pat.constraint_ (pvar env) ty_env
 
-(* We sometimes need two (or more) copies of a variable, one for each
-   side (at arities greater than 1). *)
+(* We sometimes need two (or more) copies of a variable: one copy for each
+   index [j] ranging in the interval [0..arity). *)
 
-let copy (side : int) (arity : int) (x : string) : string =
-  assert (0 <= side && side < arity);
+let copy (j : int) (x : string) : string =
+  assert (0 <= j && j < arity);
   if arity = 1 then
     (* No alteration required. *)
     x
   else
-    sprintf "%s_%d" x side
+    sprintf "%s_%d" x j
 
-(* The variables [component i] denote tuple components. *)
+(* The variables [component i j] denote tuple components. The index [i]
+   ranges over tuple components; the index [j] ranges in [0..arity). *)
 
-let component (i : int) : variable =
-  sprintf "c%d" i
+let component (i : int) (j : int) : variable =
+  copy j (sprintf "c%d" i)
 
-let components (xs : _ list) : variable list =
-  mapi (fun i _ -> component i) xs
+let components (i : int) : variable list =
+  map (component i) (interval 0 arity)
 
-(* The variable [thing tycon] denotes a record of type [tycon]. *)
+let componentss (xs : _ list) : variable list list =
+  mapi (fun i _ -> components i) xs
 
-let thing (tycon : tycon) : variable =
-  sprintf "_%s" tycon
+(* The variable [thing tycon j] denotes a value of type [tycon]. *)
 
-(* The variables [field label] denote record fields. *)
+let thing (tycon : tycon) (j : int) : variable =
+  copy j (sprintf "_%s" tycon)
 
-let field (label : label) : variable =
-  sprintf "f%s" label
+let things (tycon : tycon) : variable list =
+  map (thing tycon) (interval 0 arity)
 
-let fields (labels : label list) : variable list =
-  map field labels
+(* The variables [field label j] denote record fields. *)
+
+let field (label : label) (j : int) : variable =
+  copy j (sprintf "f%s" label)
+
+let fields (label : label) : variable list =
+  map (field label) (interval 0 arity)
+
+let fieldss (labels : label list) : variable list list =
+  map fields labels
 
 (* The variables [result i] denote results of recursive calls. *)
 
@@ -190,36 +236,6 @@ let result (i : int) : variable =
 
 let results (xs : _ list) : variable list =
   mapi (fun i _ -> result i) xs
-
-(* -------------------------------------------------------------------------- *)
-
-(* Per-run global state. *)
-
-module Run (X : sig
-
-  (* The type declarations that we are processing. *)
-  val decls : type_declaration list
-
-  (* The arity of the generated code, e.g., 1 if one wishes to generate [visitor],
-     [iter] and [map], 2 if one wishes to generate [visitor2], [iter2] and [map2],
-     and so on. *)
-  val arity: int
-
-end) = struct
-
-let is_local =
-  is_local X.decls
-
-let cvisitor, citer, cmap =
-  scheme X.arity cvisitor,
-  scheme X.arity citer,
-  scheme X.arity cmap
-
-(* As we generate several classes at the same time, we maintain, for each
-   generated class, a list of methods that we generate as we go. The following
-   line brings [generate] and [dump] into scope. *)
-
-include ClassFieldStore(struct end)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -310,16 +326,18 @@ let rec visit_type (ty : core_type) : expression =
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
-      (* Construct a function. In the case of tuples, as opposed to data
-         constructors, we do not call an ascending method, as we would need
-         one method name per tuple type, and that would be messy. Instead, we
-         make the most general choice of ascending computation, which is to
-         rebuild a tuple on the way up. Fortunately, this should always be
-         well-typed, I believe. We do not need a descending method either
-         because there is no case analysis. *)
-      let xs = components tys in
-      let es = visit_types tys (evars xs) in
-      plambda (ptuple (pvars xs)) (tuple es)
+      (* Construct a function that takes [arity] tuples as arugments. *)
+      (* In the case of tuples, as opposed to data constructors, we do not
+         call an ascending method, as we would need one method name per tuple
+         type, and that would be messy. Instead, we make the most general
+         choice of ascending computation, which is to rebuild a tuple on the
+         way up. Fortunately, this should always be well-typed, I believe. We
+         do not need a descending method either because there is no case
+         analysis. *)
+      let xss = componentss tys in
+      plambdas
+        (ptuples (transpose arity (pvarss xss)))
+        (tuple (visit_types tys (evarss xss)))
 
   (* An unsupported construct. *)
   | _ ->
@@ -330,8 +348,14 @@ let rec visit_type (ty : core_type) : expression =
 and lambda_env_visit_type ty =
   lambda env (visit_type ty)
 
-and visit_types tys es =
-  map2 app1 (map visit_type tys) es
+and visit_types tys (ess : expression list list) : expression list =
+  (* The matrix [ess] is indexed first by component, then by index [j].
+     Thus, to each type [ty], corresponds a row [es] of expressions,
+     whose length is [arity]. *)
+  assert (is_matrix (length tys) arity ess);
+  map2 (fun ty es ->
+    app (visit_type ty) es
+  ) tys ess
 
 (* -------------------------------------------------------------------------- *)
 
@@ -349,48 +373,58 @@ let constructor_declaration (cd : constructor_declaration) : case =
 
   (* In order to treat these two cases uniformly, we extract the following
      information.
-     [xs]       the names under which the components are known.
-     [tys]      the types of the components
-     [ps]       the patterns that bind [xs], on the way down
-     [build]    the expressions that rebuild a data constructor, on the way up
+     [xss]      the names under which the components are known.
+                this matrix has [length tys] rows -- one per component --
+                and [arity] columns.
+     [tys]      the types of the components.
+     [pss]      the patterns that bind [xss], on the way down.
+                this matrix has [arity] rows.
+                it has [length tys] columns in the case of tuples,
+                and 1 column in the case of inline records.
+     [build]    the expressions that rebuild a data constructor, on the way up.
   *)
 
-  let xs, tys, ps, (build : variable list -> expression list) =
+  let xss, tys, pss, (build : variable list -> expression list) =
   match cd.pcd_args with
     (* A traditional data constructor. *)
     | Pcstr_tuple tys ->
-        let xs = components tys in
-        xs, tys, pvars xs, evars
+        let xss = componentss tys in
+        let pss = transpose arity (pvarss xss) in
+        xss, tys, pss, evars
     (* An ``inline record'' data constructor. *)
     | Pcstr_record lds ->
         let labels, tys = ld_labels lds, ld_tys lds in
-        let xs = fields labels in
-        xs, tys,
-        [precord ~closed:Closed (combine labels (pvars xs))],
+        let xss = fieldss labels in
+        let pss = transpose arity (pvarss xss) in
+        xss, tys,
+        map (fun ps -> [precord ~closed:Closed (combine labels ps)]) pss,
         fun rs -> [record (combine labels (evars rs))]
   in
+  assert (is_matrix (length tys) arity xss);
+  assert (length pss = arity);
 
   (* Get the name of this data constructor. *)
   let datacon = cd.pcd_name.txt in
   (* Create new names [rs] for the results of the recursive calls of visitor
-     methods on the components [xs]. *)
-  let rs = results xs in
+     methods. *)
+  let rs = results xss in
 
   (* Construct a case for this data constructor in the visitor method
-     associated with this sum type. After binding the components [xs], we call
-     the descending method associated with this data constructor, with
-     arguments [env] and [xs]. This method is implemented in the [visitor]
-     class. It binds the variables [rs] to the results of the recursive calls
-     to visitor methods, then calls the ascending method associated with this
-     data constructor, with arguments [rs]. This method is declared in the
-     [visitor] class and implemented in the subclasses [iter] and [map]. In
-     the subclass [iter], it always returns a unit value. In the subclass
-     [map], it reconstructs a tree node. *)
+     associated with this sum type. This case analyzes a tuple of width
+     [arity]. After binding the components [xss], we call the descending
+     method associated with this data constructor, with arguments [env] and
+     [xss]. This method is implemented in the [visitor] class. It binds the
+     variables [rs] to the results of the recursive calls to visitor methods,
+     then calls the ascending method associated with this data constructor,
+     with arguments [rs]. This method is declared in the [visitor] class and
+     implemented in the subclasses [iter] and [map]. In the subclass [iter],
+     it always returns a unit value. In the subclass [map], it reconstructs a
+     tree node. *)
   Exp.case
-    (pconstr datacon ps)
-    (hook (datacon_descending_method datacon) (env :: xs)
+    (ptuple (map (pconstr datacon) pss))
+    (hook (datacon_descending_method datacon) (env :: flatten xss)
        (letn
-          rs (visit_types tys (evars xs))
+          rs (visit_types tys (evarss xss))
           (hooks (datacon_ascending_method datacon) rs
             (unit())
             (constr datacon (build rs))
@@ -405,6 +439,12 @@ let constructor_declaration (cd : constructor_declaration) : case =
    the body of the visitor method associated with [decl]. *)
 
 let visit_decl (decl : type_declaration) : expression =
+
+  (* Bind the values to a vector of variables [xs]. *)
+  let tycon = decl.ptype_name.txt in
+  let xs = things tycon in
+  assert (length xs = arity);
+
   match decl.ptype_kind, decl.ptype_manifest with
 
   (* A type abbreviation. *)
@@ -414,13 +454,10 @@ let visit_decl (decl : type_declaration) : expression =
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
       let labels, tys = ld_labels lds, ld_tys lds in
-      (* Bind the record to a variable [x]. *)
-      let tycon = decl.ptype_name.txt in
-      let x = thing tycon in
       (* See [constructor_declaration] for comments. *)
-      lambda x (
+      lambdas xs (
         let rs = results labels in
-        letn rs (visit_types tys (accesses x labels))
+        letn rs (visit_types tys (accesses xs labels))
           (hooks (record_ascending_method tycon) rs
             (unit())
             (record (combine labels (evars rs)))
@@ -429,9 +466,28 @@ let visit_decl (decl : type_declaration) : expression =
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->
-      (* Generate one case per constructor, and place them in a function
-         body, whose formal parameter is anonymous. *)
-      Exp.function_ (map constructor_declaration cds)
+      (* Generate one case per data constructor. Place these cases in a
+         [match] construct, which itself is placed in a function body. *)
+      (* If [arity] is greater than 1 and if there is more than one data
+         constructor, then generate also a default case. In this default
+         case, invoke the failure method, which raises an exception. The
+         failure method receives [env] and [xs] as arguments. *)
+      let default() : case =
+        Exp.case
+          (ptuple (pvars xs))
+          (hook (failure_method tycon) (env :: xs)
+            (* This method ignores its arguments, which can cause warnings. *)
+            (efail (tycon_visitor_method (Lident tycon)))
+          )
+      in
+      let complete (cs : case list) : case list =
+        if arity = 1 || length cs <= 1 then cs else cs @ [ default() ]
+      in
+      lambdas xs (
+        Exp.match_
+          (tuple (evars xs))
+          (complete (map constructor_declaration cds))
+      )
 
   (* Unsupported constructs. *)
   | Ptype_abstract, None ->
@@ -458,28 +514,38 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decls decls] produces structure items (that is, toplevel definitions)
-   associated with the type declarations [decls]. *)
+(* [type_decls arity decls] produces a list of structure items (that is,
+   toplevel definitions) associated with the type declarations [decls] at
+   arity [arity]. *)
 
 (* Our classes are parameterized over the type variable ['env]. They are also
    parameterized over the type variable ['self], with a constraint that this
    is the type of [self]. This trick allows us to omit the types of the
    virtual methods, even if these types include type variables. *)
 
-let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
-  parse_options options;
-  let module R = Run(struct let decls = decls let arity = 1 end) in
+let type_decls (arity : int) (decls : type_declaration list) : structure =
+  let module R = Run(struct let decls = decls let arity = arity end) in
+  let open R in
   (* Generate [inherit] clauses for the subclasses. *)
   let actuals = [ ty_self; ty_env ] in
-  R.generate citer (inherit_ cvisitor actuals);
-  R.generate cmap  (inherit_ cvisitor actuals);
+  generate citer (inherit_ cvisitor actuals);
+  generate cmap  (inherit_ cvisitor actuals);
   (* Analyze the type definitions, and populate our classes with methods. *)
-  iter R.type_decl decls;
+  iter type_decl decls;
   (* Produce class definitions. *)
   let formals = [ ty_self, Invariant; ty_env, Invariant ] in
-  List.map
-    (fun c -> class1 formals c pself (R.dump c))
+  map
+    (fun c -> class1 formals c pself (dump c))
     [ cvisitor; citer; cmap ]
+
+(* [type_decls arity decls] produces a list of structure items (that is,
+   toplevel definitions) associated with the type declarations [decls]. *)
+
+let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
+  parse_options options;
+  (* Generate classes at arity 1 and 2. *)
+  type_decls 1 decls @
+  type_decls 2 decls
 
 (* -------------------------------------------------------------------------- *)
 

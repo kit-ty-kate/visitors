@@ -132,10 +132,12 @@ let letn (xs : variable list) (es : expression list) (e : expression) =
 let access (x : variable) (label : label) : expression =
   Exp.field (evar x) (mknoloc (Lident label))
 
-(* [accesses x labels] constructs a list of record access expressions. *)
+(* [accesses labels xs] constructs a matrix of record access expressions of
+   the form [x.label]. There is a row for every [label] and a column for every
+   [x]. *)
 
-let accesses (x : variable) (labels : label list) : expression list =
-  List.map (access x) labels
+let accesses (xs : variable list) (labels : label list) : expression list list =
+  List.map (fun label -> List.map (fun x -> access x label) xs) labels
 
 (* -------------------------------------------------------------------------- *)
 
@@ -148,6 +150,25 @@ let ptuple (ps : pattern list) : pattern =
 
 let ptuples (pss : pattern list list) : pattern list =
   List.map ptuple pss
+
+(* -------------------------------------------------------------------------- *)
+
+(* [estring s] constructs a string constant. *)
+
+let estring (s : string) : expression =
+  Exp.constant (Const.string s)
+
+(* [eraise e] constructs an application of [raise]. *)
+
+let eraise (e : expression) : expression =
+  app (evar "Pervasives.raise") [e]
+    (* dangerous: [Pervasives] could be shadowed *)
+
+(* [efail s] constructs an expression of the form [raise (Failure "s")]. *)
+
+let efail (s : string) : expression =
+  eraise (constr "Failure" [ estring s ])
+    (* dangerous: [Failure] could be shadowed *)
 
 (* -------------------------------------------------------------------------- *)
 
