@@ -20,14 +20,13 @@ let init i j (f : int -> 'a) : 'a list =
 let is_matrix m n (xss : _ list list) =
   length xss = m && for_all (fun xs -> length xs = n) xss
 
-(* [transpose xss] transposes a matrix, represented as a list of lists. *)
+(* [transpose n xss] transposes a matrix, represented as a list of lists.
+   The parameter [n] is the width of the matrix, and is really useful only
+   in the case where the matrix has zero height, in which case [transpose]
+   constructs a matrix of height [n] and zero width. *)
 
-let transpose (xss : 'a list list) : 'a list list =
+let transpose (n : int) (xss : 'a list list) : 'a list list =
   let m = length xss in
-  (* [m] must be nonzero, otherwise [n] is undefined and we can't know
-     what the length of the output list should be. *)
-  assert (m > 0);
-  let n = length (hd xss) in
   assert (is_matrix m n xss);
   (* Convert [xss] to an array, for speed. *)
   let xss : 'a array array =
