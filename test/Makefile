@@ -1,6 +1,7 @@
 TARGET := \
   test.native \
   lambda.native \
+#  cil_types.native \
 
 OCAMLBUILD_FLAGS := \
   -use-ocamlfind \
@@ -10,17 +11,17 @@ OCAMLBUILD_FLAGS := \
 .PHONY: test infer clean
 
 test:
-	make -C ../src uninstall || true
-	make -C ../src install
-	ocamlbuild $(OCAMLBUILD_FLAGS) $(TARGET)
-	./$(TARGET)
+	@ make -C ../src uninstall || true
+	@ make -C ../src install
+	@ ocamlbuild $(OCAMLBUILD_FLAGS) $(TARGET)
+	@ for i in $(TARGET) ; do echo "Running $$i..." && ./$$i ; done
 
 infer:
-	make -C ../src uninstall || true
-	make -C ../src install
-	ocamlbuild $(OCAMLBUILD_FLAGS) test.inferred.mli
-	cat _build/test.inferred.mli
+	@ make -C ../src uninstall || true
+	@ make -C ../src install
+	@ ocamlbuild $(OCAMLBUILD_FLAGS) test.inferred.mli
+	@ cat _build/test.inferred.mli
 
 clean:
-	rm -f *~
-	ocamlbuild $(OCAMLBUILD_FLAGS) -clean
+	@ rm -f *~
+	@ ocamlbuild $(OCAMLBUILD_FLAGS) -clean
