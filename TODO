@@ -1,5 +1,14 @@
 TODO
 
+Optionally deal with builtin types.
+  Requires a runtime library.
+
+Test on the Frama-C AST.
+
+Allow nonlocal parameterized types to be instantiated at will?
+  That would require using multiple monomorphic methods (with identical code!)
+  or perhaps a polymorphic method (unlikely).
+
 Document everything.
 
 Modify ClassFieldStore.generate to avoid producing multiple declarations
@@ -16,9 +25,6 @@ Maybe use our own exception, instead of Failure.
   Requires a runtime library.
 
 Deal with abstract types just as if they were nonlocal.
-
-Optionally deal with builtin types.
-  Requires a runtime library.
 
 Think about compositionality.
   By multiple inheritance?
