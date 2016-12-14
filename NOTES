@@ -55,7 +55,7 @@ would be workable. (It would require defining a naming scheme, which would be
 slightly unpleasant for us.) This approach is not applicable to local type
 constructors, as it would lead to an infinite amount of duplication.
 
-What needs to be done in the less ambitious approach?
+In the less ambitious approach, what needs to be done?
 
 * when hitting a type constructor, test if it is local
   - if it is local, then treat it as if it were *not* parameterized,
@@ -66,4 +66,4 @@ What needs to be done in the less ambitious approach?
 * when hitting a type variable, declare and invoke a virtual visitor
   method for it
 
-I believe that is all...?
+I believe that is all.

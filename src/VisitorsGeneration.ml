@@ -14,6 +14,7 @@ type datacon = string
 type label = string
 type classe = string
 type methode = string
+type tyvar = string
 
 (* -------------------------------------------------------------------------- *)
 

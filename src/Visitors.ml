@@ -58,6 +58,13 @@ let tycon_visitor_method (tycon : Longident.t) : methode =
      prefix. *)
   "visit_" ^ last tycon
 
+(* Type variables are treated as nonlocal type constructors, so they also have
+   a descending method. We include a quote in the method name so as to ensure
+   the absence of collisions. *)
+
+let tyvar_visitor_method (tv : tyvar) : methode =
+  "visit_'" ^ tv
+
 (* For every data constructor [datacon], there is a descending visitor method,
    which is invoked on the way down, when this data constructor is discovered. *)
 
@@ -206,17 +213,35 @@ let rec visit_type (ty : core_type) : expression =
 
   (* A type constructor [tycon] applied to type parameters [tys]. *)
   | { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
-     (* Check if this is a local type constructor. If not, declare a virtual
-        method for it. We rely on the fact that it is permitted for a virtual
-        method to be declared several times. *)
-      if not (is_local Current.decls tycon) then
+      if is_local Current.decls tycon then begin
+        (* [tycon] is a local type constructor. Return the visitor method
+           associated with [tycon], applied to the environment [env].
+           Contrary to the nonlocal case (below), this method must not be
+           applied to the visitor functions associated with [tys]. *)
+        (* TEMPORARY check that [tys] are just the formal parameters of [tycon];
+           otherwise, issue an error *)
+        send self
+          (tycon_visitor_method tycon)
+          [evar env]
+      end
+      else begin
+        (* [tycon] is a nonlocal type constructor. Declare a virtual method for
+           it. We rely on the fact that it is permitted for a virtual method to
+           be declared several times. *)
         generate cvisitor (virtual_method (tycon_visitor_method tycon));
-      (* Return the visitor method associated with [tycon]. It must be applied
-         to the visitor functions associated with [tys] and to the environment
-         [env]. *)
+        (* Return the visitor method associated with [tycon], applied to the
+           visitor functions associated with [tys] and to [env]. *)
+        send self
+          (tycon_visitor_method tycon)
+          (map lambda_env_visit_type tys @ [evar env])
+      end
+
+  (* A type variable [tv] is treated like a nonlocal type constructor. *)
+  | { ptyp_desc = Ptyp_var tv; _ } ->
+      generate cvisitor (virtual_method (tyvar_visitor_method tv));
       send self
-        (tycon_visitor_method tycon)
-        (map lambda_env_visit_type tys @ [evar env])
+        (tyvar_visitor_method tv)
+        [evar env]
 
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
