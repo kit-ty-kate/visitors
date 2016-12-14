@@ -41,6 +41,11 @@ let pvars (xs : variable list) : pattern list =
 let evars (xs : variable list) : expression list =
   List.map (fun x -> evar x) xs
 
+(* [evarss] converts a matrix of variables to a matrix of expressions. *)
+
+let evarss (xss : variable list list) : expression list list =
+  List.map evars xss
+
 (* -------------------------------------------------------------------------- *)
 
 (* [wildcards] converts a list of anything to a list of wildcard patterns. *)
