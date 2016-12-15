@@ -10,12 +10,10 @@ open VisitorsList
 open VisitorsAnalysis
 open VisitorsGeneration
 
-(* -------------------------------------------------------------------------- *)
-
-(* General infrastructure. *)
-
 let plugin =
   "visitors"
+
+(* -------------------------------------------------------------------------- *)
 
 (* Option processing. *)
 
@@ -29,8 +27,22 @@ let plugin =
 let irregular =
   ref false
 
+(* The option [max], accompanied with an integer parameter, allows setting the
+   maximum arity up to which we generate code. If its value is 1, we generate
+   a class [visitor]; if its value is 2, we also generate a class [visitor2];
+   and so on. *)
+
+let max_arity =
+  ref 2
+
+let valid_max_arity (s : string) : bool =
+  try int_of_string s > 0 with Failure _ -> false
+
 let parse_options options =
+  (* The default values are specified here. *)
+  max_arity := 2;
   irregular := false;
+  (* Analysis. *)
   iter (fun (o, e) ->
     match o, e with
     | "irregular", { pexp_desc = Pexp_construct ({ txt = Lident "true"; _}, None) ; _ } ->
@@ -40,6 +52,12 @@ let parse_options options =
     | "irregular", _ ->
         let loc = e.pexp_loc in
         raise_errorf ~loc "%s: option %s expects a Boolean value." plugin o
+    | "max", { pexp_desc = Pexp_constant (Pconst_integer (s, None)) ; _ }
+      when valid_max_arity s ->
+        max_arity := int_of_string s
+    | "max", _ ->
+        let loc = e.pexp_loc in
+        raise_errorf ~loc "%s: option %s expects a positive integer value." plugin o
     | _ ->
         let loc = e.pexp_loc in
         raise_errorf ~loc "%s: option %s is not supported." plugin o
@@ -534,7 +552,7 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decls arity decls] produces a list of structure items (that is,
+(* [type_decls decls arity] produces a list of structure items (that is,
    toplevel definitions) associated with the type declarations [decls] at
    arity [arity]. *)
 
@@ -543,7 +561,7 @@ end
    is the type of [self]. This trick allows us to omit the types of the
    virtual methods, even if these types include type variables. *)
 
-let type_decls (arity : int) (decls : type_declaration list) : structure =
+let type_decls (decls : type_declaration list) (arity : int) : structure =
   let module R = Run(struct let decls = decls let arity = arity end) in
   let open R in
   (* Generate [inherit] clauses for the subclasses. *)
@@ -563,9 +581,8 @@ let type_decls (arity : int) (decls : type_declaration list) : structure =
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  (* Generate classes at arity 1 and 2. *)
-  type_decls 1 decls @
-  type_decls 2 decls
+  (* Generate classes at arity 1, 2, ... up to [!max_arity]. *)
+  flatten (map (type_decls decls) (interval 1 (!max_arity + 1)))
 
 (* -------------------------------------------------------------------------- *)
 
