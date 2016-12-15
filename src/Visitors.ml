@@ -35,31 +35,22 @@ let irregular =
 let max_arity =
   ref 2
 
-let valid_max_arity (s : string) : bool =
-  try int_of_string s > 0 with Failure _ -> false
-
 let parse_options options =
+  let bool = Arg.get_expr ~deriver:plugin Arg.bool
+  and int = Arg.get_expr ~deriver:plugin Arg.int in
   (* The default values are specified here. *)
   max_arity := 2;
   irregular := false;
   (* Analysis. *)
   iter (fun (o, e) ->
-    match o, e with
-    | "irregular", { pexp_desc = Pexp_construct ({ txt = Lident "true"; _}, None) ; _ } ->
-        irregular := true
-    | "irregular", { pexp_desc = Pexp_construct ({ txt = Lident "false"; _}, None) ; _ } ->
-        ()
-    | "irregular", _ ->
-        let loc = e.pexp_loc in
-        raise_errorf ~loc "%s: option %s expects a Boolean value." plugin o
-    | "max", { pexp_desc = Pexp_constant (Pconst_integer (s, None)) ; _ }
-      when valid_max_arity s ->
-        max_arity := int_of_string s
-    | "max", _ ->
-        let loc = e.pexp_loc in
+    let loc = e.pexp_loc in
+    match o with
+    | "irregular" ->
+        irregular := bool e
+    | "max" ->
+        if 0 < int e then max_arity := int e else
         raise_errorf ~loc "%s: option %s expects a positive integer value." plugin o
     | _ ->
-        let loc = e.pexp_loc in
         raise_errorf ~loc "%s: option %s is not supported." plugin o
   ) options
 
