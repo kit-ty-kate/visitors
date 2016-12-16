@@ -66,4 +66,30 @@ In the less ambitious approach, what needs to be done?
 * when hitting a type variable, declare and invoke a virtual visitor
   method for it
 
-I believe that is all.
+------------------------------------------------------------------------------
+
+More on parameterized type declarations
+
+The Frama-C AST uses lists and options extensively. Also, when dealing with
+names and binders, I need to define a type 'a binder once and for all, and to
+use several instances of it in a single type definition. So, I need to allow
+multiple distinct instances of a (built-in or nonlocal) parameterized type.
+
+Duplicating methods and inventing names, like list_apple and list_orange,
+sounds unpleasant. (I note that one could avoid inventing names by requiring
+the user to provide a name in an attribute declaration, but that seems heavy,
+too.) Furthermore, in the subclasses [iter] and [map], each of the duplicate
+virtual methods needs to be manually overridden, it seems. This is not
+tolerable.
+
+In the case of ['a list], in the subclasses [iter] and [map], we can get away
+by not creating a method and directly invoking the polymorphic functions
+[List.iter] and [List.map]. Similarly for options. Similarly for a
+user-defined nonlocal type, such as ['a binder], provided we have a user
+annotation (or a uniform naming scheme) that gives us access to polymorphic
+functions [Binder.iter] and [Binder.map]. Unfortunately, I am not sure what to
+do about the base class, [visitor]. I could use the same trick that I imagined
+for tuples and just use [Binder.map] directly -- thus imposing that folding on
+a binder must reconstruct a binder. That might work but would be somewhat
+inefficient and unpleasant. I feel there is something that I still do not
+understand here...
