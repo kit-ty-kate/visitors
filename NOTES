@@ -93,3 +93,23 @@ for tuples and just use [Binder.map] directly -- thus imposing that folding on
 a binder must reconstruct a binder. That might work but would be somewhat
 inefficient and unpleasant. I feel there is something that I still do not
 understand here...
+
+------------------------------------------------------------------------------
+
+Base class, or no base class
+
+I initially thought that [iter] and [map] should be subclasses of a base class
+[visitor], as they differ only in the ascending computation: to do nothing in
+[iter], and to reconstruct a data structure in [map].
+
+However, a difficulty with this approach is that this requires declaring
+virtual methods in the base class [visitor], and these virtual methods must
+have a monomorphic type, even if they are invoked in several places -- which
+is typically the case for nonlocal (parameterized) types, such as tuples,
+lists, options, and pre-existing user-defined type constructors. This leads to
+an unacceptable lack of generality.
+
+A different approach is to generate [iter] and [map] directly, without a base
+class. In the case of nonlocal types, we allow the user to provide (possibly
+polymorphic) code. This solves the problem. (Furthermore, we probably gain
+some speed by saving a few virtual method calls.)
