@@ -1,28 +1,21 @@
 TODO
 
-Optionally deal with builtin types.
-  Requires a runtime library.
+Allow the user to specify how to deal with (parameterized) nonlocal type constructors.
+  Use this mechanism to (optionally) deal with built-in types.
+
+Allow the user to choose exactly which visitors they want generated.
 
 Test on the Frama-C AST.
 
-Allow nonlocal parameterized types to be instantiated at will?
-  That would require using multiple monomorphic methods (with identical code!)
-  or perhaps a polymorphic method (unlikely).
-
 Document everything.
+  Document the names that could be captured:
+    Pervasives
+    Failure
 
 Modify ClassFieldStore.generate to avoid producing multiple declarations
 of a virtual method.
 
 Avoid warnings about unused variables.
-
-Maybe iter and map should not inherit from visitor;
-  the user could mix them by herself;
-  or iter and map could be defined directly (for speed).
-
-Maybe use our own exception, instead of Failure.
-  Also, should ensure that the names "raise" and "Failure" cannot be captured.
-  Requires a runtime library.
 
 Deal with abstract types just as if they were nonlocal.
 
