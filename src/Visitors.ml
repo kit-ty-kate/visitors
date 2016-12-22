@@ -28,9 +28,7 @@ let irregular =
   ref false
 
 (* The option [max], accompanied with an integer parameter, allows setting the
-   maximum arity up to which we generate code. If its value is 1, we generate
-   a class [visitor]; if its value is 2, we also generate a class [visitor2];
-   and so on. *)
+   maximum arity up to which we generate code. *)
 
 let max_arity =
   ref 2
@@ -83,6 +81,15 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
 
 (* -------------------------------------------------------------------------- *)
 
+(* We can generate two classes, [iter] and [map]. They are mostly identical,
+   and differ only in the code that is executed after the recursive calls. In
+   [iter], this code does nothing; in [map], it reconstructs a data
+   structure. *)
+
+type variety =
+  | Iter
+  | Map
+
 (* Per-run global state. *)
 
 module Run (X : sig
@@ -90,10 +97,13 @@ module Run (X : sig
   (* The type declarations that we are processing. *)
   val decls : type_declaration list
 
-  (* The arity of the generated code, e.g., 1 if one wishes to generate [visitor],
-     [iter] and [map], 2 if one wishes to generate [visitor2], [iter2] and [map2],
-     and so on. *)
+  (* The arity of the generated code, e.g., 1 if one wishes to generate [iter]
+     and [map], 2 if one wishes to generate [iter2] and [map2], and so on. *)
   val arity: int
+
+  (* The variety of visitor that we wish to generate (see the definition of
+     the type [variety] above). *)
+  val variety: variety
 
 end) = struct
 
@@ -102,6 +112,11 @@ let is_local =
 
 let arity =
   X.arity
+
+let choose e1 e2 =
+  match X.variety with
+  | Iter -> e1
+  | Map  -> e2
 
 (* As we generate several classes at the same time, we maintain, for each
    generated class, a list of methods that we generate as we go. The following
@@ -113,8 +128,8 @@ include ClassFieldStore(struct end)
 
 (* Public naming conventions. *)
 
-(* We support multiple arities, e.g., we can also generate [visitor2], [iter2],
-   [map2]. Our naming scheme is as follows. *)
+(* We support multiple arities, e.g., we can generate not just [iter] and [map]
+   but also [iter2] and [map2], and so on. Our naming scheme is as follows. *)
 
 let scheme (c : classe) : classe =
   if arity = 1 then
@@ -123,17 +138,10 @@ let scheme (c : classe) : classe =
   else
     sprintf "%s%d" c arity
 
-(* We generate three classes: a [visitor] base class and two subclasses, [iter]
-   and [map]. *)
+(* At each arity, we can generate two classes: [iter] and [map]. *)
 
-let cvisitor : classe =
-  scheme "visitor"
-
-let citer : classe =
-  scheme "iter"
-
-let cmap : classe =
-  scheme "map"
+let current : classe =
+  scheme (choose "iter" "map")
 
 (* For every type constructor [tycon], there is a visitor method, also called
    a descending method, as it is invoked when going down into the tree. *)
@@ -161,22 +169,6 @@ let tyvar_visitor_method (tv : tyvar) : methode =
 
 let datacon_descending_method (datacon : datacon) : methode =
   "match_" ^ datacon
-
-(* For every data constructor [datacon], there is also an ascending visitor
-   method, which is invoked on the way up, after children have been processed,
-   in order to finish the processing of this node. In the base class, this
-   ascending method is virtual. In the class [iter], it is defined to return a
-   unit value. In the class [map], it is defined to reconstruct a new tree
-   node using [datacon]. *)
-
-let datacon_ascending_method (datacon : datacon) : methode =
-  "build_" ^ datacon
-
-(* For every record type constructor [tycon], there is an ascending visitor
-   method. (See above description.) *)
-
-let record_ascending_method (tycon : tycon) : methode =
-  "build_" ^ tycon
 
 (* At arity 2, for every sum type constructor [tycon] which has at least two
    data constructors, there is a failure method, which is invoked when the
@@ -277,33 +269,10 @@ let results (xs : _ list) : variable list =
    overridden. *)
 
 let hook (m : string) (xs : string list) (e : expression) : expression =
-  (* Generate a method in the class [visitor]. We note that the formal
-     parameters [xs] don't need a type annotation: because this method has a
-     call site, its type can be inferred. *)
-  generate cvisitor (concrete_method m (lambdas xs e));
-  (* Construct a method call. *)
-  send self m (evars xs)
-
-(* [hooks m xs e1 e2] constructs a call of the form [self#m xs], and (as a side
-   effect) generates a virtual method named [m] in the class [visitor]. It also
-   generates an implementation [method m xs = e1] in the subclass [iter] and an
-   implementation [method m xs = e2] in the subclass [map]. The free variables
-   of the expressions [e1] and [e2] must be (a subset of) [xs]. *)
-
-let hooks (m : string) (xs : variable list)
-          (e1 : expression) (e2 : expression) : expression =
-  (* Generate a declaration of [m] as a virtual method in the class [visitor].
-     We note that it does not need a type annotation: because we have used the
-     trick of parameterizing the class over its ['self] type, no annotations
-     at all are needed. *)
-  generate cvisitor (virtual_method m);
-  (* Define this method in the subclass [iter]. *)
-  (* An ad hoc detail: we assume that [e1] does not use its arguments [xs],
-     so, in order to avoid OCaml's warning about unused variables, we replace
-     them with wildcard patterns. *)
-  generate citer (concrete_method m (plambdas (wildcards xs) e1));
-  (* Define this method in the subclass [map]. *)
-  generate cmap (concrete_method m (lambdas xs e2));
+  (* Generate a method. The formal parameters [xs] don't need a type
+     annotation: because this method has a call site, its type can be
+     inferred. *)
+  generate current (concrete_method m (lambdas xs e));
   (* Construct a method call. *)
   send self m (evars xs)
 
@@ -338,7 +307,7 @@ let rec visit_type (ty : core_type) : expression =
           (* [tycon] is a nonlocal type constructor. Declare a virtual method for
              it. We rely on the fact that it is permitted for a virtual method to
              be declared several times. *)
-          generate cvisitor (virtual_method (tycon_visitor_method tycon));
+          generate current (virtual_method (tycon_visitor_method tycon));
           (* Return the visitor method associated with [tycon], applied to the
              visitor functions associated with [tys] and to [env]. *)
           send self
@@ -348,7 +317,7 @@ let rec visit_type (ty : core_type) : expression =
 
   (* A type variable [tv] is treated like a nonlocal type constructor. *)
   | { ptyp_desc = Ptyp_var tv; _ } ->
-      generate cvisitor (virtual_method (tyvar_visitor_method tv));
+      generate current (virtual_method (tyvar_visitor_method tv));
       send self
         (tyvar_visitor_method tv)
         [evar env]
@@ -356,17 +325,17 @@ let rec visit_type (ty : core_type) : expression =
   (* A tuple type. *)
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
       (* Construct a function that takes [arity] tuples as arugments. *)
-      (* In the case of tuples, as opposed to data constructors, we do not
-         call an ascending method, as we would need one method name per tuple
-         type, and that would be messy. Instead, we make the most general
-         choice of ascending computation, which is to rebuild a tuple on the
-         way up. Fortunately, this should always be well-typed, I believe. We
-         do not need a descending method either because there is no case
-         analysis. *)
+      (* See [constructor_declaration] for comments. *)
       let xss = componentss tys in
+      let rs = results xss in
       plambdas
         (ptuples (transpose arity (pvarss xss)))
-        (tuple (visit_types tys (evarss xss)))
+        (letn rs (visit_types tys (evarss xss))
+          (choose
+            (unit())
+            (tuple (evars rs))
+          )
+        )
 
   (* An unsupported construct. *)
   | _ ->
@@ -442,19 +411,15 @@ let constructor_declaration (cd : constructor_declaration) : case =
      associated with this sum type. This case analyzes a tuple of width
      [arity]. After binding the components [xss], we call the descending
      method associated with this data constructor, with arguments [env] and
-     [xss]. This method is implemented in the [visitor] class. It binds the
-     variables [rs] to the results of the recursive calls to visitor methods,
-     then calls the ascending method associated with this data constructor,
-     with arguments [rs]. This method is declared in the [visitor] class and
-     implemented in the subclasses [iter] and [map]. In the subclass [iter],
-     it always returns a unit value. In the subclass [map], it reconstructs a
-     tree node. *)
+     [xss]. This method binds the variables [rs] to the results of the
+     recursive calls to visitor methods, then (in the class [iter]) returns a
+     unit value or (in the class [map]) reconstructs a tree node. *)
   Exp.case
     (ptuple (map (pconstr datacon) pss))
     (hook (datacon_descending_method datacon) (env :: flatten xss)
        (letn
           rs (visit_types tys (evarss xss))
-          (hooks (datacon_ascending_method datacon) rs
+          (choose
             (unit())
             (constr datacon (build rs))
           )
@@ -487,7 +452,7 @@ let visit_decl (decl : type_declaration) : expression =
       lambdas xs (
         let rs = results labels in
         letn rs (visit_types tys (accesses xs labels))
-          (hooks (record_ascending_method tycon) rs
+          (choose
             (unit())
             (record (combine labels (evars rs)))
           )
@@ -533,7 +498,7 @@ let visit_decl (decl : type_declaration) : expression =
    declaration [decl], as well as the necessary auxiliary methods. *)
 
 let type_decl (decl : type_declaration) : unit =
-  generate cvisitor (
+  generate current (
     concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
       (plambda penv (visit_decl decl))
@@ -543,37 +508,42 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decls decls arity] produces a list of structure items (that is,
-   toplevel definitions) associated with the type declarations [decls] at
-   arity [arity]. *)
+(* [type_decls decls variety arity] produces a list of structure items (that
+   is, toplevel definitions) associated with the type declarations [decls] at
+   at variety [variety] and arity [arity]. *)
 
 (* Our classes are parameterized over the type variable ['env]. They are also
    parameterized over the type variable ['self], with a constraint that this
    is the type of [self]. This trick allows us to omit the types of the
    virtual methods, even if these types include type variables. *)
 
-let type_decls (decls : type_declaration list) (arity : int) : structure =
-  let module R = Run(struct let decls = decls let arity = arity end) in
+let type_decls (decls : type_declaration list) variety (arity : int) : structure_item =
+  let module R = Run(struct
+    let decls = decls
+    let variety = variety
+    let arity = arity
+  end) in
   let open R in
-  (* Generate [inherit] clauses for the subclasses. *)
-  let actuals = [ ty_self; ty_env ] in
-  generate citer (inherit_ cvisitor actuals);
-  generate cmap  (inherit_ cvisitor actuals);
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
-  (* Produce class definitions. *)
+  (* Produce a class definition. *)
   let formals = [ ty_self, Invariant; ty_env, Invariant ] in
-  map
-    (fun c -> class1 formals c pself (dump c))
-    [ cvisitor; citer; cmap ]
+  class1 formals current pself (dump current)
 
-(* [type_decls arity decls] produces a list of structure items (that is,
+(* [type_decls ~ decls variety] produces a list of structure items (that is,
    toplevel definitions) associated with the type declarations [decls]. *)
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   parse_options options;
-  (* Generate classes at arity 1, 2, ... up to [!max_arity]. *)
-  flatten (map (type_decls decls) (interval 1 (!max_arity + 1)))
+  let buffer = ref [] in
+  (* Generate classes of both varieties, that is, [iter] and [map]. *)
+  [ Iter; Map ] |> iter (fun variety ->
+    (* Generate classes at arity 1, 2, ... up to [!max_arity]. *)
+    interval 1 (!max_arity + 1) |> iter (fun arity ->
+      buffer := type_decls decls variety arity :: !buffer
+    )
+  );
+  rev !buffer
 
 (* -------------------------------------------------------------------------- *)
 
