@@ -113,3 +113,19 @@ A different approach is to generate [iter] and [map] directly, without a base
 class. In the case of nonlocal types, we allow the user to provide (possibly
 polymorphic) code. This solves the problem. (Furthermore, we probably gain
 some speed by saving a few virtual method calls.)
+
+------------------------------------------------------------------------------
+
+On multiple sorts of names.
+
+We can deal with mutiple sorts of names, provided the user does the work of
+manually duplicating the code that handles names and binders at each sort.
+This can be done without duplicating the actual code, just with some plumbing.
+It is not really recommended, though.
+
+Another idea would be to use a single smart abstraction.map function, which
+dynamically decides whether to descend or not to descend into a sub-term,
+based on the current environment. If the current environment (which
+represents, say, a substitution) acts only at a certain sort (say, term
+variables) then it is not necessary to descend into subterms that do not
+contain names of that sort (say, types).
