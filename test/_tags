@@ -1,4 +1,5 @@
 true: \
   safe_string, \
   warn(A-4-44), \
-  package(visitors.ppx)
+  package(visitors.ppx), \
+  package(visitors.runtime)

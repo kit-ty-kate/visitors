@@ -8,6 +8,8 @@ end
 
 module Test1 = struct
 
+  open VisitorsRuntime
+
   type point =
     { x: int; y: int; mutable color: bool }
     [@@deriving visitors]
@@ -16,17 +18,13 @@ end
 
 module Test2 = struct
 
-  type name =
-    string
-
-  type binder =
-    string
+  open VisitorsRuntime
 
   type term =
     | TUnit
     | TIntLiteral of int
-    | TVar of name
-    | TLambda of binder * term
+    | TVar of string
+    | TLambda of string * term
     | TApp of term * term
     | TPair of { fst: term; snd: term }
     | TTuple of term_list
@@ -38,11 +36,6 @@ module Test2 = struct
 
   let iter = object
     inherit [_, int] iter
-    (* Descending methods for nonlocal types. *)
-    method visit_int env x = Printf.printf "(env=%d) int: %d\n%!" env x
-    method visit_name env x = Printf.printf "(env=%d) name: %s\n%!" env x
-    method visit_binder env x = Printf.printf "(env=%d) binder: %s\n%!" env x
-
   end
 
   let identity : term =
@@ -53,10 +46,6 @@ module Test2 = struct
 
   let map = object
     inherit [_, unit] map
-    (* Descending methods for nonlocal types. *)
-    method visit_int () x = x
-    method visit_name () x = "a" (* change name occurrences to [a], for fun *)
-    method visit_binder () x = x
   end
 
   let () =

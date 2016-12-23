@@ -1,14 +1,39 @@
+module StringSet =
+  Set.Make(String)
+
 type name =
   string
 
+module Name = struct
+
+  let iter env (x : name) =
+    ()
+
+  let map env (x : name) =
+    x
+
+end
+
 type 'a binder =
   string * 'a
+
+module Binder = struct
+
+  let iter f env (x, body) =
+    let env = StringSet.add x env in
+    f env body
+
+  let map f env (x, body) =
+    let env = StringSet.add x env in
+    x, f env body
+
+end
 
 type term =
   | TVar of name
   | TLambda of term binder
   | TApp of term * term
-  [@@deriving visitors]
+  [@@deriving visitors { irregular = true; max = 1 }]
 
 let identity =
   TLambda ("x", TVar "x")
@@ -18,9 +43,6 @@ let y =
 
 let idy =
   TApp (identity, y)
-
-module StringSet =
-  Set.Make(String)
 
 class ['a] accu (init : 'a) = object
   val mutable accu = init
@@ -40,7 +62,7 @@ end
 let fv (t : term) : StringSet.t =
   let fv = object
     inherit [_, _] iter
-    inherit [_] fv
+    inherit [_] fv (* TEMPORARY useless *)
   end in
   let env = StringSet.empty in
   fv#visit_term env t;
