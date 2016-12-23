@@ -12,9 +12,7 @@ Test on the Frama-C AST.
 Try the system with hash-consed terms. (With/without binding.)
 
 Document everything.
-  Document the names that could be captured:
-    Pervasives
-    Failure
+  The name [VisitorsRuntime] must not be shadowed.
 
 Avoid warnings about unused variables.
 
