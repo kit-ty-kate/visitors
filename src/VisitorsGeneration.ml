@@ -160,25 +160,6 @@ let ptuples (pss : pattern list list) : pattern list =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [estring s] constructs a string constant. *)
-
-let estring (s : string) : expression =
-  Exp.constant (Const.string s)
-
-(* [eraise e] constructs an application of [raise]. *)
-
-let eraise (e : expression) : expression =
-  app (evar "Pervasives.raise") [e]
-    (* dangerous: [Pervasives] could be shadowed *)
-
-(* [efail s] constructs an expression of the form [raise (Failure "s")]. *)
-
-let efail (s : string) : expression =
-  eraise (constr "Failure" [ estring s ])
-    (* dangerous: [Failure] could be shadowed *)
-
-(* -------------------------------------------------------------------------- *)
-
 (* [letopen m e] produces a single [let open!] binding. The bang character
    indicates intentional shadowing and disables OCaml's warning 44. *)
 
