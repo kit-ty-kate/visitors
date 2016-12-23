@@ -31,6 +31,16 @@ let number i s =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [ident] converts a string, which may contain the character '.', into a
+   possibly-qualified identifier. *)
+
+let ident (s : string) : Longident.t =
+  match VisitorsString.split_on_char '.' s with
+  | x :: xs ->
+      List.fold_left (fun id x -> Ldot (id, x)) (Lident x) xs
+  | [] ->
+      assert false
+
 (* [eident] converts a (possibly-qualified) identifier to an expression. *)
 
 let eident (id : Longident.t) : expression =
