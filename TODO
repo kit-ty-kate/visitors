@@ -7,6 +7,9 @@ Allow the user to specify how to deal with (parameterized) nonlocal type constru
 
 Allow the user to choose exactly which visitors they want generated.
 
+Perhaps support inline notation ("core_type")
+  by treating every type constructor as nonlocal?
+
 Test on the Frama-C AST.
 
 Try the system with hash-consed terms. (With/without binding.)
