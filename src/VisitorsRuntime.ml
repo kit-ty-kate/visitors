@@ -230,3 +230,19 @@ module String = struct
       fail()
 
 end
+
+module Unit = struct
+
+  let iter _env () =
+    ()
+
+  let map _env () =
+    ()
+
+  let iter2 _env () () =
+    ()
+
+  let map2 _env () () =
+    ()
+
+end

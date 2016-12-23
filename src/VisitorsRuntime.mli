@@ -62,3 +62,10 @@ module String : sig
   val iter2: 'env -> string -> string ->   unit
   val map2:  'env -> string -> string -> string
 end
+
+module Unit : sig
+  val iter: 'env -> unit -> unit
+  val map:  'env -> unit -> unit
+  val iter2: 'env -> unit -> unit -> unit
+  val map2:  'env -> unit -> unit -> unit
+end
