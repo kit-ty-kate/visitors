@@ -1,19 +1,21 @@
 TODO
 
 Allow the user to specify how to deal with (parameterized) nonlocal type constructors.
+  Maybe just by calling Foo.iter2 / Foo.map2 when dealing with type foo at arity 2.
+    but: there is an environment
   Use this mechanism to (optionally) deal with built-in types.
+  Deal with int, bool, float, etc.
 
 Allow the user to choose exactly which visitors they want generated.
 
 Test on the Frama-C AST.
 
+Try the system with hash-consed terms. (With/without binding.)
+
 Document everything.
   Document the names that could be captured:
     Pervasives
     Failure
-
-Modify ClassFieldStore.generate to avoid producing multiple declarations
-of a virtual method.
 
 Avoid warnings about unused variables.
 
