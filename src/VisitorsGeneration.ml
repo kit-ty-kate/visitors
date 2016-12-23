@@ -179,6 +179,19 @@ let efail (s : string) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [letopen m e] produces a single [let open!] binding. The bang character
+   indicates intentional shadowing and disables OCaml's warning 44. *)
+
+let letopen (m : Longident.t) (e : expression) : expression =
+  Exp.open_ Override (mknoloc m) e
+
+(* [letopen ms e] produces a series of [let open!] bindings. *)
+
+let letopen (ms : Longident.t list) (e : expression) : expression =
+  List.fold_right letopen ms e
+
+(* -------------------------------------------------------------------------- *)
+
 (* [class1 params name self fields] constructs a (virtual) class declaration
    and packages it as a structure item (so it cannot be recursive with other
    class declarations). *)
