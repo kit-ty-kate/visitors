@@ -160,6 +160,18 @@ let ptuples (pss : pattern list list) : pattern list =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [efail s] generates a call to [VisitorsRuntime.fail]. The parameter [s] is
+   a string, which could represent the place where a failure occurred, or the
+   reason why a failure occurred. As of now, it is unused. *)
+
+let efail : expression =
+  eident (Ldot (Lident "VisitorsRuntime", "fail"))
+
+let efail (_ : string) : expression =
+  app efail [ unit() ]
+
+(* -------------------------------------------------------------------------- *)
+
 (* [letopen m e] produces a single [let open!] binding. The bang character
    indicates intentional shadowing and disables OCaml's warning 44. *)
 
