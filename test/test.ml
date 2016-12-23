@@ -2,7 +2,12 @@ module Test0 = struct
 
   type u = Uber
    and point = u * u
-    [@@deriving visitors, visitors { arity = 2 }]
+  [@@deriving
+       visitors { name = "iter"; variety = "iter" },
+       visitors { name = "map"; variety = "map" },
+       visitors { name = "iter2"; variety = "iter2" },
+       visitors { name = "map2"; variety = "map2" }
+  ]
 
 end
 
@@ -10,7 +15,12 @@ module Test1 = struct
 
   type point =
     { x: int; y: int; mutable color: bool }
-    [@@deriving visitors]
+  [@@deriving
+       visitors { name = "iter"; variety = "iter" },
+       visitors { name = "map"; variety = "map" },
+       visitors { name = "iter2"; variety = "iter2" },
+       visitors { name = "map2"; variety = "map2" }
+  ]
 
 end
 
@@ -28,7 +38,12 @@ module Test2 = struct
   and term_list =
     | TLNil
     | TLCons of (term * term_list)
-    [@@deriving visitors]
+  [@@deriving
+       visitors { name = "iter"; variety = "iter" },
+       visitors { name = "map"; variety = "map" },
+       visitors { name = "iter2"; variety = "iter2" },
+       visitors { name = "map2"; variety = "map2" }
+  ]
 
   let iter = object
     inherit [_, int] iter
@@ -55,7 +70,12 @@ module Test3 = struct
     | TVar of 'var
     | TAbs of 'binder * ('var, 'binder) term
     | TApp of ('var, 'binder) term * ('var, 'binder) term
-  [@@deriving visitors]
+  [@@deriving
+       visitors { name = "iter"; variety = "iter" },
+       visitors { name = "map"; variety = "map" },
+       visitors { name = "iter2"; variety = "iter2" },
+       visitors { name = "map2"; variety = "map2" }
+  ]
 
   (* Nominal. *)
 

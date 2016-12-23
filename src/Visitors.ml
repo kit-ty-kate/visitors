@@ -1,3 +1,5 @@
+open VisitorsList
+open VisitorsString
 open Longident
 open List
 let sprintf = Printf.sprintf
@@ -6,7 +8,6 @@ open Parsetree
 open Ast_helper
 open Ast_convenience
 open Ppx_deriving
-open VisitorsList
 open VisitorsAnalysis
 open VisitorsGeneration
 
@@ -15,7 +16,24 @@ let plugin =
 
 (* -------------------------------------------------------------------------- *)
 
+(* We can generate two classes, [iter] and [map]. They are mostly identical,
+   and differ only in the code that is executed after the recursive calls. In
+   [iter], this code does nothing; in [map], it reconstructs a data
+   structure. *)
+
+type variety =
+  | Iter
+  | Map
+
+(* -------------------------------------------------------------------------- *)
+
 (* Option processing. *)
+
+(* The option [arity], accompanied with an integer parameter, allows setting
+   the arity at which we generate code. *)
+
+let arity =
+  ref 0 (* dummy *)
 
 (* The option [irregular = true] suppresses the regularity check and allows a
    local parameterized type to be instantiated; e.g., the definition of ['a t]
@@ -27,11 +45,11 @@ let plugin =
 let irregular =
   ref false (* dummy *)
 
-(* The option [arity], accompanied with an integer parameter, allows setting
-   the arity at which we generate code. *)
+(* The option [name] specifies the name of the generated class. It is NOT
+   optional. *)
 
-let arity =
-  ref 0 (* dummy *)
+let name =
+  ref "" (* dummy *)
 
 (* The option [nonlocal], accompanied with a list of module names, allows
    setting the modules that are searched for nonlocal functions, such as
@@ -41,30 +59,73 @@ let arity =
 let nonlocal : Longident.t list ref =
   ref [] (* dummy *)
 
-let parse_options options =
+(* The option [variety] indicates what kind of visitor we are generating.
+   We support two kinds: [iter] and [map]. *)
+
+let variety : variety option ref =
+  ref None (* dummy *)
+
+let parse_variety loc (s : string) =
+  try
+    if prefix "map" s then
+      let s = remainder "map" s in
+      let i = if s = "" then 1 else int_of_string s in
+      if i <= 0 then failwith "negative integer";
+      Map, i
+      (* TEMPORARY should allow positive integer only *)
+    else if prefix "iter" s then
+      let s = remainder "iter" s in
+      let i = if s = "" then 1 else int_of_string s in
+      if i <= 0 then failwith "negative integer";
+      Iter, i
+    else
+      failwith "unexpected prefix"
+  with
+  | Failure _ ->
+      raise_errorf ~loc "%s: invalid variety.\n\
+                         A valid variety is iter, map, iter2, map2, etc." plugin
+
+let parse_options loc options =
   let bool = Arg.get_expr ~deriver:plugin Arg.bool
-  and int = Arg.get_expr ~deriver:plugin Arg.int
-  and modules = Arg.get_expr ~deriver:plugin (Arg.list Arg.string) in
+  and string = Arg.get_expr ~deriver:plugin Arg.string
+  and strings = Arg.get_expr ~deriver:plugin (Arg.list Arg.string) in
   (* The default values are specified here. *)
   arity := 1;
   irregular := false;
+  name := "";
   nonlocal := [ Lident "VisitorsRuntime" ];
+  variety := None;
   (* Analysis. *)
   iter (fun (o, e) ->
     let loc = e.pexp_loc in
     match o with
     | "irregular" ->
         irregular := bool e
-    | "arity" ->
-        if 0 < int e then arity := int e else
-        raise_errorf ~loc "%s: option %s expects a positive integer value." plugin o
+    | "name" ->
+        name := string e;
+        if String.length !name = 0 || String.uncapitalize_ascii !name <> !name then
+          (* TEMPORARY should implement [is_valid_ocaml_class_name] properly *)
+          raise_errorf ~loc "%s: %s must be a valid class name." plugin o
     | "nonlocal" ->
+        (* TEMPORARY should check that every string in the list is a valid module name *)
         (* Always open [VisitorsRuntime], but allow it to be shadowed by
            user-specified modules. *)
-        nonlocal := map ident ("VisitorsRuntime" :: modules e)
+        nonlocal := map ident ("VisitorsRuntime" :: strings e)
+    | "variety" ->
+        let v, a = parse_variety loc (string e) in
+        variety := Some v;
+        arity := a;
     | _ ->
         raise_errorf ~loc "%s: option %s is not supported." plugin o
-  ) options
+  ) options;
+  (* The parameter [name] is not optional. *)
+  if String.length !name = 0 then
+    raise_errorf ~loc "%s: please specify the name of the generated class.\n\
+                       e.g. [@@deriving visitors { name = \"traverse\" }]" plugin;
+  (* The parameter [variety] is not optional. *)
+  if !variety = None then
+    raise_errorf ~loc "%s: please specify the variety of the generated class.\n\
+                       e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
 
 (* -------------------------------------------------------------------------- *)
 
@@ -95,21 +156,15 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
 
 (* -------------------------------------------------------------------------- *)
 
-(* We can generate two classes, [iter] and [map]. They are mostly identical,
-   and differ only in the code that is executed after the recursive calls. In
-   [iter], this code does nothing; in [map], it reconstructs a data
-   structure. *)
-
-type variety =
-  | Iter
-  | Map
-
 (* Per-run global state. *)
 
 module Run (X : sig
 
   (* The type declarations that we are processing. *)
-  val decls : type_declaration list
+  val decls: type_declaration list
+
+  (* The name of the generated class. *)
+  val current: classe
 
   (* The arity of the generated code, e.g., 1 if one wishes to generate [iter]
      and [map], 2 if one wishes to generate [iter2] and [map2], and so on. *)
@@ -123,6 +178,9 @@ end) = struct
 
 let is_local =
   is_local X.decls
+
+let current =
+  X.current
 
 let arity =
   X.arity
@@ -141,21 +199,6 @@ include ClassFieldStore(struct end)
 (* -------------------------------------------------------------------------- *)
 
 (* Public naming conventions. *)
-
-(* We support multiple arities, e.g., we can generate not just [iter] and [map]
-   but also [iter2] and [map2], and so on. Our naming scheme is as follows. *)
-
-let scheme (c : classe) : classe =
-  if arity = 1 then
-    (* No need for the suffix [1]. *)
-    c
-  else
-    sprintf "%s%d" c arity
-
-(* At each arity, we can generate two classes: [iter] and [map]. *)
-
-let current : classe =
-  scheme (choose "iter" "map")
 
 (* For every type constructor [tycon], there is a visitor method, also called
    a descending method, as it is invoked when going down into the tree. *)
@@ -545,46 +588,42 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decls decls variety arity] produces a list of structure items (that
-   is, toplevel definitions) associated with the type declarations [decls] at
-   at variety [variety] and arity [arity]. *)
+(* [type_decls decls] produces a list of structure items (that is, toplevel
+   definitions) associated with the type declarations [decls]. *)
 
 (* Our classes are parameterized over the type variable ['env]. They are also
    parameterized over the type variable ['self], with a constraint that this
    is the type of [self]. This trick allows us to omit the types of the
    virtual methods, even if these types include type variables. *)
 
-let type_decls (decls : type_declaration list) variety (arity : int) : structure_item =
+(* TEMPORARY move [parse_options] down here and avoid needless global state *)
+
+let type_decls (decls : type_declaration list) : structure =
   let module R = Run(struct
     let decls = decls
-    let variety = variety
-    let arity = arity
+    let variety = match !variety with None -> assert false | Some v -> v
+    let arity = !arity
+    let current = !name
   end) in
   let open R in
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
   (* Produce a class definition. *)
   let formals = [ ty_self, Invariant; ty_env, Invariant ] in
-  class1 formals current pself (dump current)
+  [ class1 formals current pself (dump current) ]
 
-(* [type_decls ~ decls variety] produces a list of structure items (that is,
-   toplevel definitions) associated with the type declarations [decls]. *)
+(* [type_decls decls] produces a list of structure items (that is, toplevel
+   definitions) associated with the type declarations [decls]. *)
 
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
-  parse_options options;
-  let buffer = ref [] in
-  (* Generate classes of both varieties, that is, [iter] and [map]. *)
-  [ Iter; Map ] |> iter (fun variety ->
-    buffer := type_decls decls variety !arity :: !buffer
-  );
-  rev !buffer
+  assert (decls <> []);
+  let loc = (VisitorsList.last decls).ptype_loc in (* an approximation *)
+  parse_options loc options;
+  type_decls decls
 
 (* -------------------------------------------------------------------------- *)
 
 (* Register our plugin with [ppx_deriving]. *)
 
 let () =
-  register (create plugin
-    ~type_decl_str:type_decls
-    ()
-  )
+  register (create plugin ~type_decl_str:type_decls ())
