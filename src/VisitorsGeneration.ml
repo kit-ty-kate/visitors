@@ -31,6 +31,13 @@ let number i s =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [eident] converts a (possibly-qualified) identifier to an expression. *)
+
+let eident (id : Longident.t) : expression =
+  Exp.ident (mknoloc id)
+
+(* -------------------------------------------------------------------------- *)
+
 (* [pvars] converts a list of variables to a list of patterns. *)
 
 let pvars (xs : variable list) : pattern list =
