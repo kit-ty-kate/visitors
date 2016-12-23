@@ -6,8 +6,7 @@ requires = "compiler-libs ppx_tools ppx_deriving"
 # See https://github.com/whitequark/ppx_deriving
 
 package "ppx" (
-  description = "[@@deriving visitors]"
-  version = "(development)"
+  description = "Compile-time support for generating visitors"
   requires(-ppx_driver) = "ppx_deriving"
   ppxopt(-ppx_driver) = "ppx_deriving,./ppx_deriving_visitors.cma"
 
@@ -20,4 +19,12 @@ package "ppx" (
   archive(ppx_driver, byte) = "ppx_deriving_visitors.cma"
   archive(ppx_driver, native) = "ppx_deriving_visitors.cmxa"
 
+)
+
+# The runtime support library.
+
+package "runtime" (
+  description = "Runtime support for the generated visitors"
+  archive(byte) = "VisitorsRuntime.cma"
+  archive(native) = "VisitorsRuntime.cmxa"
 )

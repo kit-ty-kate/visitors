@@ -8,8 +8,13 @@ PACKAGE := \
 PLUGIN := \
   ppx_deriving_$(PACKAGE)
 
+RUNTIME := \
+  VisitorsRuntime
+
+# Not sure whether all of the following files are really required.
 OCAMLBUILD_TARGET := \
-  $(PLUGIN).cma $(PLUGIN).cmxa $(PLUGIN).cmxs
+  $(patsubst %,$(PLUGIN).%,a cma cmxa cmxs) \
+  $(patsubst %,$(RUNTIME).%,a cma cmi cmo cmx cmxa o) \
 
 OCAMLBUILD_FLAGS := \
   -use-ocamlfind \
