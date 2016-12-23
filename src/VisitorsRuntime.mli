@@ -1,5 +1,7 @@
 exception StructuralMismatch
 
+val fail: unit -> 'a
+
 module Array : sig
   val iter: ('env -> 'a -> unit) -> 'env -> 'a array ->     unit
   val map:  ('env -> 'a ->   'b) -> 'env -> 'a array -> 'b array
