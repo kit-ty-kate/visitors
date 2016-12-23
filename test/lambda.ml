@@ -33,7 +33,7 @@ type term =
   | TVar of name
   | TLambda of term binder
   | TApp of term * term
-  [@@deriving visitors { irregular = true; max = 1 }]
+  [@@deriving visitors { irregular = true }]
 
 let identity =
   TLambda ("x", TVar "x")

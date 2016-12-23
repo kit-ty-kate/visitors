@@ -27,10 +27,10 @@ let plugin =
 let irregular =
   ref false (* dummy *)
 
-(* The option [max], accompanied with an integer parameter, allows setting the
-   maximum arity up to which we generate code. *)
+(* The option [arity], accompanied with an integer parameter, allows setting
+   the arity at which we generate code. *)
 
-let max_arity =
+let arity =
   ref 0 (* dummy *)
 
 (* The option [nonlocal], accompanied with a list of module names, allows
@@ -46,7 +46,7 @@ let parse_options options =
   and int = Arg.get_expr ~deriver:plugin Arg.int
   and modules = Arg.get_expr ~deriver:plugin (Arg.list Arg.string) in
   (* The default values are specified here. *)
-  max_arity := 2;
+  arity := 1;
   irregular := false;
   nonlocal := [ Lident "VisitorsRuntime" ];
   (* Analysis. *)
@@ -55,8 +55,8 @@ let parse_options options =
     match o with
     | "irregular" ->
         irregular := bool e
-    | "max" ->
-        if 0 < int e then max_arity := int e else
+    | "arity" ->
+        if 0 < int e then arity := int e else
         raise_errorf ~loc "%s: option %s expects a positive integer value." plugin o
     | "nonlocal" ->
         (* Always open [VisitorsRuntime], but allow it to be shadowed by
@@ -575,10 +575,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   let buffer = ref [] in
   (* Generate classes of both varieties, that is, [iter] and [map]. *)
   [ Iter; Map ] |> iter (fun variety ->
-    (* Generate classes at arity 1, 2, ... up to [!max_arity]. *)
-    interval 1 (!max_arity + 1) |> iter (fun arity ->
-      buffer := type_decls decls variety arity :: !buffer
-    )
+    buffer := type_decls decls variety !arity :: !buffer
   );
   rev !buffer
 

@@ -2,7 +2,7 @@ module Test0 = struct
 
   type u = Uber
    and point = u * u
-    [@@deriving visitors { max = 3 }]
+    [@@deriving visitors, visitors { arity = 2 }]
 
 end
 
