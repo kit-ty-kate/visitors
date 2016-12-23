@@ -1,10 +1,9 @@
 TODO
 
 Allow the user to specify how to deal with (parameterized) nonlocal type constructors.
-  Maybe just by calling Foo.iter2 / Foo.map2 when dealing with type foo at arity 2.
-    but: there is an environment
-  Use this mechanism to (optionally) deal with built-in types.
-  Deal with int, bool, float, etc.
+  Must allow a local "open" to take place before invoking nonlocal function.
+    let open! VisitorsRuntime in let open! <user's choice> in <nonlocal function call>
+  Must allow user to derive several "iter"-like classes under different names.
 
 Allow the user to choose exactly which visitors they want generated.
 
@@ -30,14 +29,3 @@ Show to François Bobot and Virgile Prevosto. Try the Frama-C AST.
 Show to Andrei and Jean-Christophe.
 
 Add a LICENSE. Announce.
-
-------------------------------------------------------------------------------
-
-BUGS
-
-The tuple trick of always reconstructing a tuple may not work as desired?
-It may force the user to also reconstruct a tuple when implementing his own
-folds. Investigate.
-
-If A.t and B.t are nonlocal types, then (with our current naming convention)
-we have a name clash.
