@@ -25,6 +25,94 @@ module Array = struct
 
 end
 
+module Bool = struct
+
+  let iter _env _b =
+    ()
+
+  let map _env b =
+    b
+
+  let iter2 _env (b1 : bool) (b2 : bool) =
+    if b1 = b2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (b1 : bool) (b2 : bool) =
+    if b1 = b2 then
+      b1
+    else
+      fail()
+
+end
+
+module Char = struct
+
+  let iter _env _c =
+    ()
+
+  let map _env c =
+    c
+
+  let iter2 _env (c1 : char) (c2 : char) =
+    if c1 = c2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (c1 : char) (c2 : char) =
+    if c1 = c2 then
+      c1
+    else
+      fail()
+
+end
+
+module Float = struct
+
+  let iter _env _f =
+    ()
+
+  let map _env f =
+    f
+
+  let iter2 _env (f1 : float) (f2 : float) =
+    if f1 = f2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (f1 : float) (f2 : float) =
+    if f1 = f2 then
+      f1
+    else
+      fail()
+
+end
+
+module Int = struct
+
+  let iter _env _i =
+    ()
+
+  let map _env i =
+    i
+
+  let iter2 _env (i1 : int) (i2 : int) =
+    if i1 = i2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (i1 : int) (i2 : int) =
+    if i1 = i2 then
+      i1
+    else
+      fail()
+
+end
+
 module List = struct
 
   (* We could reuse the functions provided by OCaml's [List] module,
@@ -118,5 +206,27 @@ module Ref = struct
 
   let map2 f env rx1 rx2 =
     ref (f env !rx1 !rx2)
+
+end
+
+module String = struct
+
+  let iter _env _s =
+    ()
+
+  let map _env s =
+    s
+
+  let iter2 _env (s1 : string) (s2 : string) =
+    if s1 = s2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (s1 : string) (s2 : string) =
+    if s1 = s2 then
+      s1
+    else
+      fail()
 
 end
