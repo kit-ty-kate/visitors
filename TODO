@@ -1,14 +1,10 @@
 TODO
 
-Allow the user to specify how to deal with (parameterized) nonlocal type constructors.
-  Must allow a local "open" to take place before invoking nonlocal function.
-    let open! VisitorsRuntime in let open! <user's choice> in <nonlocal function call>
-  Must allow user to derive several "iter"-like classes under different names.
-
-Allow the user to choose exactly which visitors they want generated.
-
 Perhaps support inline notation ("core_type")
   by treating every type constructor as nonlocal?
+
+Perhaps do something about ~path,
+  which seems connected to nested modules.
 
 Test on the Frama-C AST.
 
