@@ -177,6 +177,28 @@ let datacon_descending_method (datacon : datacon) : methode =
 let failure_method (tycon : tycon) : methode =
   "fail_" ^ tycon
 
+(* For every nonlocal type constructor [tycon], we need a visitor function.
+   E.g., if we are generating a class [map], then for the type constructor
+   [list], we need [List.map]. *)
+
+let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
+  match tycon with
+  | Lident tycon ->
+      (* Turn [list] into [List]. *)
+      Lident (String.capitalize_ascii tycon)
+  | Ldot (path, "t") ->
+      (* Turn [Foo.t] into [Foo]. *)
+      path
+  | Ldot (path, tycon) ->
+      (* Turn [Foo.list] into [Foo.List]. *)
+      Ldot (path, String.capitalize_ascii tycon)
+  | Lapply _ ->
+      assert false
+
+let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
+  (* For [list], we need [List.map]. *)
+  Ldot (nonlocal_tycon_module tycon, current)
+
 (* -------------------------------------------------------------------------- *)
 
 (* Private naming conventions. *)
@@ -304,14 +326,13 @@ let rec visit_type (ty : core_type) : expression =
             (tycon_visitor_method tycon)
             [evar env]
       | None ->
-          (* [tycon] is a nonlocal type constructor. Declare a virtual method for
-             it. We rely on the fact that it is permitted for a virtual method to
-             be declared several times. *)
-          generate current (virtual_method (tycon_visitor_method tycon));
-          (* Return the visitor method associated with [tycon], applied to the
-             visitor functions associated with [tys] and to [env]. *)
-          send self
-            (tycon_visitor_method tycon)
+          (* [tycon] is a nonlocal type constructor. Invoke the (user-supplied)
+             external function associated with it. This function is typically
+             polymorphic, so multiple call sites do not pollute one another.
+             This function must be applied to the visitor functions associated
+             with [tys] and to [env]. *)
+          app
+            (eident (nonlocal_tycon_function tycon))
             (map lambda_env_visit_type tys @ [evar env])
       end
 
