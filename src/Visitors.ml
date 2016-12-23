@@ -584,23 +584,10 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
 
 (* -------------------------------------------------------------------------- *)
 
-(* We disallow the syntax [[%derive.visitors: ty]], where [ty] is a type.
-   Indeed, we cannot produce meaningful visiting code outside of a class
-   declaration. (We could create a fresh instance of the class [iter],
-   but such a visitor does nothing. It is necessary to override at least
-   one method in order to obtain a nontrivial visitor.) *)
-
-let disallowed ty =
-  let loc = ty.ptyp_loc in
-  raise_errorf ~loc "%s: the syntax [%%derive.%s] is disallowed." plugin plugin
-
-(* -------------------------------------------------------------------------- *)
-
 (* Register our plugin with [ppx_deriving]. *)
 
 let () =
   register (create plugin
-    ~core_type:disallowed
     ~type_decl_str:type_decls
     ()
   )
