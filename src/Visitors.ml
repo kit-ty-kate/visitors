@@ -35,14 +35,16 @@ let max_arity =
 
 (* The option [nonlocal], accompanied with a list of module names, allows
    setting the modules that are searched for nonlocal functions, such as
-   [List.iter]. *)
+   [List.iter]. The modules that appear first in the list are searched
+   last. *)
 
 let nonlocal : Longident.t list ref =
   ref [] (* dummy *)
 
 let parse_options options =
   let bool = Arg.get_expr ~deriver:plugin Arg.bool
-  and int = Arg.get_expr ~deriver:plugin Arg.int in
+  and int = Arg.get_expr ~deriver:plugin Arg.int
+  and modules = Arg.get_expr ~deriver:plugin (Arg.list Arg.string) in
   (* The default values are specified here. *)
   max_arity := 2;
   irregular := false;
@@ -56,6 +58,10 @@ let parse_options options =
     | "max" ->
         if 0 < int e then max_arity := int e else
         raise_errorf ~loc "%s: option %s expects a positive integer value." plugin o
+    | "nonlocal" ->
+        (* Always open [VisitorsRuntime], but allow it to be shadowed by
+           user-specified modules. *)
+        nonlocal := map ident ("VisitorsRuntime" :: modules e)
     | _ ->
         raise_errorf ~loc "%s: option %s is not supported." plugin o
   ) options
