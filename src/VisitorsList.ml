@@ -1,5 +1,21 @@
 open List
 
+(* [last xs] returns the last element of the nonempty list [xs]. *)
+
+let rec last1 x xs =
+  match xs with
+  | [] ->
+      x
+  | x :: xs ->
+      last1 x xs
+
+let last xs =
+  match xs with
+  | [] ->
+      assert false
+  | x :: xs ->
+      last1 x xs
+
 (* [interval i j] constructs a list representation of the semi-open interval
    [i..j). *)
 
