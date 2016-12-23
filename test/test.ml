@@ -8,8 +8,6 @@ end
 
 module Test1 = struct
 
-  open VisitorsRuntime
-
   type point =
     { x: int; y: int; mutable color: bool }
     [@@deriving visitors]
@@ -17,8 +15,6 @@ module Test1 = struct
 end
 
 module Test2 = struct
-
-  open VisitorsRuntime
 
   type term =
     | TUnit

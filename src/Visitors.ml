@@ -25,13 +25,20 @@ let plugin =
    [int t] but not to other instances of [t]. *)
 
 let irregular =
-  ref false
+  ref false (* dummy *)
 
 (* The option [max], accompanied with an integer parameter, allows setting the
    maximum arity up to which we generate code. *)
 
 let max_arity =
-  ref 2
+  ref 0 (* dummy *)
+
+(* The option [nonlocal], accompanied with a list of module names, allows
+   setting the modules that are searched for nonlocal functions, such as
+   [List.iter]. *)
+
+let nonlocal : Longident.t list ref =
+  ref [] (* dummy *)
 
 let parse_options options =
   let bool = Arg.get_expr ~deriver:plugin Arg.bool
@@ -39,6 +46,7 @@ let parse_options options =
   (* The default values are specified here. *)
   max_arity := 2;
   irregular := false;
+  nonlocal := [ Lident "VisitorsRuntime" ];
   (* Analysis. *)
   iter (fun (o, e) ->
     let loc = e.pexp_loc in
@@ -179,7 +187,9 @@ let failure_method (tycon : tycon) : methode =
 
 (* For every nonlocal type constructor [tycon], we need a visitor function.
    E.g., if we are generating a class [map], then for the type constructor
-   [list], we need [List.map]. *)
+   [list], we need [List.map]. Note that this is not an absolute name: its
+   interpretation depends on which modules have been opened. This can be
+   influenced by the user via the option [nonlocal]. *)
 
 let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
   match tycon with
@@ -332,7 +342,7 @@ let rec visit_type (ty : core_type) : expression =
              This function must be applied to the visitor functions associated
              with [tys] and to [env]. *)
           app
-            (eident (nonlocal_tycon_function tycon))
+            (letopen !nonlocal (eident (nonlocal_tycon_function tycon)))
             (map lambda_env_visit_type tys @ [evar env])
       end
 
