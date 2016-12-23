@@ -65,7 +65,11 @@ let nonlocal : Longident.t list ref =
 let variety : variety option ref =
   ref None (* dummy *)
 
+let variety_string =
+  ref "" (* TEMPORARY moche *)
+
 let parse_variety loc (s : string) =
+  variety_string := s;
   try
     if prefix "map" s then
       let s = remainder "map" s in
@@ -256,7 +260,7 @@ let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
 
 let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
   (* For [list], we need [List.map]. *)
-  Ldot (nonlocal_tycon_module tycon, current)
+  Ldot (nonlocal_tycon_module tycon, !variety_string)
 
 (* -------------------------------------------------------------------------- *)
 
