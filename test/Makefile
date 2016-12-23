@@ -1,7 +1,5 @@
 TARGET := \
-  test.native \
-  lambda.native \
-#  cil_types.native \
+  test.native
 
 OCAMLBUILD_FLAGS := \
   -use-ocamlfind \
