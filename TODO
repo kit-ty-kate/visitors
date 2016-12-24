@@ -1,5 +1,10 @@
 TODO
 
+Generate a "fold" class in addition to iter and map?
+  Should not be difficult.
+  Create virtual methods for local types. Use external functions for nonlocal types.
+  Analogous to ppx_tools/genlifter.
+
 Perhaps support inline notation ("core_type")
   by treating every type constructor as nonlocal?
 
