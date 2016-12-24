@@ -23,6 +23,8 @@ Document everything.
 
 Avoid warnings about unused variables.
 
+Avoid useless eta-expansions (fun env -> foo env).
+
 Deal with abstract types just as if they were nonlocal.
 
 Think about compositionality.
