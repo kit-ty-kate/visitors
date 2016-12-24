@@ -114,7 +114,7 @@ let parse_options loc options =
         (* TEMPORARY should check that every string in the list is a valid module name *)
         (* Always open [VisitorsRuntime], but allow it to be shadowed by
            user-specified modules. *)
-        nonlocal := map ident ("VisitorsRuntime" :: strings e)
+        nonlocal := map Longident.parse ("VisitorsRuntime" :: strings e)
     | "variety" ->
         let v, a = parse_variety loc (string e) in
         variety := Some v;
