@@ -399,7 +399,7 @@ let rec visit_type (ty : core_type) : expression =
             (map lambda_env_visit_type tys @ [evar env])
       end
 
-  (* A type variable [tv] is treated like a nonlocal type constructor. *)
+  (* A type variable [tv] is handled by a virtual method visitor. *)
   | { ptyp_desc = Ptyp_var tv; _ } ->
       generate current (virtual_method (tyvar_visitor_method tv));
       send self
