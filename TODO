@@ -9,6 +9,9 @@ Perhaps do something about ~path,
 Test on the Frama-C AST.
 
 Try the system with hash-consed terms. (With/without binding.)
+Try dealing with an open term definition and closing it afterwards.
+Try dealing with suspended substitutions.
+  (As a distinct construct. Not necessarily at abstractions.)
 
 Document everything.
   The name [VisitorsRuntime] must not be shadowed.
@@ -20,7 +23,7 @@ Deal with abstract types just as if they were nonlocal.
 Think about compositionality.
   By multiple inheritance?
 
-Think about transforming a closed recursive type definition into an open one.
+Think about automatically transforming a closed recursive type definition into an open one.
 
 Show to François Bobot and Virgile Prevosto. Try the Frama-C AST.
 Show to Andrei and Jean-Christophe.
