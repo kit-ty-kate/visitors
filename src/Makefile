@@ -39,3 +39,15 @@ install: all
 
 uninstall:
 	ocamlfind remove $(PACKAGE)
+
+# ------------------------------------------------------------------------------
+
+# Testing the preprocessor. (This assumes the package has been installed.)
+
+PPX_DERIVING := $(shell ocamlfind query ppx_deriving)
+PPX          := $(PPX_DERIVING)/ppx_deriving _build/$(PLUGIN).cma
+REWRITE      := ocamlfind ppx_tools/rewriter -ppx '$(PPX)'
+
+%.ml.processed: %.ml
+	$(REWRITE) $< > $@
+	ocp-indent --inplace $@
