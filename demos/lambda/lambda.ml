@@ -59,11 +59,11 @@ let idy =
   TApp (identity, y)
 
 let () =
-  print_endline "fv(\x.x):";
+  print_endline "fv(\\x.x):";
   StringSet.print (fv identity);
   print_endline "fv(y):";
   StringSet.print (fv y);
-  print_endline "fv((\x.x) y):";
+  print_endline "fv((\\x.x) y):";
   StringSet.print (fv idy)
 
 (*
