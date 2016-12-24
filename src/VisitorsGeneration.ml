@@ -185,6 +185,14 @@ let letopen (ms : Longident.t list) (e : expression) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [floating s] produces a floating attribute. *)
+
+let floating (s : string) : structure_item =
+  let payload = PStr [] in
+  Str.attribute (mknoloc s, payload)
+
+(* -------------------------------------------------------------------------- *)
+
 (* [class1 params name self fields] constructs a (virtual) class declaration
    and packages it as a structure item (so it cannot be recursive with other
    class declarations). *)
