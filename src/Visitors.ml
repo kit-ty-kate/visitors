@@ -363,17 +363,26 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [visit_type ty] builds a small expression that represents the visiting code
-   associated with the OCaml type [ty]. For instance, if [ty] is a local type
-   constructor, this could be a call to the visitor method associated with
-   this type constructor. The expression constructed by [visit_type ty] may
-   refer to the variables [self] and [env]. *)
+(* [visit_type env_in_scope ty] builds a small expression that represents the
+   visiting code associated with the OCaml type [ty]. For instance, if [ty] is
+   a local type constructor, this could be a call to the visitor method
+   associated with this type constructor. *)
 
-let rec visit_type (ty : core_type) : expression =
-  match ty with
+(* This expression may refer to the variable [self]. *)
 
-  (* A type constructor [tycon] applied to type parameters [tys]. *)
-  | { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
+(* If [env_in_scope] is true, then this expression may refer to the variable
+   [env]. If [env_in_scope] is false, then this expression should denote a
+   function of [env]. The use of [env_in_scope] complicates things slightly,
+   but allows us to avoid the production of certain eta-redexes. *)
+
+let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
+  match env_in_scope, ty with
+
+  (* A type constructor [tycon] applied to type parameters [tys]. We handle
+     the case where [env_in_scope] is false, so we construct a function of
+     [env]. *)
+  | false,
+    { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
       begin match is_local tycon with
       | Some formals ->
           (* [tycon] is a local type constructor, whose formal type parameters
@@ -381,33 +390,35 @@ let rec visit_type (ty : core_type) : expression =
           (* Check that [tys] and [formals] coincide. If they do not, we cannot
              handle this type declaration. *)
           check_regularity ty.ptyp_loc (last tycon) formals tys;
-          (* Return the visitor method associated with [tycon], applied to the
-             environment [env]. Contrary to the nonlocal case (below), this
-             method must not be applied to the visitor functions associated with
-             [tys]. *)
+          (* Return the visitor method associated with [tycon]. Contrary to
+             the nonlocal case (below), this method must not be applied to the
+             visitor functions associated with [tys]. *)
           send self
             (tycon_visitor_method tycon)
-            [evar env]
+            []
       | None ->
           (* [tycon] is a nonlocal type constructor. Invoke the (user-supplied)
              external function associated with it. This function is typically
              polymorphic, so multiple call sites do not pollute one another.
              This function must be applied to the visitor functions associated
-             with [tys] and to [env]. *)
+             with [tys]. *)
           app
             (letopen !nonlocal (eident (nonlocal_tycon_function tycon)))
-            (map lambda_env_visit_type tys @ [evar env])
+            (map (visit_type false) tys)
       end
 
   (* A type variable [tv] is handled by a virtual method visitor. *)
-  | { ptyp_desc = Ptyp_var tv; _ } ->
+  | false,
+    { ptyp_desc = Ptyp_var tv; _ } ->
       generate current (virtual_method (tyvar_visitor_method tv));
       send self
         (tyvar_visitor_method tv)
-        [evar env]
+        []
 
-  (* A tuple type. *)
-  | { ptyp_desc = Ptyp_tuple tys; _ } ->
+  (* A tuple type. We handle the case where [env_in_scope] is true, as it
+     is easier. *)
+  | true,
+    { ptyp_desc = Ptyp_tuple tys; _ } ->
       (* Construct a function that takes [arity] tuples as arugments. *)
       (* See [constructor_declaration] for comments. *)
       let xss = componentss tys in
@@ -421,14 +432,19 @@ let rec visit_type (ty : core_type) : expression =
           )
         )
 
+  (* If [env_in_scope] does not have the desired value, wrap a recursive call
+     within an application or abstraction. At most one recursive call takes
+     place, so we never produce an eta-redex. *)
+  | true, { ptyp_desc = (Ptyp_constr _ | Ptyp_var _); _ } ->
+     app (visit_type false ty) [evar env]
+  | false, { ptyp_desc = (Ptyp_tuple _); _ } ->
+     lambda env (visit_type true ty)
+
   (* An unsupported construct. *)
-  | _ ->
+  | _, _ ->
       let loc = ty.ptyp_loc in
       raise_errorf ~loc "%s: cannot deal with the type %s." plugin
         (string_of_core_type ty)
-
-and lambda_env_visit_type ty =
-  lambda env (visit_type ty)
 
 and visit_types tys (ess : expression list list) : expression list =
   (* The matrix [ess] is indexed first by component, then by index [j].
@@ -436,7 +452,7 @@ and visit_types tys (ess : expression list list) : expression list =
      whose length is [arity]. *)
   assert (is_matrix (length tys) arity ess);
   map2 (fun ty es ->
-    app (visit_type ty) es
+    app (visit_type true ty) es
   ) tys ess
 
 (* -------------------------------------------------------------------------- *)
@@ -527,7 +543,7 @@ let visit_decl (decl : type_declaration) : expression =
 
   (* A type abbreviation. *)
   | Ptype_abstract, Some ty ->
-      visit_type ty
+      visit_type true ty
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
