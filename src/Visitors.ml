@@ -602,7 +602,10 @@ end
 
 (* TEMPORARY move [parse_options] down here and avoid needless global state *)
 
-let type_decls (decls : type_declaration list) : structure =
+let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
+  assert (decls <> []);
+  let loc = (VisitorsList.last decls).ptype_loc in (* an approximation *)
+  parse_options loc options;
   let module R = Run(struct
     let decls = decls
     let variety = match !variety with None -> assert false | Some v -> v
@@ -615,15 +618,6 @@ let type_decls (decls : type_declaration list) : structure =
   (* Produce a class definition. *)
   let formals = [ ty_self, Invariant; ty_env, Invariant ] in
   [ class1 formals current pself (dump current) ]
-
-(* [type_decls decls] produces a list of structure items (that is, toplevel
-   definitions) associated with the type declarations [decls]. *)
-
-let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
-  assert (decls <> []);
-  let loc = (VisitorsList.last decls).ptype_loc in (* an approximation *)
-  parse_options loc options;
-  type_decls decls
 
 (* -------------------------------------------------------------------------- *)
 
