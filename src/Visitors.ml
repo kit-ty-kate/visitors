@@ -615,9 +615,13 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   let open R in
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
-  (* Produce a class definition. *)
+  (* Produce a class definition. Surround it with floating attributes, which
+     can be used as markers to find and review the generated code. *)
   let formals = [ ty_self, Invariant; ty_env, Invariant ] in
-  [ class1 formals current pself (dump current) ]
+  floating "VISITORS.BEGIN" ::
+  class1 formals current pself (dump current) ::
+  floating "VISITORS.END" ::
+  []
 
 (* -------------------------------------------------------------------------- *)
 
