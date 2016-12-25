@@ -89,6 +89,21 @@ let lambdas (xs : variable list) (e : expression) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [app] works like [Ast_convenience.app] (which it shadows), except it avoids
+   constructing nested applications of the form [(f x) y], transforming them
+   instead into a single application [f x y]. The difference is probably just
+   cosmetic. *)
+
+let app (e : expression) (es2 : expression list) : expression =
+  match e.pexp_desc with
+  | Pexp_apply (e1, les1) ->
+      let les2 = List.map (fun e -> Label.nolabel, e) es2 in
+      { e with pexp_desc = Pexp_apply (e1, les1 @ les2) }
+  | _ ->
+      app e es2
+
+(* -------------------------------------------------------------------------- *)
+
 (* [sequence es] constructs a sequence of the expressions in the list [es]. *)
 
 let fold_right1 f xs accu =

@@ -27,8 +27,6 @@ Document everything.
 
 Avoid warnings about unused variables.
 
-Use a smarter [app] function, so two nested apps become one app.
-
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
 
