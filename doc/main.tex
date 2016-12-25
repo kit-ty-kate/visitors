@@ -1,0 +1,36 @@
+\documentclass[onecolumn,11pt,nocopyrightspace]{sigplanconf}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\input{listings-ocaml}
+\lstset{language=ocaml}
+\usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{xspace}
+
+% ------------------------------------------------------------------------------
+% Headings.
+
+\title{Visitors}
+
+\begin{document}
+
+\authorinfo{François Pottier}
+	   {Inria Paris}
+	   {francois.pottier@inria.fr}
+
+\maketitle
+
+% ------------------------------------------------------------------------------
+
+\clearpage
+\tableofcontents
+\clearpage
+
+% ------------------------------------------------------------------------------
+
+Original:
+\lstinputlisting{expr.ml}
+Processed:
+\lstinputlisting{expr.processed.ml}
+
+\end{document}
