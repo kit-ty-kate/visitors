@@ -1,11 +1,39 @@
 \documentclass[onecolumn,11pt,nocopyrightspace]{sigplanconf}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{listings}
 \input{listings-ocaml}
 \lstset{language=ocaml}
-\usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{xcolor}
+\usepackage{mdframed}
 \usepackage{xspace}
+
+% ------------------------------------------------------------------------------
+
+\newenvironment{origenv}{%
+  \begin{mdframed}[backgroundcolor=gray!10,linewidth=0pt]%
+}{%
+  \end{mdframed}%
+}
+
+\newcommand{\orig}[1]{%
+\begin{origenv}
+\lstinputlisting{#1.ml}
+\end{origenv}
+}
+
+\newenvironment{processedenv}{%
+  \begin{mdframed}[backgroundcolor=yellow!40,linewidth=0pt]%
+}{%
+  \end{mdframed}%
+}
+
+\newcommand{\processed}[1]{%
+\begin{processedenv}
+\lstinputlisting{#1.processed.ml}
+\end{processedenv}
+}
 
 % ------------------------------------------------------------------------------
 % Headings.
@@ -29,8 +57,9 @@
 % ------------------------------------------------------------------------------
 
 Original:
-\lstinputlisting{expr.ml}
+\orig{expr}
+
 Processed:
-\lstinputlisting{expr.processed.ml}
+\processed{expr}
 
 \end{document}
