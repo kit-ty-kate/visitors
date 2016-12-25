@@ -39,23 +39,3 @@ install: all
 
 uninstall:
 	ocamlfind remove $(PACKAGE)
-
-# ------------------------------------------------------------------------------
-
-# Testing the preprocessor. (This assumes the package has been installed.)
-
-# The rewriting command.
-PPX          := `ocamlfind query ppx_deriving`/ppx_deriving \
-                `ocamlfind query visitors`/$(PLUGIN).cma
-REWRITE      := ocamlfind ppx_tools/rewriter -ppx '$(PPX)'
-
-# Use GNU sed to extract the generated code.
-# This requires GNU sed 3.95 or above, I am told.
-SED          := $(shell if command -v gsed >/dev/null ; then echo gsed ; else echo sed ; fi)
-EXTRACT      := $(SED) -e '/VISITORS.BEGIN/,/VISITORS.END/!d;//d'
-
-# Use ocp-indent to beautify the generated code.
-INDENT       := ocp-indent --config=JaneStreet
-
-%.ml.processed: %.ml
-	$(REWRITE) $< | $(EXTRACT) | $(INDENT) > $@

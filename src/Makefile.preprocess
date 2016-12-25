@@ -1,0 +1,21 @@
+# This Makefile allows running visitors as a preprocessor,
+# so as to inspect the generated code and possibly include
+# it in a TeX document.
+
+# This assumes the visitors package is installed.
+
+# The rewriting command.
+PPX          := `ocamlfind query ppx_deriving`/ppx_deriving \
+                `ocamlfind query visitors`/ppx_deriving_visitors.cma
+REWRITE      := ocamlfind ppx_tools/rewriter -ppx '$(PPX)'
+
+# Use GNU sed to extract the generated code.
+# This requires GNU sed 3.95 or above, I am told.
+SED          := $(shell if command -v gsed >/dev/null ; then echo gsed ; else echo sed ; fi)
+EXTRACT      := $(SED) -e '/VISITORS.BEGIN/,/VISITORS.END/!d;//d'
+
+# Use ocp-indent to beautify the generated code.
+INDENT       := ocp-indent --config=JaneStreet
+
+%.processed.ml: %.ml
+	$(REWRITE) $< | $(EXTRACT) | $(INDENT) > $@
