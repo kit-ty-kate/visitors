@@ -13,6 +13,10 @@ Perhaps do something about ~path,
 
 Test on the Frama-C AST.
 
+Develop support for names and binders.
+  Try to make it a functor, i.e., independent of the structure of terms.
+  Do we need private methods?
+
 Try the system with hash-consed terms. (With/without binding.)
 Try dealing with an open term definition and closing it afterwards.
 Try dealing with suspended substitutions.
