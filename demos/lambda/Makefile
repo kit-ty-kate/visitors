@@ -5,7 +5,7 @@ OCAMLBUILD := \
   ocamlbuild \
   -use-ocamlfind \
   -classic-display \
-  -cflags "-g -dsource" -lflags "-g" \
+  -cflags "-g" -lflags "-g" \
 
 SRC := \
   ../../src
