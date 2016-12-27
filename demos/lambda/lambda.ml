@@ -9,6 +9,8 @@ module StringSet = struct
 
 end
 
+module StringMap = Map.Make(String)
+
 type ('bn, 'term) abstraction =
   'bn * 'term
 
@@ -20,33 +22,43 @@ module Nominal = struct
   end
 end
 
+module Nominal2DeBruijn = struct
+  module Abstraction = struct
+    let map _ f (env, n) (x, body) =
+      let env = StringMap.add x n env in
+      (), f (env, n+1) body
+  end
+end
+
+type void
+
+class fv = object
+  val mutable accu = StringSet.empty
+  method visit_'fn (env : 'env) x =
+    if not (StringSet.mem x env) then
+      accu <- StringSet.add x accu
+  method visit_'bn (env : 'env) (x : void) : unit =
+    assert false (* never invoked *)
+  method accu = accu
+end
+
 type ('fn, 'bn) term =
   | TVar of 'fn
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
-    visitors { name = "fv"; variety = "iter"; nonlocal = ["Nominal"] }
+    visitors { name = "iter"; variety = "iter"; nonlocal = ["Nominal"] },
+    visitors { name = "import"; variety = "map"; nonlocal = ["Nominal2DeBruijn"] }
   ]
 
 (* Nominal. *)
 
-class ['a] accu (init : 'a) = object
-  val mutable accu = init
-  method accu = accu
-end
-
 let fv (t : (string, string) term) : StringSet.t =
-  let env = StringSet.empty in
   let o = object
-    inherit [_] accu (StringSet.empty)
-    inherit [_, _] fv
-    method visit_'fn env x =
-      if not (StringSet.mem x env) then
-        accu <- StringSet.add x accu
-    method visit_'bn env x =
-      assert false (* never invoked *)
+    inherit [_, _] iter
+    inherit fv
   end in
-  o # visit_term env t;
+  o # visit_term StringSet.empty t;
   o # accu
 
 let identity =
