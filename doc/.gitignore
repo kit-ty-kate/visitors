@@ -24,6 +24,3 @@ _whizzy*
 # latexmk
 *.fdb_latexmk
 *.fls
-
-# Misc.
-*.processed.ml

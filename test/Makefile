@@ -1,5 +1,5 @@
 TESTS := \
-  $(wildcard *.ml)
+  $(shell ls *.ml | grep -v processed)
 
 TARGETS := \
   $(patsubst %.ml,%.native,$(TESTS))
@@ -13,7 +13,7 @@ OCAMLBUILD := \
   -classic-display \
   -cflags "-g" -lflags "-g" \
 
-.PHONY: test mli clean
+.PHONY: test mli processed clean
 
 test:
 	@ make -C ../src uninstall || true
@@ -27,6 +27,11 @@ mli:
 	@ $(OCAMLBUILD) $(MLI)
 	@ more $(patsubst %,_build/%,$(MLI))
 
+include ../src/Makefile.preprocess
+
+processed: $(patsubst %.ml,%.processed.ml,$(TESTS))
+
 clean:
 	@ rm -f *~
+	@ rm -f *.processed.ml
 	@ $(OCAMLBUILD) -clean
