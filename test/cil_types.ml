@@ -1,5 +1,12 @@
+(* Support for the type [Integer.t]. *)
 module Integer = struct
   type t = int
+  include VisitorsRuntime.Inert
+end
+(* Support for the type [Lexing.position]. *)
+module Lexing = struct
+  include Lexing
+  module Position = VisitorsRuntime.Inert
 end
 
 (****************************************************************************)
@@ -1706,7 +1713,11 @@ and custom_tree = CustomDummy
   | CustomLexpr of lexpr
   | CustomOther of string * (custom_tree list)
 *)
-[@@deriving visitors { irregular = true }]
+[@@deriving visitors { name="iter"; variety="iter"; irregular = true },
+            visitors { name="map"; variety="map"; irregular = true },
+            visitors { name="iter2"; variety="iter2"; irregular = true },
+            visitors { name="map2"; variety="map2"; irregular = true }
+]
 
 type kinstr =
   | Kstmt of stmt
