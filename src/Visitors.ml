@@ -319,7 +319,7 @@ let componentss (xs : _ list) : variable list list =
 (* The variable [thing tycon j] denotes a value of type [tycon]. *)
 
 let thing (tycon : tycon) (j : int) : variable =
-  copy j (sprintf "_%s" tycon)
+  copy j (sprintf "this_%s" tycon)
 
 let things (tycon : tycon) : variable list =
   map (thing tycon) (interval 0 arity)
@@ -632,12 +632,15 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
   (* Produce a class definition. Surround it with floating attributes, which
-     can be used as markers to find and review the generated code. *)
+     can be used as markers to find and review the generated code. Also,
+     disable some warnings: 26, 27 (unused variables), 4 (fragile pattern
+     matching; a feature intentionally exploited by [iter2] and [map2]). *)
   let formals = [ ty_self, Invariant; ty_env, Invariant ] in
-  floating "VISITORS.BEGIN" ::
-  class1 formals current pself (dump current) ::
-  floating "VISITORS.END" ::
-  []
+  [ with_warnings "-4-26-27" [
+    floating "VISITORS.BEGIN" [];
+    class1 formals current pself (dump current);
+    floating "VISITORS.END" [];
+  ]]
 
 (* -------------------------------------------------------------------------- *)
 

@@ -200,11 +200,34 @@ let letopen (ms : Longident.t list) (e : expression) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [floating s] produces a floating attribute. *)
+(* [include_ e] constructs an [include] declaration. *)
 
-let floating (s : string) : structure_item =
-  let payload = PStr [] in
-  Str.attribute (mknoloc s, payload)
+let include_ (e : module_expr) : structure_item =
+  Str.include_ {
+    pincl_mod = e;
+    pincl_loc = Location.none;
+    pincl_attributes = [];
+  }
+
+(* -------------------------------------------------------------------------- *)
+
+(* [floating s items] produces a floating attribute whose name is [s] and
+   whose payload is the list of structure items [items]. *)
+
+let floating (s : string) (items : structure) : structure_item =
+  Str.attribute (mknoloc s, PStr items)
+
+(* -------------------------------------------------------------------------- *)
+
+(* [with_warnings w items] wraps the structure items [items] in such a way
+   that the warning directive [w] is applied to these items. Technically, this
+   is done by emitting [include struct [@@@ocaml.warning <w>] <items> end]. *)
+
+let with_warnings (w : string) (items : structure_item list) : structure_item =
+  include_ (Mod.structure (
+     floating "ocaml.warning" [ Str.eval (Exp.constant (Const.string w)) ]
+  :: items
+  ))
 
 (* -------------------------------------------------------------------------- *)
 

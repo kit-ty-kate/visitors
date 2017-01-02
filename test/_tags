@@ -1,5 +1,5 @@
 true: \
   safe_string, \
-  warn(A-4), \
+  warn(A), \
   package(visitors.ppx), \
   package(visitors.runtime)

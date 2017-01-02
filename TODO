@@ -2,13 +2,6 @@
 
 TODO (REALLY)
 
-Avoid warnings about unused variables.
-
-Avoid warning 4, triggered by iter2 and map2.
-  include struct [@@@ocaml.warning "-4"]
-    ...
-  end
-
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
 
