@@ -3,6 +3,28 @@ exception StructuralMismatch
 let fail () =
   raise StructuralMismatch
 
+module Inert = struct
+
+  let iter _env _x =
+    ()
+
+  let map _env x =
+    x
+
+  let iter2 _env x1 x2 =
+    if x1 = x2 then
+      ()
+    else
+      fail()
+
+  let map2 _env x1 x2 =
+    if x1 = x2 then
+      x1
+    else
+      fail()
+
+end
+
 module Array = struct
 
   let iter f env xs =
@@ -25,137 +47,17 @@ module Array = struct
 
 end
 
-module Bool = struct
+module Bool = Inert
 
-  let iter _env _b =
-    ()
+module Char = Inert
 
-  let map _env b =
-    b
+module Float = Inert
 
-  let iter2 _env (b1 : bool) (b2 : bool) =
-    if b1 = b2 then
-      ()
-    else
-      fail()
+module Int = Inert
 
-  let map2 _env (b1 : bool) (b2 : bool) =
-    if b1 = b2 then
-      b1
-    else
-      fail()
+module Int32 = Inert
 
-end
-
-module Char = struct
-
-  let iter _env _c =
-    ()
-
-  let map _env c =
-    c
-
-  let iter2 _env (c1 : char) (c2 : char) =
-    if c1 = c2 then
-      ()
-    else
-      fail()
-
-  let map2 _env (c1 : char) (c2 : char) =
-    if c1 = c2 then
-      c1
-    else
-      fail()
-
-end
-
-module Float = struct
-
-  let iter _env _f =
-    ()
-
-  let map _env f =
-    f
-
-  let iter2 _env (f1 : float) (f2 : float) =
-    if f1 = f2 then
-      ()
-    else
-      fail()
-
-  let map2 _env (f1 : float) (f2 : float) =
-    if f1 = f2 then
-      f1
-    else
-      fail()
-
-end
-
-module Int = struct
-
-  let iter _env _i =
-    ()
-
-  let map _env i =
-    i
-
-  let iter2 _env (i1 : int) (i2 : int) =
-    if i1 = i2 then
-      ()
-    else
-      fail()
-
-  let map2 _env (i1 : int) (i2 : int) =
-    if i1 = i2 then
-      i1
-    else
-      fail()
-
-end
-
-module Int32 = struct
-
-  let iter _env _i =
-    ()
-
-  let map _env i =
-    i
-
-  let iter2 _env (i1 : int32) (i2 : int32) =
-    if i1 = i2 then
-      ()
-    else
-      fail()
-
-  let map2 _env (i1 : int32) (i2 : int32) =
-    if i1 = i2 then
-      i1
-    else
-      fail()
-
-end
-
-module Int64 = struct
-
-  let iter _env _i =
-    ()
-
-  let map _env i =
-    i
-
-  let iter2 _env (i1 : int64) (i2 : int64) =
-    if i1 = i2 then
-      ()
-    else
-      fail()
-
-  let map2 _env (i1 : int64) (i2 : int64) =
-    if i1 = i2 then
-      i1
-    else
-      fail()
-
-end
+module Int64 = Inert
 
 module List = struct
 
@@ -253,40 +155,6 @@ module Ref = struct
 
 end
 
-module String = struct
+module String = Inert
 
-  let iter _env _s =
-    ()
-
-  let map _env s =
-    s
-
-  let iter2 _env (s1 : string) (s2 : string) =
-    if s1 = s2 then
-      ()
-    else
-      fail()
-
-  let map2 _env (s1 : string) (s2 : string) =
-    if s1 = s2 then
-      s1
-    else
-      fail()
-
-end
-
-module Unit = struct
-
-  let iter _env () =
-    ()
-
-  let map _env () =
-    ()
-
-  let iter2 _env () () =
-    ()
-
-  let map2 _env () () =
-    ()
-
-end
+module Unit = Inert
