@@ -37,6 +37,20 @@ module Int : sig
   val map2:  'env -> int -> int ->  int
 end
 
+module Int32 : sig
+  val iter: 'env -> int32 -> unit
+  val map:  'env -> int32 ->  int32
+  val iter2: 'env -> int32 -> int32 -> unit
+  val map2:  'env -> int32 -> int32 ->  int32
+end
+
+module Int64 : sig
+  val iter: 'env -> int64 -> unit
+  val map:  'env -> int64 ->  int64
+  val iter2: 'env -> int64 -> int64 -> unit
+  val map2:  'env -> int64 -> int64 ->  int64
+end
+
 module List : sig
   val iter: ('env -> 'a -> unit) -> 'env -> 'a list ->    unit
   val map:  ('env -> 'a ->   'b) -> 'env -> 'a list -> 'b list

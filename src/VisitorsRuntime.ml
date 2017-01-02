@@ -113,6 +113,50 @@ module Int = struct
 
 end
 
+module Int32 = struct
+
+  let iter _env _i =
+    ()
+
+  let map _env i =
+    i
+
+  let iter2 _env (i1 : int32) (i2 : int32) =
+    if i1 = i2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (i1 : int32) (i2 : int32) =
+    if i1 = i2 then
+      i1
+    else
+      fail()
+
+end
+
+module Int64 = struct
+
+  let iter _env _i =
+    ()
+
+  let map _env i =
+    i
+
+  let iter2 _env (i1 : int64) (i2 : int64) =
+    if i1 = i2 then
+      ()
+    else
+      fail()
+
+  let map2 _env (i1 : int64) (i2 : int64) =
+    if i1 = i2 then
+      i1
+    else
+      fail()
+
+end
+
 module List = struct
 
   (* We could reuse the functions provided by OCaml's [List] module,
