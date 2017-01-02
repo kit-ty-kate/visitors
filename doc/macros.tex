@@ -2,8 +2,16 @@
 % Including a source code file foo.ml:
 %   \orig{foo}
 
+\mdfsetup{%
+  linewidth=0pt,%
+  skipabove=\baselineskip,%
+  skipbelow=.4\baselineskip,%
+  innertopmargin=0pt,%
+  innerbottommargin=0pt,%
+}
+
 \newenvironment{origenv}{%
-  \begin{mdframed}[backgroundcolor=gray!10,linewidth=0pt]%
+  \begin{mdframed}[backgroundcolor=gray!10]%
 }{%
   \end{mdframed}%
 }
@@ -19,7 +27,7 @@
 %   \processed{foo}
 
 \newenvironment{processedenv}{%
-  \begin{mdframed}[backgroundcolor=yellow!40,linewidth=0pt]%
+  \begin{mdframed}[backgroundcolor=yellow!40]%
 }{%
   \end{mdframed}%
 }
