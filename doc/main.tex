@@ -1,7 +1,8 @@
 \documentclass[onecolumn,11pt,nocopyrightspace]{sigplanconf}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,%
+            linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{listings}
 \input{listings-ocaml}
 \lstset{language=ocaml}
@@ -16,11 +17,7 @@
 \title{Visitors}
 
 \begin{document}
-
-\authorinfo{François Pottier}
-	   {Inria Paris}
-	   {francois.pottier@inria.fr}
-
+\authorinfo{François Pottier}{Inria Paris}{francois.pottier@inria.fr}
 \maketitle
 
 % ------------------------------------------------------------------------------
@@ -31,7 +28,8 @@
 
 % ------------------------------------------------------------------------------
 
-Original:
+Suppose we are working with arithmetic expressions, which are built out of
+integer literals and (binary) additions:
 \orig{expr00}
 
 Processed:
