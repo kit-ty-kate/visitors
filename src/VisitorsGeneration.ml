@@ -208,9 +208,20 @@ let floating (s : string) : structure_item =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [class1 params name self fields] constructs a (virtual) class declaration
-   and packages it as a structure item (so it cannot be recursive with other
-   class declarations). *)
+(* [class1 params name self fields] builds a class declaration and packages it
+   as a structure item. (This implies that it cannot be recursive with other
+   class declarations). The class is declared virtual if and only if at least
+   one virtual method explicitly appears as part of the list [fields]. *)
+
+let is_virtual_method (field : class_field) : bool =
+  match field.pcf_desc with
+  | Pcf_method (_, _, Cfk_virtual _) ->
+      true
+  | _ ->
+      false
+
+let has_virtual_method (fields : class_field list) : bool =
+  List.exists is_virtual_method fields
 
 let class1
   (params : (core_type * variance) list)
@@ -219,7 +230,7 @@ let class1
   (fields : class_field list)
   : structure_item =
   Str.class_ [{
-    pci_virt = Virtual;
+    pci_virt = if has_virtual_method fields then Virtual else Concrete;
     pci_params = params;
     pci_name = mknoloc name;
     pci_expr = Cl.structure (Cstr.mk self fields);
