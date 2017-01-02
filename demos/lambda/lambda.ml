@@ -23,6 +23,8 @@ module Nominal = struct
 end
 
 module Nominal2DeBruijn = struct
+  type env =
+    int StringMap.t * int
   module Abstraction = struct
     let map _ f (env, n) (x, body) =
       let env = StringMap.add x n env in
@@ -37,9 +39,17 @@ class fv = object
   method visit_'fn (env : 'env) x =
     if not (StringSet.mem x env) then
       accu <- StringSet.add x accu
-  method visit_'bn (env : 'env) (x : void) : unit =
+  method visit_'bn (_ : 'env) (_ : void) : unit =
     assert false (* never invoked *)
   method accu = accu
+end
+
+class import = object
+  method visit_'fn (env, n) x =
+    let level = StringMap.find x env in
+    n - level
+  method visit_'bn (_ : Nominal2DeBruijn.env) (_ : void) : unit =
+    assert false (* never invoked *)
 end
 
 type ('fn, 'bn) term =
@@ -48,18 +58,31 @@ type ('fn, 'bn) term =
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
     visitors { name = "iter"; variety = "iter"; nonlocal = ["Nominal"] },
-    visitors { name = "import"; variety = "map"; nonlocal = ["Nominal2DeBruijn"] }
+    visitors { name = "map"; variety = "map"; nonlocal = ["Nominal2DeBruijn"] }
   ]
 
 (* Nominal. *)
 
-let fv (t : (string, string) term) : StringSet.t =
+type nominal_term =
+  (string, string) term
+
+type db_term =
+  (int, unit) term
+
+let fv (t : nominal_term) : StringSet.t =
   let o = object
     inherit [_, _] iter
     inherit fv
   end in
   o # visit_term StringSet.empty t;
   o # accu
+
+let import (t : nominal_term) : db_term =
+  let o = object
+    inherit [_, _] map
+    inherit import
+  end in
+  o # visit_term (StringMap.empty, 0) t
 
 let identity =
   TLambda ("x", TVar "x")
