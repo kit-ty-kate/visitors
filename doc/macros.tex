@@ -1,0 +1,31 @@
+% ------------------------------------------------------------------------------
+% Including a source code file foo.ml:
+%   \orig{foo}
+
+\newenvironment{origenv}{%
+  \begin{mdframed}[backgroundcolor=gray!10,linewidth=0pt]%
+}{%
+  \end{mdframed}%
+}
+
+\newcommand{\orig}[1]{%
+\begin{origenv}
+\lstinputlisting{#1.ml}
+\end{origenv}
+}
+
+% ------------------------------------------------------------------------------
+% Including the corresponding auto-generated code:
+%   \processed{foo}
+
+\newenvironment{processedenv}{%
+  \begin{mdframed}[backgroundcolor=yellow!40,linewidth=0pt]%
+}{%
+  \end{mdframed}%
+}
+
+\newcommand{\processed}[1]{%
+\begin{processedenv}
+\lstinputlisting{#1.processed.ml}
+\end{processedenv}
+}
