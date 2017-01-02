@@ -20,7 +20,7 @@ let iter = object(self)
     let env = StringSet.add x env in
     self#visit_term env t
   (* Descending methods for nonlocal types. *)
-  method visit_'binder env x = ()
+  method visit_'binder _env _x = ()
   method visit_'var env x =
     if StringSet.mem x env then
       Printf.printf "%s is a bound variable.\n%!" x
@@ -40,11 +40,11 @@ let () =
 let iter = object(self)
   inherit [_, _] iter
   (* Descending methods for local types. *)
-  method! match_TAbs env x t =
+  method! match_TAbs env _x t =
     let env = 1 + env in
     self#visit_term env t
   (* Descending methods for nonlocal types. *)
-  method visit_'binder env x = ()
+  method visit_'binder _env _x = ()
   method visit_'var env x =
     if x < env then
       Printf.printf "%d is a bound variable.\n%!" x
