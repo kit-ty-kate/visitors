@@ -1,25 +1,32 @@
-TARGET := \
-  test.native
+TESTS := \
+  $(wildcard *.ml)
 
-OCAMLBUILD_FLAGS := \
+TARGETS := \
+  $(patsubst %.ml,%.native,$(TESTS))
+
+MLI := \
+  $(patsubst %.ml,%.inferred.mli,$(TESTS))
+
+OCAMLBUILD := \
+  ocamlbuild \
   -use-ocamlfind \
   -classic-display \
-  -cflags "-g -dsource" -lflags "-g" \
+  -cflags "-g" -lflags "-g" \
 
-.PHONY: test infer clean
+.PHONY: test mli clean
 
 test:
 	@ make -C ../src uninstall || true
 	@ make -C ../src install
-	@ ocamlbuild $(OCAMLBUILD_FLAGS) $(TARGET)
-	@ for i in $(TARGET) ; do echo "Running $$i..." && ./$$i ; done
+	@ $(OCAMLBUILD) $(TARGETS)
+#	@ for i in $(TARGET) ; do echo "Running $$i..." && ./$$i ; done
 
-infer:
+mli:
 	@ make -C ../src uninstall || true
 	@ make -C ../src install
-	@ ocamlbuild $(OCAMLBUILD_FLAGS) test.inferred.mli
-	@ cat _build/test.inferred.mli
+	@ $(OCAMLBUILD) $(MLI)
+	@ more $(patsubst %,_build/%,$(MLI))
 
 clean:
 	@ rm -f *~
-	@ ocamlbuild $(OCAMLBUILD_FLAGS) -clean
+	@ $(OCAMLBUILD) -clean
