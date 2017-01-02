@@ -4,12 +4,16 @@ TODO (REALLY)
 
 Avoid warnings about unused variables.
 
+Avoid warning 4, triggered by iter2 and map2.
+  include struct [@@@ocaml.warning "-4"]
+    ...
+  end
+
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
 
-Clean up and clarify the test suite.
-
 Test on the Frama-C AST.
+  Instantiate visit_'term and visit_'locs and make sure we have working code.
 
 Develop support for names and binders.
   Try to make it a functor, i.e., independent of the structure of terms.
