@@ -1,15 +1,13 @@
-TODO
+------------------------------------------------------------------------------
 
-Generate a "fold" class in addition to iter and map?
-  Should not be difficult.
-  Create virtual methods for local types. Use external functions for nonlocal types.
-  Analogous to ppx_tools/genlifter.
+TODO (REALLY)
 
-Perhaps support inline notation ("core_type")
-  by treating every type constructor as nonlocal?
+Avoid warnings about unused variables.
 
-Perhaps do something about ~path,
-  which seems connected to nested modules.
+Avoid generating beta-redexes.
+  (fun (x, y) -> ...) z should be let (x, y) = z in ...
+
+Clean up and clarify the test suite.
 
 Test on the Frama-C AST.
 
@@ -25,19 +23,20 @@ Try dealing with suspended substitutions.
 Document everything.
   The name [VisitorsRuntime] must not be shadowed.
 
-Avoid warnings about unused variables.
+Show to François Bobot and Virgile Prevosto.
+Show to Andrei and Jean-Christophe.
+Add a LICENSE. Announce.
 
-Avoid generating beta-redexes.
-  (fun (x, y) -> ...) z should be let (x, y) = z in ...
+------------------------------------------------------------------------------
 
-Deal with abstract types just as if they were nonlocal.
+TODO (PERHAPS)
 
-Think about compositionality.
-  By multiple inheritance?
+Generate a "fold" class in addition to iter and map?
+  Should not be difficult.
+  Create virtual methods for local types. Use external functions for nonlocal types.
+  Analogous to ppx_tools/genlifter.
+
+Do something about ~path?
+  It seems connected to nested modules.
 
 Think about automatically transforming a closed recursive type definition into an open one.
-
-Show to François Bobot and Virgile Prevosto. Try the Frama-C AST.
-Show to Andrei and Jean-Christophe.
-
-Add a LICENSE. Announce.
