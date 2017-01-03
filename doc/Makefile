@@ -2,17 +2,20 @@ include ../src/Makefile.preprocess
 
 export TEXINPUTS=.:../test:
 
-.PHONY: all clean
+.PHONY: all loop clean
 
 all: main.pdf
 
 SOURCES   := $(wildcard *.tex) $(wildcard *.bib) $(wildcard *.sty)
-ML        := $(wildcard ../test/*.ml)
+ML        := $(shell ls ../test/*.ml | grep -v processed)
 PROCESSED := $(patsubst %.ml,%.processed.ml,$(ML))
 
 %.pdf: %.tex $(SOURCES) $(ML) $(PROCESSED)
 	pdflatex $*
 	pdflatex $*
+
+loop: $(SOURCES) $(ML) $(PROCESSED)
+	latexmk -pdf -pvc main
 
 clean:
 	rm -f *.log *.aux *.bbl *.blg *.out *.toc *~ main.pdf
