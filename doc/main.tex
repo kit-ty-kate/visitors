@@ -72,4 +72,41 @@ the first part of \fref{fig:expr00}. By annotating this type definition with
 a visitor for expressions. The code for this visitor, which normally remains
 invisible, is shown in the second part of \fref{fig:expr00}.
 
+The annotation \texttt{[@@deriving visitors { ... }]} must carry at least two
+parameters. The parameter \name can be an arbitrary string; it is used as the
+name of the generated class. The parameter \variety must be one of \iter,
+\map, \itertwo, \maptwo. It indicates which visitor template must be used.
+
+% ------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\orig{expr01}
+\vspace{-\baselineskip}
+\processed{expr01}
+\caption{A \texttt{map}-style visitor}
+\label{fig:expr01}
+\end{figure}
+
+% ------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\orig{expr02}
+\vspace{-\baselineskip}
+\processed{expr02}
+\caption{An \texttt{iter2}-style visitor}
+\label{fig:expr02}
+\end{figure}
+
+% ------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\orig{expr03}
+\vspace{-\baselineskip}
+\processed{expr03}
+\caption{A \texttt{map2}-style visitor}
+\label{fig:expr03}
+\end{figure}
+
+% ------------------------------------------------------------------------------
+
 \end{document}
