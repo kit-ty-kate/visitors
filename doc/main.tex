@@ -51,9 +51,9 @@ Furthermore, a Merlin user should add the following lines in her project's
   PKG visitors.runtime
 \end{lstlisting}
 
-\subsection{Tutorial}
-
 % ------------------------------------------------------------------------------
+
+\subsection{A first example}
 
 \begin{figure}[t]
 In an OCaml source code file, a type definition can be annotated with
@@ -61,7 +61,7 @@ In an OCaml source code file, a type definition can be annotated with
 \orig{expr00}
 This causes the following code to be (invisibly) generated:
 \processed{expr00}
-\caption{An \texttt{iter}-style visitor}
+\caption{A visitor of the \iter variety}
 \label{fig:expr00}
 \end{figure}
 
@@ -69,13 +69,28 @@ Suppose we wish to work with arithmetic expressions built out of integer
 literals and binary additions. An algebraic data type \oc|expr| is shown in
 the first part of \fref{fig:expr00}. By annotating this type definition with
 \texttt{[@@deriving visitors { ... }]}, we request the automated generation of
-a visitor for expressions. The code for this visitor, which normally remains
-invisible, is shown in the second part of \fref{fig:expr00}.
+a visitor for expressions. The code for this visitor, which in normal use
+remains invisible, is shown in the second part of \fref{fig:expr00}.
 
 The annotation \texttt{[@@deriving visitors { ... }]} must carry at least two
 parameters. The parameter \name can be an arbitrary string; it is used as the
 name of the generated class. The parameter \variety must be one of \iter,
-\map, \itertwo, \maptwo. It indicates which visitor template must be used.
+\map, \itertwo, \maptwo. It indicates which variety of visitor must be
+generated.
+
+A visitor takes the form of an OCaml class, whose methods are named after the
+types and data constructors that appear in the type definition. In
+\fref{fig:expr00}, for instance, the method \oc|visit_expr| is named after the
+type \oc|expr|, while the methods \oc|match_EConst| and \oc|match_EAdd| are
+named after the data constructors \oc|EConst| and \oc|EAdd|.
+
+Every method is parameterized with an environment \oc|env|, which (by default)
+is carried down into every recursive call. This environment is (by default)
+unused, so it could have any type. It is declared to have type \oc|'env|,
+where the type variable \oc|'env| is a parameter of the class.
+
+A visitor of the \iter variety traverses a data structure and (by default)
+does nothing. Thus, every method has return type \unit.
 
 % ------------------------------------------------------------------------------
 
@@ -83,7 +98,7 @@ name of the generated class. The parameter \variety must be one of \iter,
 \orig{expr01}
 \vspace{-\baselineskip}
 \processed{expr01}
-\caption{A \texttt{map}-style visitor}
+\caption{A visitor of the \map variety}
 \label{fig:expr01}
 \end{figure}
 
@@ -93,7 +108,7 @@ name of the generated class. The parameter \variety must be one of \iter,
 \orig{expr02}
 \vspace{-\baselineskip}
 \processed{expr02}
-\caption{An \texttt{iter2}-style visitor}
+\caption{An visitor of the \itertwo variety}
 \label{fig:expr02}
 \end{figure}
 
@@ -103,7 +118,7 @@ name of the generated class. The parameter \variety must be one of \iter,
 \orig{expr03}
 \vspace{-\baselineskip}
 \processed{expr03}
-\caption{A \texttt{map2}-style visitor}
+\caption{A visitor of the \maptwo variety}
 \label{fig:expr03}
 \end{figure}
 
