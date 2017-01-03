@@ -56,8 +56,8 @@ Furthermore, a Merlin user should add the following lines in her project's
 \subsection{A first example}
 
 \begin{figure}[t]
-In an OCaml source code file, a type definition can be annotated with
-\texttt{[@@deriving visitors { ... }]}:
+In an OCaml source file, a type definition can be annotated with
+\oc|[@@deriving visitors { ... }]|:
 \orig{expr00}
 This causes the following code to be (invisibly) generated:
 \processed{expr00}
@@ -68,11 +68,11 @@ This causes the following code to be (invisibly) generated:
 Suppose we wish to work with arithmetic expressions built out of integer
 literals and binary additions. An algebraic data type \oc|expr| is shown in
 the first part of \fref{fig:expr00}. By annotating this type definition with
-\texttt{[@@deriving visitors { ... }]}, we request the automated generation of
+\oc|[@@deriving visitors { ... }]|, we request the automated generation of
 a visitor for expressions. The code for this visitor, which in normal use
 remains invisible, is shown in the second part of \fref{fig:expr00}.
 
-The annotation \texttt{[@@deriving visitors { ... }]} must carry at least two
+The annotation \oc|[@@deriving visitors { ... }]| must carry at least two
 parameters. The parameter \name can be an arbitrary string; it is used as the
 name of the generated class. The parameter \variety must be one of \iter,
 \map, \itertwo, \maptwo. It indicates which variety of visitor must be
@@ -80,17 +80,25 @@ generated.
 
 A visitor takes the form of an OCaml class, whose methods are named after the
 types and data constructors that appear in the type definition. In
-\fref{fig:expr00}, for instance, the method \oc|visit_expr| is named after the
-type \oc|expr|, while the methods \oc|match_EConst| and \oc|match_EAdd| are
-named after the data constructors \oc|EConst| and \oc|EAdd|.
+\fref{fig:expr00}, for instance, the method \tyconvisitor{expr} is named after
+the type \oc|expr|, while the methods \dataconvisitor{EConst} and
+\dataconvisitor{EAdd} are named after the data constructors \oc|EConst| and
+\oc|EAdd|.
 
-Every method is parameterized with an environment \oc|env|, which (by default)
-is carried down into every recursive call. This environment is (by default)
-unused, so it could have any type. It is declared to have type \oc|'env|,
-where the type variable \oc|'env| is a parameter of the class.
+A visitor of the \iter variety traverses a data structure. It returns no
+result: its methods have return type \unit. The default implementations of
+these methods do nothing. In \fref{fig:expr00}, for instance, the method
+\tyconvisitor{expr} inspects its argument \oc|this_expr| and recursively
+invokes either \dataconvisitor{EConst} or \dataconvisitor{EAdd}, as
+appropriate. The method \dataconvisitor{EConst} does nothing. (More precisely,
+it calls the function \oc|VisitorsRuntime.Int.iter|, which itself does
+nothing.) The method \dataconvisitor{EAdd} performs two recursive calls to
+\tyconvisitor{expr}, which does nothing, so \dataconvisitor{EAdd} itself does
+nothing.
 
-A visitor of the \iter variety traverses a data structure and (by default)
-does nothing. Thus, every method has return type \unit.
+Every method is parameterized with an environment \oc|env|, which is carried
+down into every recursive call and is otherwise unused.
+% The type of this environment is therefore a priori undetermined.
 
 % ------------------------------------------------------------------------------
 
