@@ -100,6 +100,26 @@ Every method is parameterized with an environment \oc|env|, which is carried
 down into every recursive call and is otherwise unused.
 % The type of this environment is therefore a priori undetermined.
 
+\begin{figure}[t]
+\begin{origenv}
+\lstinputlisting[firstline=3]{expr04.ml}
+\end{origenv}
+\caption{Counting the number of addition nodes in an expression}
+\label{fig:expr04}
+\end{figure}
+
+Naturally, traversing a data structure without actually computing anything is
+not a very sensible thing to do. Things become interesting when at least one
+visitor method is overridden so as to obtain a nontrivial behavior. Suppose,
+for instance, that we wish to count the number of addition nodes in an
+expression. This can be done as shown in \fref{fig:expr04}. We create an
+object~\oc|v| which is both a counter (that is, it has a mutable
+field~\oc|count|) and a visitor, and we override its method
+\dataconvisitor{EAdd} so that the counter is incremented every time this
+method is invoked. There remains to run the visitor, by invoking its
+\tyconvisitor{expr} method, and to return the final value of the counter. The
+environment, in this example, is unused; we let it have type \unit.
+
 % ------------------------------------------------------------------------------
 
 \begin{figure}[t]
