@@ -5,6 +5,9 @@ TODO (REALLY)
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
 
+Benchmark.
+  Compare the speed of visitor-based code w.r.t. a recursive function.
+
 Test on the Frama-C AST.
   Instantiate visit_'term and visit_'locs and make sure we have working code.
 
