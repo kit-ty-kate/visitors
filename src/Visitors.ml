@@ -282,16 +282,10 @@ let pself : pattern =
   Pat.constraint_ (pvar self) ty_self
 
 (* The variable [env] refers to the environment that is carried down into
-   recursive calls. The type variable [ty_env] denotes its type. *)
+   recursive calls. *)
 
 let env : variable =
   "env"
-
-let ty_env : core_type =
-  Typ.var "env"
-
-let penv : pattern =
-  Pat.constraint_ (pvar env) ty_env
 
 (* We sometimes need two (or more) copies of a variable: one copy for each
    index [j] ranging in the interval [0..arity). *)
@@ -601,7 +595,7 @@ let type_decl (decl : type_declaration) : unit =
   generate current (
     concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
-      (plambda penv (visit_decl decl))
+      (plambda (pvar env) (visit_decl decl))
   )
 
 end
@@ -635,7 +629,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
      can be used as markers to find and review the generated code. Also,
      disable some warnings: 26, 27 (unused variables), 4 (fragile pattern
      matching; a feature intentionally exploited by [iter2] and [map2]). *)
-  let formals = [ ty_self, Invariant; ty_env, Invariant ] in
+  let formals = [ ty_self, Invariant ] in
   [ with_warnings "-4-26-27" [
     floating "VISITORS.BEGIN" [];
     class1 formals current pself (dump current);

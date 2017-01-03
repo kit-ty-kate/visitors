@@ -71,7 +71,7 @@ type db_term =
 
 let fv (t : nominal_term) : StringSet.t =
   let o = object
-    inherit [_, _] iter
+    inherit [_] iter
     inherit fv
   end in
   o # visit_term StringSet.empty t;
@@ -79,7 +79,7 @@ let fv (t : nominal_term) : StringSet.t =
 
 let import (t : nominal_term) : db_term =
   let o = object
-    inherit [_, _] map
+    inherit [_] map
     inherit import
   end in
   o # visit_term (StringMap.empty, 0) t
@@ -114,7 +114,7 @@ end
 
 let subst (sigma : name -> name) (t : term) : term =
   let subst = object
-    inherit [_, _] map
+    inherit [_] map
     inherit [_] subst sigma
   end in
   let env = StringSet.empty in

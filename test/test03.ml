@@ -14,7 +14,7 @@ type ('var, 'binder) term =
 module StringSet = Set.Make(String)
 
 let iter = object(self)
-  inherit [_, _] iter
+  inherit [_] iter
   (* Descending methods for local types. *)
   method! match_TAbs env x t =
     let env = StringSet.add x env in
@@ -38,7 +38,7 @@ let () =
 (* De Bruijn. *)
 
 let iter = object(self)
-  inherit [_, _] iter
+  inherit [_] iter
   (* Descending methods for local types. *)
   method! match_TAbs env _x t =
     let env = 1 + env in
