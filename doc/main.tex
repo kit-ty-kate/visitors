@@ -53,8 +53,6 @@ Furthermore, a Merlin user should add the following lines in her project's
 
 % ------------------------------------------------------------------------------
 
-\subsection{A first example}
-
 \begin{figure}[t]
 In an OCaml source file, a type definition can be annotated with
 \oc|[@@deriving visitors { ... }]|:
@@ -64,6 +62,8 @@ This causes the following code to be (invisibly) generated:
 \caption{A visitor of the \iter variety}
 \label{fig:expr00}
 \end{figure}
+
+\subsection{A first visitor: definition}
 
 Suppose we wish to work with arithmetic expressions built out of integer
 literals and binary additions. An algebraic data type \oc|expr| is shown in
@@ -100,6 +100,8 @@ Every method is parameterized with an environment \oc|env|, which is carried
 down into every recursive call and is otherwise unused.
 % The type of this environment is therefore a priori undetermined.
 
+% ------------------------------------------------------------------------------
+
 \begin{figure}[t]
 \begin{origenv}
 \lstinputlisting[firstline=3]{expr04.ml}
@@ -107,6 +109,8 @@ down into every recursive call and is otherwise unused.
 \caption{Counting the number of addition nodes in an expression}
 \label{fig:expr04}
 \end{figure}
+
+\subsection{A first visitor: usage}
 
 Naturally, traversing a data structure without actually computing anything is
 not a very sensible thing to do. Things become interesting when at least one
@@ -119,6 +123,13 @@ field~\oc|count|) and a visitor, and we override its method
 method is invoked. There remains to run the visitor, by invoking its
 \tyconvisitor{expr} method, and to return the final value of the counter. The
 environment, in this example, is unused; we let it have type \unit.
+
+This may seem a rather complicated way of counting the addition nodes in an
+expression. Of course, one could give a direct recursive definition of the
+function \oc|count|, in a few lines of code, without using a visitor at all.
+The point of employing a visitor, as done in Figures~\ref{fig:expr00}
+and~\ref{fig:expr04}, is that no changes to the code are required when the
+type of expressions is extended with new cases.
 
 % ------------------------------------------------------------------------------
 
