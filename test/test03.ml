@@ -16,7 +16,7 @@ module StringSet = Set.Make(String)
 let iter = object(self)
   inherit [_] iter
   (* Descending methods for local types. *)
-  method! match_TAbs env x t =
+  method! visit_TAbs env x t =
     let env = StringSet.add x env in
     self#visit_term env t
   (* Descending methods for nonlocal types. *)
@@ -40,7 +40,7 @@ let () =
 let iter = object(self)
   inherit [_] iter
   (* Descending methods for local types. *)
-  method! match_TAbs env _x t =
+  method! visit_TAbs env _x t =
     let env = 1 + env in
     self#visit_term env t
   (* Descending methods for nonlocal types. *)

@@ -229,7 +229,7 @@ let tyvar_visitor_method (tv : tyvar) : methode =
    which is invoked on the way down, when this data constructor is discovered. *)
 
 let datacon_descending_method (datacon : datacon) : methode =
-  "match_" ^ datacon
+  "visit_" ^ datacon
 
 (* At arity 2, for every sum type constructor [tycon] which has at least two
    data constructors, there is a failure method, which is invoked when the
