@@ -22,17 +22,54 @@
 
 % ------------------------------------------------------------------------------
 
+% TEMPORARY
 \clearpage
-\tableofcontents
-\clearpage
+% \tableofcontents
+% \clearpage
 
 % ------------------------------------------------------------------------------
 
-Suppose we are working with arithmetic expressions, which are built out of
-integer literals and (binary) additions:
-\orig{expr00}
+\section{Introduction}
 
-Processed:
+\subsection{Setup}
+
+In order to install the \visitors package, an \opam user should issue the
+following commands:
+\begin{verbatim}
+  opam update
+  opam install visitors
+\end{verbatim}
+In order to use the \visitors package, an \ocamlbuild user should add the
+following line in her project's \texttt{\_tags} file:
+\begin{lstlisting}
+  true: package(visitors.ppx), package(visitors.runtime)
+\end{lstlisting}
+Furthermore, a Merlin user should add the following lines in her project's
+\texttt{.merlin} file:
+\begin{lstlisting}
+  PKG visitors.ppx
+  PKG visitors.runtime
+\end{lstlisting}
+
+\subsection{Tutorial}
+
+% ------------------------------------------------------------------------------
+
+\begin{figure}[t]
+In an OCaml source code file, a type definition can be annotated with
+\texttt{[@@deriving visitors { ... }]}:
+\orig{expr00}
+This causes the following code to be (invisibly) generated:
 \processed{expr00}
+\caption{An \texttt{iter}-style visitor}
+\label{fig:expr00}
+\end{figure}
+
+Suppose we wish to work with arithmetic expressions built out of integer
+literals and binary additions. An algebraic data type \oc|expr| is shown in
+the first part of \fref{fig:expr00}. By annotating this type definition with
+\texttt{[@@deriving visitors { ... }]}, we request the automated generation of
+a visitor for expressions. The code for this visitor, which normally remains
+invisible, is shown in the second part of \fref{fig:expr00}.
 
 \end{document}
