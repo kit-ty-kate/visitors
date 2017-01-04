@@ -30,8 +30,10 @@
 % ------------------------------------------------------------------------------
 
 \section{Introduction}
+\label{sec:intro}
 
 \subsection{Setup}
+\label{sec:intro:setup}
 
 In order to install the \visitors package, an \opam user should issue the
 following commands:
@@ -64,6 +66,7 @@ This causes the following code to be (invisibly) generated:
 \end{figure}
 
 \subsection{A first visitor: definition}
+\label{sec:intro:iter:def}
 
 Suppose we wish to work with arithmetic expressions built out of integer
 literals and binary additions. An algebraic data type \oc|expr| is shown in
@@ -111,6 +114,7 @@ down into every recursive call and is otherwise unused.
 \end{figure}
 
 \subsection{A first visitor: usage}
+\label{sec:intro:iter:usage}
 
 Naturally, traversing a data structure without actually computing anything is
 not a very sensible thing to do. Things become interesting when at least one
@@ -133,6 +137,9 @@ type of expressions is extended with new cases.
 
 % ------------------------------------------------------------------------------
 
+\subsection{Other varieties of visitors}
+\label{sec:intro:other}
+
 \begin{figure}[t]
 \orig{expr01}
 \vspace{-\baselineskip}
@@ -141,19 +148,24 @@ type of expressions is extended with new cases.
 \label{fig:expr01}
 \end{figure}
 
+A visitor of the \iter variety (\sref{sec:intro:iter:def}) returns no result.
+Although, as illustrated previously (\sref{sec:intro:iter:usage}), it can use
+private mutable state to accumulate information, there are applications for
+which such a visitor is not suitable. One class of such applications is tree
+transformations. For this purpose, one must use a visitor of another variety,
+namely \map.
+
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr02}
 \vspace{-\baselineskip}
 \processed{expr02}
-\caption{An visitor of the \itertwo variety}
+\caption{A visitor of the \itertwo variety}
 \label{fig:expr02}
 \end{figure}
 
-% ------------------------------------------------------------------------------
-
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr03}
 \vspace{-\baselineskip}
 \processed{expr03}
