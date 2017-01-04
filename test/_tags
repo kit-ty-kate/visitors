@@ -3,3 +3,6 @@ true: \
   warn(A), \
   package(visitors.ppx), \
   package(visitors.runtime)
+
+<expr07.*>: \
+  package(hashcons)
