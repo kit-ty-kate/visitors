@@ -34,7 +34,9 @@ TODO (PERHAPS)
 Generate a "fold" class in addition to iter and map?
   Should not be difficult.
   Create virtual methods for local types. Use external functions for nonlocal types.
+    Do something about tuples. (Reconstruct them identically?)
   Analogous to ppx_tools/genlifter.
+  Would allow the user to define subclasses, possibly in several steps. Could be useful.
 
 Do something about ~path?
   It seems connected to nested modules.
