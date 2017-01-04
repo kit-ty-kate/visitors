@@ -2,6 +2,8 @@
 
 TODO (REALLY)
 
+Generate a virtual method at most once.
+
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
 
