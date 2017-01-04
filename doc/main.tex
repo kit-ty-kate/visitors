@@ -65,7 +65,7 @@ This causes the following code to be (invisibly) generated:
 \label{fig:expr00}
 \end{figure}
 
-\subsection{A first visitor: definition}
+\subsection{An \iter visitor: definition}
 \label{sec:intro:iter:def}
 
 Suppose we wish to work with arithmetic expressions built out of integer
@@ -113,7 +113,7 @@ down into every recursive call and is otherwise unused.
 \label{fig:expr04}
 \end{figure}
 
-\subsection{A first visitor: usage}
+\subsection{An \iter visitor: usage}
 \label{sec:intro:iter:usage}
 
 Naturally, traversing a data structure without actually computing anything is
@@ -137,9 +137,6 @@ type of expressions is extended with new cases.
 
 % ------------------------------------------------------------------------------
 
-\subsection{Other varieties of visitors}
-\label{sec:intro:other}
-
 \begin{figure}[t]
 \orig{expr01}
 \vspace{-\baselineskip}
@@ -148,12 +145,22 @@ type of expressions is extended with new cases.
 \label{fig:expr01}
 \end{figure}
 
+\subsection{A \map visitor}
+\label{sec:intro:map}
+
 A visitor of the \iter variety (\sref{sec:intro:iter:def}) returns no result.
 Although, as illustrated previously (\sref{sec:intro:iter:usage}), it can use
 private mutable state to accumulate information, there are applications for
 which such a visitor is not suitable. One class of such applications is tree
 transformations. For this purpose, one must use a visitor of another variety,
 namely \map.
+
+How to request the generation of a \map visitor is shown in the first part of
+\fref{fig:expr01}. The generated code appears in the second part of
+\fref{fig:expr01}. In comparison with the \iter visitor of \fref{fig:expr00},
+the code is identical, except that, instead of returning \oc|()|, the method
+\dataconvisitor{EConst} reconstructs an \oc|EConst| expression, and the method
+\dataconvisitor{EAdd} reconstructs an \oc|EAdd| expression.
 
 % ------------------------------------------------------------------------------
 
@@ -172,6 +179,41 @@ namely \map.
 \caption{A visitor of the \maptwo variety}
 \label{fig:expr03}
 \end{figure}
+
+\subsection{Visitors of arity 2}
+\label{sec:intro:aritytwo}
+
+The \iter and \map visitors shown so far traverse one tree at a time. There
+are situations where one wishes to simultaneously traverse two trees, which
+one expects have the same structure. For this purpose, one should use a
+visitor of arity 2. These come in two varities, namely \itertwo
+(\fref{fig:expr02}) and \maptwo (\fref{fig:expr03}).
+
+In these visitors, the method \tyconvisitor{expr} expects an environment and
+two expressions. The two expressions must have identical structure: indeed, if
+the method \tyconvisitor{expr} finds that the two expressions exhibit
+different tags at the root, say \oc|EConst| versus \oc|EAdd|, then it invokes
+the method \tyconfail{expr}, which by default calls \oc|VisitorsRuntime.fail()|,
+which throws the exception \oc|VisitorsRuntime.StructuralMismatch|.
+
+\begin{figure}[t]
+\begin{origenv}
+\lstinputlisting[firstline=3]{expr05.ml}
+\end{origenv}
+\caption{Determining whether two expressions are syntactically equal}
+\label{fig:expr05}
+\end{figure}
+
+An \itertwo visitor can be used, for instance, to easily determine whether two
+expressions are syntactically equal (\fref{fig:expr05}). Naturally, for this
+particular purpose, one could use OCaml's primitive equality operator \oc|=|,
+or one could exploit \ppxderiving and annotate the type definition with
+\oc|[@@deriving eq]|. Visitors offer greater flexibility: for instance, if our
+arithmetic expressions contained variables, we could easily define an
+operation that tests whether two expressions are equal up to a renaming of
+variables.
+% More generally, if expressions contained variables and binders, we could
+% define an operation that tests whether two expressions are $\alpha$-equivalent.
 
 % ------------------------------------------------------------------------------
 
