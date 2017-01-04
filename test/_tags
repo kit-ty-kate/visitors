@@ -6,3 +6,6 @@ true: \
 
 <expr07.*>: \
   package(hashcons)
+
+<expr08.*>: \
+  package(hashcons)
