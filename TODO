@@ -31,7 +31,7 @@ Document everything.
 Show to François Bobot and Virgile Prevosto.
 Show to Andrei and Jean-Christophe.
 Add a LICENSE.
-Create an opam package. Dependency on 4.03.
+Create an opam package. Dependency on 4.03. Note @@unboxed requires 4.04.
   Dependencies on other packages for tests: hashcons, core_bench...
   Run these tests only if these packages are installed, warn otherwise?
 Announce.
