@@ -15,7 +15,10 @@ Develop support for names and binders.
   Try to make it a functor, i.e., independent of the structure of terms.
   Do we need private methods?
 
-Try the system with hash-consed terms. (With/without binding.)
+Try the system with hash-consed terms.
+  (With/without binding.)
+  Seems to require the ability of deferring visitor generation!
+
 Try dealing with an open term definition and closing it afterwards.
 Try dealing with suspended substitutions.
   (As a distinct construct. Not necessarily at abstractions.)
@@ -25,7 +28,11 @@ Document everything.
 
 Show to François Bobot and Virgile Prevosto.
 Show to Andrei and Jean-Christophe.
-Add a LICENSE. Announce.
+Add a LICENSE.
+Create an opam package. Dependency on 4.03.
+  Dependencies on other packages for tests: hashcons, core_bench...
+  Run these tests only if these packages are installed, warn otherwise?
+Announce.
 
 ------------------------------------------------------------------------------
 
