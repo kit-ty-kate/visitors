@@ -46,7 +46,7 @@ following line in her project's \texttt{\_tags} file:
 \begin{lstlisting}
   true: package(visitors.ppx), package(visitors.runtime)
 \end{lstlisting}
-Furthermore, a Merlin user should add the following lines in her project's
+Furthermore, a \merlin user should add the following lines in her project's
 \texttt{.merlin} file:
 \begin{lstlisting}
   PKG visitors.ppx
@@ -238,3 +238,13 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 % ------------------------------------------------------------------------------
 
 \end{document}
+
+% TEMPORARY
+
+related work:
+  ppx_deriving (generates monolithic code) (fixed number of templates)
+  ppx_deriving_morphism
+  Hongbo Zhang has `deriving at a distance' in Fan
+    https://github.com/bobzhang/fan
+    http://zhanghongbo.me/fan/
+    http://zhanghongbo.me/fan/_downloads/metaprogramming_for_ocaml.pdf
