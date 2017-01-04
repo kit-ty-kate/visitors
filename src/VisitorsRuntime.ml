@@ -155,6 +155,32 @@ module Ref = struct
 
 end
 
+module Result = struct
+
+  let iter f g env r =
+    match r with
+    | Ok a -> f env a
+    | Error b -> g env b
+
+  let map f g env r =
+    match r with
+    | Ok a -> Ok (f env a)
+    | Error b -> Error (g env b)
+
+  let iter2 f g env r1 r2 =
+    match r1, r2 with
+    | Ok a1, Ok a2 -> f env a1 a2
+    | Error b1, Error b2 -> g env b1 b2
+    | _, _ -> fail()
+
+  let map2 f g env r1 r2 =
+    match r1, r2 with
+    | Ok a1, Ok a2 -> Ok (f env a1 a2)
+    | Error b1, Error b2 -> Error (g env b1 b2)
+    | _, _ -> fail()
+
+end
+
 module String = Inert
 
 module Unit = Inert
