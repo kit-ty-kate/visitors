@@ -6,8 +6,9 @@ type 'expr expr_node =
   [@@deriving visitors { name = "map0"; variety = "map" }]
 
 type expr =
-  E of expr expr_node hash_consed [@@unboxed]
-  (* TEMPORARY unboxed annotation *)
+  E of expr expr_node hash_consed [@@ocaml.unboxed]
+  (* TEMPORARY unboxed annotation does not work *)
+  (* https://caml.inria.fr/mantis/view.php?id=7364 *)
 
 let table : expr expr_node Hashcons.t =
   create 128
@@ -28,7 +29,7 @@ let eq (E e1) (E e2) = e1 == e2
 let increment (e : expr) : expr =
   let v = object
     inherit [_] map
-    method visit_EConst env i =
+    method! visit_EConst _env i =
       EConst (i + 1)
   end in
   v # visit_'expr () e
@@ -36,8 +37,12 @@ let increment (e : expr) : expr =
 let e1 : expr = eadd (econst 0) (econst 1)
 let e2 : expr = new map # visit_'expr () e1
 let () =
+  Printf.printf "%b\n%!" (e1 == e2)
+let () =
   Printf.printf "%b\n%!" (eq e1 e2)
 let e3 : expr = eadd (econst 1) (econst 2)
 let e4 : expr = increment e1
+let () =
+  Printf.printf "%b\n%!" (e3 == e4)
 let () =
   Printf.printf "%b\n%!" (eq e3 e4)
