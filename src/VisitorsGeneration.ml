@@ -293,6 +293,32 @@ let virtual_method (m : methode) : class_field =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [method_name] extracts a method name out of a class field (which must be
+   a method definition). *)
+
+let method_name (cf : class_field) : string =
+  match cf.pcf_desc with
+  | Pcf_method (m, _, _) ->
+      m.txt
+  | _ ->
+      assert false
+
+(* -------------------------------------------------------------------------- *)
+
+(* [is_virtual] tests whether a class field (which must be a method definition)
+   represents a virtual method. *)
+
+let is_virtual (cf : class_field) : bool =
+  match cf.pcf_desc with
+  | Pcf_method (_, _, Cfk_virtual _) ->
+      true
+  | Pcf_method (_, _, Cfk_concrete _) ->
+      false
+  | _ ->
+      assert false
+
+(* -------------------------------------------------------------------------- *)
+
 (* [send o m es] produces a call to the method [o#m] with arguments [es]. *)
 
 let send (o : variable) (m : methode) (es : expression list) : expression =
@@ -325,6 +351,14 @@ end = struct
     store := StringMap.add c (cf :: get c) !store
 
   let dump c =
-    List.rev (get c)
+    let fields = List.rev (get c) in
+    (* Move all of the virtual methods up front. If two virtual methods have
+       the same name, keep only one of them. This is useful because we allow
+       a virtual method declaration to be generated several times. In fact,
+       OCaml supports this, but it looks tidier if we remove duplicates. *)
+    let virtual_fields, concrete_fields = List.partition is_virtual fields in
+    let cmp cf1 cf2 = compare (method_name cf1) (method_name cf2) in
+    let virtual_fields = VisitorsList.weed cmp virtual_fields in
+    virtual_fields @ concrete_fields
 
 end
