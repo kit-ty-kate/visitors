@@ -22,6 +22,12 @@
 \end{origenv}
 }
 
+\newcommand{\origfirstline}[2]{%
+\begin{origenv}
+\lstinputlisting[firstline=#2]{#1.ml}
+\end{origenv}
+}
+
 % ------------------------------------------------------------------------------
 % Including the corresponding auto-generated code:
 %   \processed{foo}
