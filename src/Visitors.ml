@@ -396,8 +396,11 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
              polymorphic, so multiple call sites do not pollute one another.
              This function must be applied to the visitor functions associated
              with [tys]. *)
+          (* The search for this external function (by the compiler) is influenced
+             by the [open] directives that we place at the beginning of the generated
+             code. *)
           app
-            (letopen !nonlocal (eident (nonlocal_tycon_function tycon)))
+            (eident (nonlocal_tycon_function tycon))
             (map (visit_type false) tys)
       end
 
@@ -634,6 +637,14 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        used as markers to find and review the generated code. We use this
        mechanism to show the generated code in the documentation. *)
     floating "VISITORS.BEGIN" [] ::
+    (* Open the module [VisitorsRuntime], as well as all modules specified
+       by the user via the [nonlocal] option. In theory it would be preferable
+       to use a tight [let open] declaration around every reference to an
+       external function. However, the generated code looks nicer if we use
+       a single series of [open] declarations at the beginning. These [open]
+       declarations have local scope because [with_warnings] creates a local
+       module using [include struct ... end]. *)
+    stropen !nonlocal @
     (* Produce a class definition. *)
     class1 [ ty_self, Invariant ] current pself (dump current) ::
     floating "VISITORS.END" [] ::
