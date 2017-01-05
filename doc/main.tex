@@ -359,6 +359,33 @@ option (\sref{sec:nonlocal}) lets the user control where the module \oc|Foo|
 is found.
 
 % ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+\section{Advanced examples} % TEMPORARY ou: applications, illustrations?
+\label{sec:advanced}
+
+% ------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\orig{expr12}
+\caption{Open and closed types of arithmetic expressions}
+\label{fig:expr12}
+\end{figure}
+
+\subsection{Visitors for open and closed data types}
+
+The algebraic data types of arithmetic expressions shown in the previous
+section (\sref{sec:intro}) are \emph{closed}. That is, the type \oc|expr|
+is recursive: an expression of type \oc|expr| has subexpressions of type
+\oc|expr|.
+
+It is often desirable, for greater flexibility, to first define an \emph{open}
+type of arithmetic expressions. Such a type, say \oc|oexpr|, is parameterized
+over a type variable~\oc|'expr|. It is nonrecursive: an expression of type
+\oc|'expr oexpr| has subexpressions of type \oc|'expr|. The closed (recursive)
+type of expressions, \oc|expr|, can then be defined as the fixed point of the
+functor \oc|oexpr|.
+% TEMPORARY citation; demander à Pierre-Évariste
 
 % TEMPORARY illustration: types ouverts, et comment les fermer
 
