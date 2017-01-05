@@ -12,11 +12,13 @@ RUNTIME := \
   VisitorsRuntime
 
 # Not sure whether all of the following files are really required.
-OCAMLBUILD_TARGET := \
+TARGET := \
   $(patsubst %,$(PLUGIN).%,a cma cmxa cmxs) \
   $(patsubst %,$(RUNTIME).%,a cma cmi cmo cmx cmxa o) \
 
-OCAMLBUILD_FLAGS := \
+OCAMLBUILD := \
+  ocamlbuild \
+  -j 0 \
   -use-ocamlfind \
   -classic-display \
   -cflags "-g" -lflags "-g"
@@ -25,17 +27,20 @@ OCAMLBUILD_FLAGS := \
 
 # Rules.
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall reinstall
 
 all:
-	ocamlbuild $(OCAMLBUILD_FLAGS) $(OCAMLBUILD_TARGET)
+	$(OCAMLBUILD) $(TARGET)
 
 clean:
 	rm -f *~
-	ocamlbuild $(OCAMLBUILD_FLAGS) -clean
+	$(OCAMLBUILD) -clean
 
 install: all
-	ocamlfind install $(PACKAGE) META $(patsubst %,_build/%,$(OCAMLBUILD_TARGET))
+	ocamlfind install $(PACKAGE) META $(patsubst %,_build/%,$(TARGET))
 
 uninstall:
 	ocamlfind remove $(PACKAGE)
+
+reinstall: uninstall clean
+	@ $(MAKE) install
