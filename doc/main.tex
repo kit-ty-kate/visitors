@@ -10,6 +10,8 @@
 \usepackage{mdframed}
 \usepackage{xspace}
 \input{macros}
+% Style.
+\renewcommand{\emph}[1]{\textbf{#1}}
 
 % ------------------------------------------------------------------------------
 % Headings.
@@ -106,9 +108,7 @@ down into every recursive call and is otherwise unused.
 % ------------------------------------------------------------------------------
 
 \begin{figure}[t]
-\begin{origenv}
-\lstinputlisting[firstline=3]{expr04.ml}
-\end{origenv}
+\origfirstline{expr04}{3}
 \caption{Counting the number of addition nodes in an expression}
 \label{fig:expr04}
 \end{figure}
@@ -197,9 +197,7 @@ the method \tyconfail{expr}, which by default calls \oc|VisitorsRuntime.fail()|,
 which throws the exception \oc|VisitorsRuntime.StructuralMismatch|.
 
 \begin{figure}[t]
-\begin{origenv}
-\lstinputlisting[firstline=3]{expr05.ml}
-\end{origenv}
+\origfirstline{expr05}{3}
 \caption{Determining whether two expressions are syntactically equal}
 \label{fig:expr05}
 \end{figure}
@@ -238,18 +236,61 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr09}
 \vspace{-\baselineskip}
 \processed{expr09}
-\caption{Visitors for parameterized types}
+\caption{A visitor for a parameterized type of decorated expressions}
 \label{fig:expr09}
+\end{figure}
+
+\begin{figure}[p]
+\origfirstline{expr10}{3}
+\caption{Working with different types of decorations}
+\label{fig:expr10}
 \end{figure}
 
 \subsection{Visitors for parameterized types}
 \label{sec:intro:parameterized}
 
+Visitors can be generated for parameterized types, too. (Technically, we
+impose a restriction to \emph{regular} types; see \S\ref{sec:regularity}.)
+%
+In \fref{fig:expr09}, for instance, we define a variant of arithmetic
+expressions where every tree node is decorated with a value of type
+\oc|'info|. We request the generation of a \map visitor, whose code is shown
+in the second part of \fref{fig:expr09}. The generated code has exactly the
+same structure as in the previous sections. The only new feature is that the
+class \map is now virtual, as it has a virtual method, \tyconvisitor{'info}.
 
+The methods are \emph{not} declared polymorphic in the type
+variable~\oc|'info|, or in two type variables~\oc|'info1| and~\oc|'info2|, as
+one might perhaps expect. In fact, they must not be declared polymorphic:
+indeed, the user who implements \tyconvisitor{'info} in a subclass of \map may
+wish to provide an implementation that expects and/or produces specific types
+of information.
+
+As a result, every visitor \emph{object} is monomorphic: its method
+\tyconvisitor{'info} must have type \oc|info1 -> info2| for certain specific
+types \oc|info1| and \oc|info2|. Fortunately, the visitor \emph{class} is
+polymorphic: therefore, two distinct visitor objects can have distinct types.
+
+The class \map is \emph{not} parameterized over the type variable~\oc|'info|,
+or over two type variables~\oc|'info1| and~\oc|'info2|, as one might perhaps
+expect. This is not necessary.\footnote{The class is parameterized over
+  \oc|'self|, and that is sufficient. Indeed, the type \oc|'self| determines
+  the type of all methods, including \tyconvisitor{'info}. Therefore,
+  \oc|'self| determines \oc|'info|.}
+
+\fref{fig:expr10} presents two example uses of the class \map. In the first
+example, we define a function \oc|strip|, of type \oc|'info expr -> unit expr|,
+which strips off the decorations in an arithmetic expression, replacing them
+with unit values. In the second example, we define a function \oc|number|,
+of type \oc|'info expr -> int expr|, which decorates each node in an arithmetic
+expression with a unique integer number.\footnote{Because the \oc|info| field
+appears before the \oc|node| field in the declaration of the type \oc|expr|,
+and because fields are visited left-to-right, we get a prefix numbering scheme.
+By exchanging the field declarations, we would get postfix numbering.}
 
 % ------------------------------------------------------------------------------
 
