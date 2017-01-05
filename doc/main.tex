@@ -12,12 +12,16 @@
 \input{macros}
 % Style.
 \renewcommand{\emph}[1]{\textbf{#1}}
+\input{version}
+% Let our version number appear at the bottom right of every page.
+\makeatletter
+\def\@formatyear{\visitorsversion}
+\makeatother
 
 % ------------------------------------------------------------------------------
 % Headings.
 
-\title{Visitors}
-
+\title{Visitors\\\normalsize version \visitorsversion}
 \begin{document}
 \authorinfo{François Pottier}{Inria Paris}{francois.pottier@inria.fr}
 \maketitle
