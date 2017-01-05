@@ -1,23 +1,23 @@
 open Hashcons
 
-type 'expr expr_node =
+type 'expr oexpr =
   | EConst of int
   | EAdd of 'expr * 'expr
   [@@deriving visitors { name = "map0"; variety = "map" }]
 
 type expr =
-  E of expr expr_node hash_consed [@@unboxed]
+  E of expr oexpr hash_consed [@@unboxed]
 
-let table : expr expr_node Hashcons.t =
+let table : expr oexpr Hashcons.t =
   create 128
 
-let make : expr expr_node -> expr =
+let make : expr oexpr -> expr =
   fun e -> E (hashcons table e)
 
 class ['self] map = object(self : 'self)
   inherit [_] map0
   method visit_'expr env (E { node = e; _ }) =
-    make (self#visit_expr_node env e)
+    make (self#visit_oexpr env e)
 end
 
 let econst e = make (EConst e)
