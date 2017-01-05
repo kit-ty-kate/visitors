@@ -54,3 +54,29 @@ let transpose (n : int) (xss : 'a list list) : 'a list list =
       xss.(i).(j)
     )
   )
+
+(* [uniq cmp xs] assumes that the list [xs] is sorted according to the
+   ordering [cmp] and returns the list [xs] deprived of any duplicate
+   elements. *)
+
+let rec uniq1 cmp x ys =
+  match ys with
+  | [] ->
+      []
+  | y :: ys ->
+      if cmp x y = 0 then
+        uniq1 compare x ys
+      else
+        y :: uniq1 cmp y ys
+
+let uniq cmp xs =
+  match xs with
+  | [] ->
+      []
+  | x :: xs ->
+      x :: uniq1 cmp x xs
+
+(* [weed cmp xs] returns the list [xs] deprived of any duplicate elements. *)
+
+let weed cmp xs =
+  uniq cmp (List.sort cmp xs)
