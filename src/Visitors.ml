@@ -629,10 +629,9 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
      can be used as markers to find and review the generated code. Also,
      disable some warnings: 26, 27 (unused variables), 4 (fragile pattern
      matching; a feature intentionally exploited by [iter2] and [map2]). *)
-  let formals = [ ty_self, Invariant ] in
   [ with_warnings "-4-26-27" [
     floating "VISITORS.BEGIN" [];
-    class1 formals current pself (dump current);
+    class1 [ ty_self, Invariant ] current pself (dump current);
     floating "VISITORS.END" [];
   ]]
 
