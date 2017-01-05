@@ -350,7 +350,8 @@ For every OCaml primitive type, the library module \oc|VisitorsRuntime|, which
 is automatically opened in the generated code, supplies suitable visitor
 functions. The module \oc|VisitorsRuntime| contains several submodules named
 \oc|Int|, \oc|List|, and so on; each of them supplies four functions named
-\iter, \map, \itertwo, \maptwo.
+\iter, \map, \itertwo, \maptwo. (Please consult \srcFile{VisitorsRuntime.mli}
+for details.)
 
 For a user-defined type \oc|foo|, it is up to the user to ensure that a module
 named \oc|Foo| can be found and offers these four functions. The \nonlocal
