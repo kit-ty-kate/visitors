@@ -277,24 +277,76 @@ polymorphic: therefore, two distinct visitor objects can have distinct types.
 
 The class \map is \emph{not} parameterized over the type variable~\oc|'info|,
 or over two type variables~\oc|'info1| and~\oc|'info2|, as one might perhaps
-expect. This is not necessary.\footnote{The class is parameterized over
-  \oc|'self|, and that is sufficient. Indeed, the type \oc|'self| determines
-  the type of all methods, including \tyconvisitor{'info}. Therefore,
-  \oc|'self| determines \oc|'info|.}
+expect. This is not necessary.%
+\footnote{The class is parameterized over \oc|'self|, and that is sufficient.
+  Indeed, the type \oc|'self| determines the type of all methods, including
+  \tyconvisitor{'info}. Therefore, \oc|'self| determines \oc|'info|.}
 
 \fref{fig:expr10} presents two example uses of the class \map. In the first
 example, we define a function \oc|strip|, of type \oc|'info expr -> unit expr|,
 which strips off the decorations in an arithmetic expression, replacing them
 with unit values. In the second example, we define a function \oc|number|,
 of type \oc|'info expr -> int expr|, which decorates each node in an arithmetic
-expression with a unique integer number.\footnote{Because the \oc|info| field
-appears before the \oc|node| field in the declaration of the type \oc|expr|,
-and because fields are visited left-to-right, we get a prefix numbering scheme.
-By exchanging the field declarations, we would get postfix numbering.}
+expression with a unique integer number.%
+\footnote{Because the \oc|info| field appears before the \oc|node| field in
+  the definition of the type \oc|expr|, and because fields are visited
+  left-to-right, we get a prefix numbering scheme. By exchanging these fields,
+  we would get postfix numbering.}
 
 % ------------------------------------------------------------------------------
 
-% TEMPORARY traitement des types non locaux (et primitifs)
+\begin{figure}[t]
+\orig{expr11}
+\vspace{-\baselineskip}
+\processed{expr11}
+\caption{Dealing with preexisting (parameterized) types, such as \oc|int| and \oc|list|}
+\label{fig:expr11}
+\end{figure}
+
+\subsection{Dealing with preexisting types}
+\label{sec:intro:nonlocal}
+
+A type definition can contain references to the types that are being defined,
+also known as \emph{local} types. For instance, in \fref{fig:expr00}, the
+definition of \oc|EAdd| contains two references to a local type, namely
+\oc|expr|.
+
+A type definition can also contain references to pre-existing types, also
+known as \emph{nonlocal} types. For instance, in \fref{fig:expr00}, the
+definition of \oc|EConst| contains a reference to a nonlocal type, namely
+\oc|int|, which happens to be one of OCaml's primitive types. In
+\fref{fig:expr11}, the definition of \oc|EAdd| contains a reference to a
+parameterized nonlocal type, namely \oc|list|, which happens to be defined in
+OCaml's standard library.
+
+The treatment of local types has been illustrated in the previous sections.
+In short, for every local type, a visitor method is generated: for instance,
+for the local type \oc|expr|, we generate the method \tyconvisitor{expr}.
+
+The treatment of nonlocal types is different. We do not wish to adopt a scheme
+where there is one visitor method per nonlocal type.%
+%
+\footnote{That would be too restrictive. For instance, imagine that a type
+  definition contains references to both \oc|int list| and \oc|expr list|. If
+  we relied on just one method \tyconvisitor{list}, then this method would be
+  used at two different types. Because our methods are monomorphic, that would
+  cause a type error. One might consider instead declaring a polymorphic
+  method, or declaring multiple monomorphic methods, but neither of these
+  approaches seems workable.}
+%
+Instead, we expect one (possibly polymorphic) visitor \emph{function} to exist
+for each nonlocal type. By convention, when generating an \iter visitor, the
+visitor function for the type \oc|int| must be named \oc|Int.iter|; the
+visitor function for the type (parameterized) type \oc|list| must be named
+\oc|List.iter|; and so on.
+
+% ------------------------------------------------------------------------------
+
+% TEMPORARY illustration: types ouverts, et comment les fermer
+
+% ------------------------------------------------------------------------------
+
+% TEMPORARY illustration: types ouverts, fermés avec hash-consing
 
 % ------------------------------------------------------------------------------
 
