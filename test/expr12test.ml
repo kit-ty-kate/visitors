@@ -12,4 +12,13 @@ let e : expr =
   add (const 1) (const 2)
 
 let () =
+  (* should print: 3 then 6 *)
   Printf.printf "%d\n%d\n%!" (eval e) (eval (double e))
+
+let map : 'expr1 'expr2 . ('expr1 -> 'expr2) -> 'expr1 oexpr -> 'expr2 oexpr =
+  fun f e ->
+    let v = object
+      inherit [_] omap
+      method visit_'expr _env e = f e
+    end in
+    v # visit_oexpr () e
