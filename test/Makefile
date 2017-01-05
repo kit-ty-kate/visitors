@@ -9,6 +9,7 @@ MLI := \
 
 OCAMLBUILD := \
   ocamlbuild \
+  -j 0 \
   -use-ocamlfind \
   -classic-display \
   -cflags "-g" -lflags "-g" \
