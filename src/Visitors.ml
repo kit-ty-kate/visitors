@@ -625,15 +625,20 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   let open R in
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
-  (* Produce a class definition. Surround it with floating attributes, which
-     can be used as markers to find and review the generated code. Also,
-     disable some warnings: 26, 27 (unused variables), 4 (fragile pattern
-     matching; a feature intentionally exploited by [iter2] and [map2]). *)
-  [ with_warnings "-4-26-27" [
-    floating "VISITORS.BEGIN" [];
-    class1 [ ty_self, Invariant ] current pself (dump current);
-    floating "VISITORS.END" [];
-  ]]
+  (* In the generated code, disable certain warnings, so that the user sees
+     no warnings, even if she explicitly enables them. We disable warnings
+     26, 27 (unused variables) and 4 (fragile pattern matching; a feature
+     intentionally exploited by [iter2] and [map2]). *)
+  [ with_warnings "-4-26-27" (
+    (* Surround the generated code with floating attributes, which can be
+       used as markers to find and review the generated code. We use this
+       mechanism to show the generated code in the documentation. *)
+    floating "VISITORS.BEGIN" [] ::
+    (* Produce a class definition. *)
+    class1 [ ty_self, Invariant ] current pself (dump current) ::
+    floating "VISITORS.END" [] ::
+    []
+  )]
 
 (* -------------------------------------------------------------------------- *)
 
