@@ -338,7 +338,20 @@ Instead, we expect one (possibly polymorphic) visitor \emph{function} to exist
 for each nonlocal type. By convention, when generating an \iter visitor, the
 visitor function for the type \oc|int| must be named \oc|Int.iter|; the
 visitor function for the type (parameterized) type \oc|list| must be named
-\oc|List.iter|; and so on.
+\oc|List.iter|; and so on. If the type definition contains a reference to a
+nonlocal user-defined type \oc|foo|, then the visitor function for this type
+must be named \oc|Foo.iter|.
+
+For every OCaml primitive type, the library module \oc|VisitorsRuntime|, which
+is automatically opened in the generated code, supplies suitable visitor
+functions. The module \oc|VisitorsRuntime| contains several submodules named
+\oc|Int|, \oc|List|, and so on; each of them supplies four functions named
+\iter, \map, \itertwo, \maptwo.
+
+For a user-defined type \oc|foo|, it is up to the user to ensure that a module
+named \oc|Foo| can be found and offers these four functions. The \nonlocal
+option (\sref{sec:nonlocal}) lets the user control where the module \oc|Foo|
+is found.
 
 % ------------------------------------------------------------------------------
 
