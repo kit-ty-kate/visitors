@@ -224,6 +224,7 @@ variables.
 \end{figure}
 
 \subsection{Visitors for a family of types}
+\label{sec:intro:family}
 
 Visitors can be generated not just for one type definition, but for a family
 of type definitions. In \fref{fig:expr06}, we propose a definition of
@@ -237,9 +238,31 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 
 % ------------------------------------------------------------------------------
 
+\begin{figure}[t]
+\orig{expr09}
+\vspace{-\baselineskip}
+\processed{expr09}
+\caption{Visitors for parameterized types}
+\label{fig:expr09}
+\end{figure}
+
+\subsection{Visitors for parameterized types}
+\label{sec:intro:parameterized}
+
+
+
+% ------------------------------------------------------------------------------
+
+% TEMPORARY traitement des types non locaux (et primitifs)
+
+% ------------------------------------------------------------------------------
+
 \end{document}
 
 % TEMPORARY
+
+indiquer comment voir le code engendré
+      et comment voir son type
 
 related work:
   ppx_deriving (generates monolithic code) (fixed number of templates)
