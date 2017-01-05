@@ -198,6 +198,16 @@ let letopen (m : Longident.t) (e : expression) : expression =
 let letopen (ms : Longident.t list) (e : expression) : expression =
   List.fold_right letopen ms e
 
+(* [stropen m] produces a single [open!] declaration. *)
+
+let stropen (m : Longident.t) : structure_item =
+  Str.open_ (Opn.mk ~override:Override (mknoloc m))
+
+(* [stropen ms] produces a series of [open!] declarations. *)
+
+let stropen (ms : Longident.t list) : structure =
+  List.map stropen ms
+
 (* -------------------------------------------------------------------------- *)
 
 (* [include_ e] constructs an [include] declaration. *)
