@@ -408,13 +408,59 @@ is recursive: an expression of type \oc|expr| has subexpressions of type
 It is often desirable, for greater flexibility, to first define an \emph{open}
 type of arithmetic expressions. Such a type, say \oc|oexpr|, is parameterized
 over a type variable~\oc|'expr|. It is nonrecursive: an expression of type
-\oc|'expr oexpr| has subexpressions of type \oc|'expr|. The closed (recursive)
-type of expressions, \oc|expr|, can then be defined as the fixed point of the
-functor \oc|oexpr|.
-% TEMPORARY citation; demander à Pierre-Évariste
+\oc|'expr oexpr| has subexpressions of type \oc|'expr|. It is shown in
+\fref{fig:expr12}. Naturally, we may request the generation of visitors for
+the type \oc|oexpr|. In \fref{fig:expr12}, we generate a class of \map
+visitors, which we name \oc|omap|. As explained earlier
+(\sref{sec:intro:parameterized}), this class has a virtual method,
+\tyconvisitor{'expr}.
 
-% TEMPORARY ICI commenter la \fref{fig:expr12}.
-% expr12 (oexpr)
+The closed (recursive) type of expressions, \oc|expr|, can then be defined in
+terms of \oc|expr|. This is done in \fref{fig:expr13}. In type-theoretical
+terms, one would like to define \oc|expr| as the fixed point of the functor
+\oc|oexpr|.
+% TEMPORARY citation; demander à Pierre-Évariste
+That is, roughly speaking, one would like to define \oc|type expr = expr oexpr|.
+This is not accepted by OCaml, though;%
+%
+\footnote{It would be accepted by OCaml with the command line switch
+  \texttt{-rectypes}, which instructs the typechecker to tolerate
+  equirecursive types. However, this is \emph{not} a good idea, as it causes
+  the typechecker to suddenly accept many meaningless programs and infer
+  bizarre types for them.}
+%
+we work around this limitation by making \oc|expr| an algebraic data type
+whose single data constructor is named~\oc|E|.%
+%
+\footnote{We mark this algebraic data type \oc|[@@unboxed]|, which (as of
+  OCaml 4.04) guarantees that there is no runtime cost associated with the
+  data constructor~\oc|E|. A value of type \oc|expr| is represented at
+  runtime as a value of type \oc|expr oexpr|.}
+
+Let us now construct a visitor class for the type \oc|expr|. It is easy to
+do so, by hand, in a few lines of code.%
+%
+\footnote{We could request the generation of a visitor class via a
+  \oc|[@@deriving]| annotation. However, the type \oc|oexpr| would then be
+  viewed as nonlocal; therefore, we would have to first define a visitor
+  function \oc|Oexpr.map| for the type \oc|oexpr|. That could be done. More
+  seriously, the generated visitor class would have only one method, namely
+  \tyconvisitor{expr}, so it would not be customizable by inheritance, as it
+  should be.}
+%
+We define a class \oc|map|, a subclass of \oc|omap|, and provide a concrete
+implementation of the virtual method \tyconvisitor{'expr}. In the definition
+of the type \oc|expr|, the type variable \oc|'expr| is instantiated with
+\oc|expr|, so the method \tyconvisitor{'expr} expects an argument of type
+\oc|expr| and must return a result of type \oc|expr|. We deconstruct the
+argument using the pattern \oc|E e|. Therefore, the variable \oc|e| has type
+\oc|expr oexpr| and is a suitable argument to the method \tyconvisitor{oexpr}.
+After this call, we perform the same step in reverse: the result of the call
+has type \oc|expr oexpr|, so we wrap it in an application of the data
+constructor~\oc|E| and obtain a result of type \oc|expr|.
+
+% TEMPORARY ICI
+% commenter la fonction double; la mettre dans une figure à part?
 % expr13 (expr from oexpr)
 % expr08 (hexpr)
 % expr14 (moving from expr to hexpr and back)
