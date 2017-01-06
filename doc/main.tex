@@ -490,9 +490,28 @@ On top of the open data type \oc|oexpr| of the previous section
 of expressions where every node is annotated with information.
 
 As an example, let us define a type \oc|hexpr| of hash-consed (that is,
-maximally-shared) arithmetic expressions. We follow Filliâtre and Conchon's
-approach~\cite{filliatre-conchon-06} and use their package \hashcons (which
-can be installed via \opam).
+maximally-shared) arithmetic expressions. We use Filliâtre and Conchon's
+library~\cite{filliatre-conchon-06}, which can be found in \opam under the
+name \hashcons.
+
+The definition of the type \oc|hexpr| appears in \fref{fig:expr08}. It is
+analogous to the definition of the type \oc|expr| (\fref{fig:expr13}), with an
+added twist: instead of taking the fixed point of the functor \oc|_ oexpr|, we
+take the fixed point of the functor \oc|_ oexpr hash_consed|. By looking up
+the definition of the type \oc|hash_consed| in \hashconsRepoFile{hashcons.mli},
+one finds that this means that every node in an arithmetic expression carries
+certain information (namely a unique tag and a hash) that are used to enforce
+maximal sharing.
+
+Enforcing maximal sharing requires maintaining a mutable table where all
+arithmetic expressions ever constructed are stored. (This is in fact a weak
+hash table.) We initialize such a table by calling the function
+\oc|Hashcons.create|. This table is then populated by the function \oc|h|, a smart
+constructor.
+% of type \oc|hexpr oexpr -> hexpr|.
+This function takes a candidate expression of type \oc|hexpr oexpr| and
+returns an expression of type \oc|hexpr|, which is either allocated anew
+or found in the table (should an identical expression already exist).
 
 % TEMPORARY illustration: types ouverts, fermés avec hash-consing
 
