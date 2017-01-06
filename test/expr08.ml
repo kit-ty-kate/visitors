@@ -2,13 +2,13 @@ open Expr12 (* oexpr *)
 
 open Hashcons
 
-type expr =
-  H of expr oexpr hash_consed [@@unboxed]
+type hexpr =
+  H of hexpr oexpr hash_consed [@@unboxed]
 
-let table : expr oexpr Hashcons.t =
+let table : hexpr oexpr Hashcons.t =
   create 128
 
-let make : expr oexpr -> expr =
+let make : hexpr oexpr -> hexpr =
   fun e -> H (hashcons table e)
 
 class ['self] map = object(self : 'self)
