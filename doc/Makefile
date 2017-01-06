@@ -12,6 +12,8 @@ PROCESSED := $(patsubst %.ml,%.processed.ml,$(ML))
 
 %.pdf: %.tex $(SOURCES) $(ML) $(PROCESSED)
 	pdflatex $*
+	bibtex $*
+	pdflatex $*
 	pdflatex $*
 
 loop: $(SOURCES) $(ML) $(PROCESSED)

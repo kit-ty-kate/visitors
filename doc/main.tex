@@ -395,21 +395,8 @@ is found.
 \label{fig:expr08}
 \end{figure}
 
-\begin{figure}[p]
-\codefollowupgeneral{Figures~\ref{fig:expr12} and \ref{fig:expr13}}
-\origfirstline{expr13double}{4}
-\caption{A transformation of arithmetic expressions}
-\label{fig:expr13double}
-\end{figure}
-
-\begin{figure}[p]
-\codefollowupgeneral{Figures~\ref{fig:expr12}, \ref{fig:expr13}, and~\ref{fig:expr08}}
-\origfirstline{expr14}{6}
-\caption{Conversions between two types of arithmetic expressions}
-\label{fig:expr14}
-\end{figure}
-
 \subsection{Visitors for open and closed data types}
+\label{sec:advanced:openclosed}
 
 The algebraic data types of arithmetic expressions shown in the previous
 section (\sref{sec:intro}) are \emph{closed}. That is, the type \oc|expr|
@@ -478,21 +465,44 @@ integer constant in an arithmetic expression. This is done in
 object that inherits \oc|map| and overrides the method
 \dataconvisitor{EConst}.
 
-
-% TEMPORARY ICI
-% expr13 (expr from oexpr)
-% expr08 (hexpr)
-% expr14 (moving from expr to hexpr and back)
-% TEMPORARY import/export devraient plutôt s'écrire à l'aide de la fonction
-%   omap sur oexpr?
-
-% TEMPORARY illustration: types ouverts, et comment les fermer
-
 % ------------------------------------------------------------------------------
+
+\begin{figure}[p]
+\codefollowupgeneral{Figures~\ref{fig:expr12} and \ref{fig:expr13}}
+\origfirstline{expr13double}{4}
+\caption{A transformation of arithmetic expressions}
+\label{fig:expr13double}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowupgeneral{Figures~\ref{fig:expr12}, \ref{fig:expr13}, and~\ref{fig:expr08}}
+\origfirstline{expr14}{6}
+\caption{Conversions between two types of arithmetic expressions}
+\label{fig:expr14}
+\end{figure}
+
+\subsection{Visitors for hash-consed abstract syntax trees}
+\label{sec:advanced:hashconsed}
+
+On top of the open data type \oc|oexpr| of the previous section
+(\sref{sec:advanced:openclosed}), one can define not just the closed data type
+\oc|expr| of ordinary arithmetic expressions, but also other closed data types
+of expressions where every node is annotated with information.
+
+As an example, let us define a type \oc|hexpr| of hash-consed (that is,
+maximally-shared) arithmetic expressions. We follow Filliâtre and Conchon's
+approach~\cite{filliatre-conchon-06} and use their package \hashcons (which
+can be installed via \opam).
 
 % TEMPORARY illustration: types ouverts, fermés avec hash-consing
 
+% expr08 (hexpr)
+% expr14 (moving from expr to hexpr and back)
+
 % ------------------------------------------------------------------------------
+
+\bibliographystyle{plain}
+\bibliography{english}
 
 \end{document}
 
