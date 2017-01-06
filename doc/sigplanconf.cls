@@ -352,9 +352,10 @@
 
 % Margin paragraphs:
 
-\setlength{\marginparwidth}{0pt}
-\setlength{\marginparsep}{0pt}
-\setlength{\marginparpush}{0pt}
+% fpottier:
+\setlength{\marginparwidth}{16mm}
+\setlength{\marginparsep}{3mm}
+\setlength{\marginparpush}{10pt}
 
 
 \setlength{\skip\footins}{8pt plus 3pt minus 1pt}
@@ -976,7 +977,7 @@
     \noindent
     \@authori = 4
     {\let \\ = ,%
-     \loop 
+     \loop
        \textbf{\@name{\@authorname\romannumeral\@authori}},
        \@name{\@authoraffil\romannumeral\@authori},
        email: \@name{\@authoremail\romannumeral\@authori}.%
