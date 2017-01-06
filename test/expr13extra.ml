@@ -16,7 +16,7 @@ let () =
   (* should print: 3 then 6 *)
   Printf.printf "%d\n%d\n%!" (eval e) (eval (double e))
 
-let map : 'expr1 'expr2 . ('expr1 -> 'expr2) -> 'expr1 oexpr -> 'expr2 oexpr =
+let omap : 'expr1 'expr2 . ('expr1 -> 'expr2) -> 'expr1 oexpr -> 'expr2 oexpr =
   fun f e ->
     let v = object
       inherit [_] omap
