@@ -4,8 +4,5 @@ true: \
   package(visitors.ppx), \
   package(visitors.runtime)
 
-<expr07.*>: \
-  package(hashcons)
-
-<expr08.*>: \
+<expr07*> or <expr08*>: \
   package(hashcons)
