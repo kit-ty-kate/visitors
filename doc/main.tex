@@ -371,10 +371,31 @@ is found.
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr12}
-\caption{Open and closed types of arithmetic expressions}
+\caption{An open type of arithmetic expressions}
 \label{fig:expr12}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowup{expr12}
+\origfirstline{expr13}{3}
+\caption{A closed type of arithmetic expressions}
+\label{fig:expr13}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowup{expr12}
+\origfirstline{expr08}{3}
+\caption{A closed type of hash-consed arithmetic expressions}
+\label{fig:expr08}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowupgeneral{Figures~\ref{fig:expr12}, \ref{fig:expr13}, and~\ref{fig:expr08}}
+\origfirstline{expr14}{6}
+\caption{Conversions between two closed types of arithmetic expressions}
+\label{fig:expr14}
 \end{figure}
 
 \subsection{Visitors for open and closed data types}
