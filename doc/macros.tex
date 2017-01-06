@@ -28,11 +28,15 @@
 \end{origenv}
 }
 
+%% \newcommand{\codefollowupgeneral}[1]{%
+%% \begin{center}
+%% (This code fragment follows up on #1.)
+%% \end{center}
+%% \vspace{-\baselineskip}
+%% }
+
 \newcommand{\codefollowupgeneral}[1]{%
-\begin{center}
-(This code fragment follows up on #1.)
-\end{center}
-\vspace{-\baselineskip}
+\marginnote{\footnotesize This follows #1.}[5mm]%
 }
 
 \newcommand{\codefollowup}[1]{%
@@ -60,6 +64,7 @@
 
 \newcommand{\fref}[1]{Figure~\ref{#1}}
 \newcommand{\sref}[1]{\S\ref{#1}}
+\newcommand{\email}[1]{\href{mailto:#1}{\texttt{#1}}}
 
 % ------------------------------------------------------------------------------
 % Abbreviations.

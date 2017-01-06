@@ -1,9 +1,12 @@
-\documentclass[onecolumn,11pt,nocopyrightspace,preprint]{sigplanconf}
+\documentclass[11pt,a4paper,twoside]{article}
+\usepackage[left=25mm,right=25mm,top=25mm,bottom=25mm,marginparwidth=50pt]{geometry}
+\usepackage{lmodern} % This gives us a bold monospace font.
+\renewcommand{\rmdefault}{ptm} % Times.
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,%
             linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
-% \usepackage{marginnote}
+\usepackage{marginnote}
 \usepackage{listings}
 \input{listings-ocaml}
 \lstset{language=ocaml}
@@ -14,25 +17,21 @@
 % Style.
 \renewcommand{\emph}[1]{\textbf{#1}}
 \input{version}
-% Let our version number appear at the bottom right of every page.
-\makeatletter
-\def\@formatyear{\visitorsversion}
-\makeatother
 
 % ------------------------------------------------------------------------------
 % Headings.
 
 \title{Visitors\\\normalsize version \visitorsversion}
+\date{}
 \begin{document}
-\authorinfo{François Pottier}{Inria Paris}{francois.pottier@inria.fr}
+\author{François Pottier\\ Inria Paris\\ \email{francois.pottier@inria.fr}}
 \maketitle
 
 % ------------------------------------------------------------------------------
 
-% TEMPORARY
 \clearpage
-% \tableofcontents
-% \clearpage
+\tableofcontents
+\clearpage
 
 % ------------------------------------------------------------------------------
 
@@ -63,10 +62,11 @@ Furthermore, a \merlin user should add the following lines in her project's
 % ------------------------------------------------------------------------------
 
 \begin{figure}[t]
-In an OCaml source file, a type definition can be annotated with
-\oc|[@@deriving visitors { ... }]|:
+% In an OCaml source file, a type definition can be annotated with
+% \oc|[@@deriving visitors { ... }]|:
 \orig{expr00}
-This causes the following code to be (invisibly) generated:
+% This causes the following code to be (invisibly) generated:
+\vspace{-\baselineskip}
 \processed{expr00}
 \caption{A visitor of the \iter variety}
 \label{fig:expr00}
@@ -196,11 +196,11 @@ visitor of arity 2. These come in two varities, namely \itertwo
 (\fref{fig:expr02}) and \maptwo (\fref{fig:expr03}).
 
 In these visitors, the method \tyconvisitor{expr} expects an environment and
-two expressions. The two expressions must have identical structure: indeed, if
-the method \tyconvisitor{expr} finds that the two expressions exhibit
-different tags at the root, say \oc|EConst| versus \oc|EAdd|, then it invokes
-the method \tyconfail{expr}, which by default calls \oc|VisitorsRuntime.fail()|,
-which throws the exception \oc|VisitorsRuntime.StructuralMismatch|.
+two expressions. These expressions must have identical structure: indeed, if
+\tyconvisitor{expr} finds that they exhibit different tags at the root, say
+\oc|EConst| versus \oc|EAdd|, then it invokes the method \tyconfail{expr},
+which by default calls \oc|VisitorsRuntime.fail()|, which throws the exception
+\oc|VisitorsRuntime.StructuralMismatch|.
 
 \begin{figure}[t]
 \codefollowup{expr02}
@@ -279,7 +279,7 @@ wish to provide an implementation that expects and/or produces specific types
 of information.
 
 As a result, every visitor \emph{object} is monomorphic: its method
-\tyconvisitor{'info} must have type \oc|info1 -> info2| for certain specific
+\tyconvisitor{'info} must have type \oc|info1 ->| \oc|info2| for certain specific
 types \oc|info1| and \oc|info2|. Fortunately, the visitor \emph{class} is
 polymorphic: therefore, two distinct visitor objects can have distinct types.
 
