@@ -1,8 +1,8 @@
 open Expr12
 open Expr08
 
-let econst e = make (EConst e)
-let eadd e1 e2 = make (EAdd (e1, e2))
+let econst e = h (EConst e)
+let eadd e1 e2 = h (EAdd (e1, e2))
 
 let increment (e : hexpr) : hexpr =
   let v = object
