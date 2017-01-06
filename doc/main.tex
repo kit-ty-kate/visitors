@@ -1,5 +1,6 @@
 \documentclass[11pt,a4paper,twoside]{article}
 \usepackage[left=25mm,right=25mm,top=25mm,bottom=25mm,marginparwidth=50pt]{geometry}
+\setlength\abovecaptionskip{0pt} % Reduce space above figure captions.
 \usepackage{lmodern} % This gives us a bold monospace font.
 \renewcommand{\rmdefault}{ptm} % Times.
 \usepackage[T1]{fontenc}
@@ -469,8 +470,16 @@ After this call, we perform the same step in reverse: the result of the call
 has type \oc|expr oexpr|, so we wrap it in an application of the data
 constructor~\oc|E| and obtain a result of type \oc|expr|.
 
+The visitor class \oc|map| can now be used to implement transformations of
+arithmetic expressions, that is, functions of type \oc|expr -> expr|. As an
+example, let us implement a transformation whose effect is to double every
+integer constant in an arithmetic expression. This is done in
+\fref{fig:expr13double}. As expected, it suffices to construct a visitor
+object that inherits \oc|map| and overrides the method
+\dataconvisitor{EConst}.
+
+
 % TEMPORARY ICI
-% commenter la fonction double; la mettre dans une figure à part?
 % expr13 (expr from oexpr)
 % expr08 (hexpr)
 % expr14 (moving from expr to hexpr and back)
