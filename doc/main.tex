@@ -556,8 +556,18 @@ expressions: compare \fref{fig:expr13double} and \fref{fig:expr08double}.
 % desired, by exploiting multiple inheritance.
 %
 
-
-% TEMPORARY show expr14 (moving from expr to hexpr and back)
+The visitor class \oc|omap| for open arithmetic expressions
+(\fref{fig:expr12}) can be exploited to define conversions
+between different types of arithmetic expressions.
+This is illustrated in \fref{fig:expr14}.
+There, the function \oc|import| converts an ordinary expression
+to a hash-consed expression, thereby imposing maximal sharing.
+Conversely, the function \oc|export| converts a hash-consed
+expression into an ordinary expression, thereby abandoning
+all sharing (therefore possibly causing an exponential explosion).
+The implementation of these functions is simple: it is just
+a matter of overriding \tyconvisitor{'expr} so as to deconstruct
+one kind of expression and reconstruct the other kind.
 
 % ------------------------------------------------------------------------------
 
