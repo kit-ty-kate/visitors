@@ -212,8 +212,8 @@ which by default calls \oc|VisitorsRuntime.fail()|, which throws the exception
 
 An \itertwo visitor can be used, for instance, to easily determine whether two
 expressions are syntactically equal (\fref{fig:expr05}). Naturally, for this
-particular purpose, one could use OCaml's primitive equality operator \oc|=|,
-or one could exploit \ppxderiving and annotate the type definition with
+particular purpose, one could use OCaml's primitive equality operator \oc|=|.
+Alternatively, one could exploit \ppxderiving and annotate the type definition with
 \oc|[@@deriving eq]|. Visitors offer greater flexibility: for instance, if our
 arithmetic expressions contained variables, we could easily define an
 operation that tests whether two expressions are equal up to a renaming of
@@ -272,14 +272,14 @@ in the second part of \fref{fig:expr09}. The generated code has exactly the
 same structure as in the previous sections. The only new feature is that the
 class \map is now virtual, as it has a virtual method, \tyconvisitor{'info}.
 
-The methods are \emph{not} declared polymorphic in the type
+The visitor methods are \emph{not} declared polymorphic in the type
 variable~\oc|'info|, or in two type variables~\oc|'info1| and~\oc|'info2|, as
 one might perhaps expect. In fact, they must not be declared polymorphic:
 indeed, the user who implements \tyconvisitor{'info} in a subclass of \map may
 wish to provide an implementation that expects and/or produces specific types
 of information.
 
-As a result, every visitor \emph{object} is monomorphic: its method
+As a result, a visitor \emph{object} is monomorphic: its method
 \tyconvisitor{'info} must have type \oc|info1 ->| \oc|info2| for certain specific
 types \oc|info1| and \oc|info2|. Fortunately, the visitor \emph{class} is
 polymorphic: therefore, two distinct visitor objects can have distinct types.
