@@ -3,6 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,%
             linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+% \usepackage{marginnote}
 \usepackage{listings}
 \input{listings-ocaml}
 \lstset{language=ocaml}
@@ -373,7 +374,9 @@ is found.
 
 \begin{figure}[p]
 \orig{expr12}
-\caption{An open type of arithmetic expressions}
+\vspace{-\baselineskip}
+\processed{expr12}
+\caption{An open type of arithmetic expressions} % and a visitor for it
 \label{fig:expr12}
 \end{figure}
 
@@ -392,9 +395,16 @@ is found.
 \end{figure}
 
 \begin{figure}[p]
+\codefollowupgeneral{Figures~\ref{fig:expr12} and \ref{fig:expr13}}
+\origfirstline{expr13double}{4}
+\caption{A transformation of arithmetic expressions}
+\label{fig:expr13double}
+\end{figure}
+
+\begin{figure}[p]
 \codefollowupgeneral{Figures~\ref{fig:expr12}, \ref{fig:expr13}, and~\ref{fig:expr08}}
 \origfirstline{expr14}{6}
-\caption{Conversions between two closed types of arithmetic expressions}
+\caption{Conversions between two types of arithmetic expressions}
 \label{fig:expr14}
 \end{figure}
 

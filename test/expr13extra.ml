@@ -1,5 +1,6 @@
 open Expr12
 open Expr13
+open Expr13double
 
 let const k = E (EConst k)
 let add e1 e2 = E (EAdd (e1, e2))
