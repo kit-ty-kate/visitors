@@ -3,7 +3,7 @@ open Expr08 (* [hexpr] *)
 
 let double (e : hexpr) : hexpr =
   let v = object
-    inherit [_] map
+    inherit [_] hmap
     method! visit_EConst _env k =
       EConst (2 * k)
   end in

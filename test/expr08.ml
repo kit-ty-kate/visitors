@@ -11,7 +11,7 @@ let table =
 let h (e : hexpr oexpr) : hexpr =
   H (hashcons table e)
 
-class ['self] map = object(self : 'self)
+class ['self] hmap = object(self : 'self)
   inherit [_] omap
   method visit_'expr env (H { node = e; _ }) =
     h (self#visit_oexpr env e)
