@@ -470,14 +470,21 @@ object that inherits \oc|map| and overrides the method
 \begin{figure}[p]
 \codefollowupgeneral{Figures~\ref{fig:expr12} and \ref{fig:expr13}}
 \origfirstline{expr13double}{4}
-\caption{A transformation of arithmetic expressions}
+\caption{A transformation of ordinary arithmetic expressions}
 \label{fig:expr13double}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowupgeneral{Figures~\ref{fig:expr12} and \ref{fig:expr08}}
+\origfirstline{expr08double}{4}
+\caption{A transformation of hash-consed arithmetic expressions}
+\label{fig:expr08double}
 \end{figure}
 
 \begin{figure}[p]
 \codefollowupgeneral{Figures~\ref{fig:expr12}, \ref{fig:expr13}, and~\ref{fig:expr08}}
 \origfirstline{expr14}{6}
-\caption{Conversions between two types of arithmetic expressions}
+\caption{Conversions between ordinary and hash-consed arithmetic expressions}
 \label{fig:expr14}
 \end{figure}
 
@@ -540,8 +547,17 @@ see \hashconsRepoFile{hashcons.mli}.}
 %
 and reconstructs it by applying the smart constructor~\oc|h|.
 
-% TEMPORARY re-do double for hash-consed expressions
-% then, show expr14 (moving from expr to hexpr and back)
+A function \oc|double| can be defined for hash-consed arithmetic expressions
+in exactly the same manner as we defined \oc|double| for ordinary arithmetic
+expressions: compare \fref{fig:expr13double} and \fref{fig:expr08double}.
+%
+% In fact, although we did not attempt to share the code of the method
+% \dataconvisitor{EConst} between these two figures, one could do so if
+% desired, by exploiting multiple inheritance.
+%
+
+
+% TEMPORARY show expr14 (moving from expr to hexpr and back)
 
 % ------------------------------------------------------------------------------
 
