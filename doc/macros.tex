@@ -28,11 +28,15 @@
 \end{origenv}
 }
 
-\newcommand{\codefollowup}[1]{%
+\newcommand{\codefollowupgeneral}[1]{%
 \begin{center}
-(This code fragment follows up on \fref{fig:#1}.)
+(This code fragment follows up on #1.)
 \end{center}
 \vspace{-\baselineskip}
+}
+
+\newcommand{\codefollowup}[1]{%
+  \codefollowupgeneral{\fref{fig:#1}}%
 }
 
 % ------------------------------------------------------------------------------
