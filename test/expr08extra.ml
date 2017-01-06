@@ -1,23 +1,15 @@
 open Expr12
 open Expr08
+open Expr08double
 
 let econst e = h (EConst e)
 let eadd e1 e2 = h (EAdd (e1, e2))
 
-let increment (e : hexpr) : hexpr =
-  let v = object
-    inherit [_] map
-    method! visit_EConst _env i =
-      EConst (i + 1)
-  end in
-  v # visit_'expr () e
-
-
 let e1 : hexpr = eadd (econst 0) (econst 1)
-let e2 : hexpr = new map # visit_'expr () e1
+let e2 : hexpr = new map # visit_'expr () e1 (* identity *)
 let () =
-  Printf.printf "%b\n%!" (e1 == e2)
-let e3 : hexpr = eadd (econst 1) (econst 2)
-let e4 : hexpr = increment e1
+  Printf.printf "%b\n%!" (e1 == e2) (* should print true *)
+let e3 : hexpr = eadd (econst 0) (econst 2)
+let e4 : hexpr = double e1 (* should produce [e3] *)
 let () =
-  Printf.printf "%b\n%!" (e3 == e4)
+  Printf.printf "%b\n%!" (e3 == e4) (* should print true *)
