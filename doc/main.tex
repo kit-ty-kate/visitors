@@ -513,10 +513,35 @@ This function takes a candidate expression of type \oc|hexpr oexpr| and
 returns an expression of type \oc|hexpr|, which is either allocated anew
 or found in the table (should an identical expression already exist).
 
-% TEMPORARY illustration: types ouverts, fermés avec hash-consing
+We can now construct a visitor class for the type \oc|hexpr|. As in the previous
+section (\sref{sec:advanced:openclosed}), we do so by hand in a few lines of code.
+%
+% Our reasons for writing this code by hand are the same as in the previous
+% section. Furthermore, we note that the code of the visitor refers to the
+% function~\oc|h|, thus depends on \oc|table|. The definition of \oc|table|
+% itself must come after the definition of the type \oc|hexpr|, since the
+% type of \oc|table| is \oc|hexpr oexpr Hashcons.t|. For this reason, we
+% cannot use [@@deriving] to generate the visitor just after the type
+% definition.
+%
+% That said, since the visitor depends on \oc|h| and not directly on \oc|table|,
+% we could cut the dependency by going through the store. Create a reference to
+% a function of type \oc|hexpr oexpr -> hexpr|. Initialize it with a dummy
+% function. Generate the visitor. Then, create the table, define \oc|h| and
+% update the reference. Ugh.
+%
+The overall structure of this code is the same as in \fref{fig:expr13}. The
+only difference is that the method \tyconvisitor{'expr} must now traverse
+two levels of type structure, corresponding to \oc|_ oexpr hash_consed|.
+It deconstructs this structure by using the pattern \oc|H { node = e ; _ }|,%
+%
+\footnote{The \oc|node| field is part of the record type \oc|hash_consed|;
+see \hashconsRepoFile{hashcons.mli}.}
+%
+and reconstructs it by applying the smart constructor~\oc|h|.
 
-% expr08 (hexpr)
-% expr14 (moving from expr to hexpr and back)
+% TEMPORARY re-do double for hash-consed expressions
+% then, show expr14 (moving from expr to hexpr and back)
 
 % ------------------------------------------------------------------------------
 
