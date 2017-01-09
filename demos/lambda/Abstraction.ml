@@ -22,6 +22,18 @@ type ('bn, 'term) abstraction =
 
 (* -------------------------------------------------------------------------- *)
 
+(* The functions associated with the type variable ['bn] are never invoked. *)
+(* TEMPORARY explain why *)
+
+module Bn = struct
+  let iter _env _x = assert false
+  let map _env _x = assert false
+  let iter2 _env _x1 _x2 = assert false
+  let map2 _env _x1 _x2 = assert false
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* During a conversion of strings to atoms, the environment maps strings to
    atoms. *)
 
@@ -52,10 +64,6 @@ module String2Atom = struct
       with Not_found ->
         raise (Unbound x)
 
-    method visit_'bn (_ : void) (_ : void) : Atom.t =
-      (* This method is never invoked. *)
-      assert false
-
   end
 
 end
@@ -85,10 +93,6 @@ module Atom2Unit = struct
     method visit_'fn env x =
       if not (Atom.Set.mem x env) then
         accu <- Atom.Set.add x accu
-
-    method visit_'bn (_ : void) (_ : void) : unit =
-      (* This method is never invoked. *)
-      assert false
 
   end
 
@@ -131,10 +135,6 @@ module Atom2DeBruijn = struct
         (* The name [x] is unknown. This should not happen if the environment
            was properly set up. *)
         assert false
-
-    method visit_'bn (_ : void) (_ : void) : unit =
-      (* This method is never invoked. *)
-      assert false
 
   end
 

@@ -3,6 +3,13 @@ type void
 type ('bn, 'term) abstraction =
   'bn * 'term
 
+module Bn : sig
+  val iter: void -> void -> 'a
+  val map: void -> void -> 'a
+  val iter2: void -> void -> void -> 'a
+  val map2: void -> void -> void -> 'a
+end
+
 module String2Atom : sig
 
   type env
@@ -20,7 +27,6 @@ module String2Atom : sig
 
   class map : object
     method visit_'fn : env -> string -> Atom.t
-    method visit_'bn : void -> void -> Atom.t
   end
 
 end
@@ -41,7 +47,6 @@ module Atom2Unit : sig
   class fa : object
     method accu : Atom.Set.t
     method visit_'fn : env -> Atom.t -> unit
-    method visit_'bn : void -> void -> unit
   end
 
 end
@@ -61,7 +66,6 @@ module Atom2DeBruijn : sig
 
   class map : object
     method visit_'fn : env -> Atom.t -> int
-    method visit_'bn : void -> void -> unit
   end
 
 end
