@@ -2,6 +2,9 @@
 
 TODO (REALLY)
 
+If there are no virtual methods, then we can produce a let rec nest
+  instead of a class definition.
+
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
 
