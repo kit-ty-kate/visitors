@@ -417,8 +417,8 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
             (map (visit_type false) tys)
       end
 
-  (* A type variable [tv] is normally handled by a virtual method visitor.
-     However, if this type variable has been marked as [frozen] by the user,
+  (* A type variable [tv] is normally handled by a virtual visitor method.
+     However, if this type variable has been marked as frozen by the user,
      then it is treated as if it were a nonlocal type by the same name. *)
   | false,
     { ptyp_desc = Ptyp_var tv; _ } ->
