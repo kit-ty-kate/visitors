@@ -27,7 +27,7 @@ let arity =
   X.arity
 
 let choose e1 e2 =
-  match X.variety with
+  match X.scheme with
   | Iter -> e1
   | Map  -> e2
 

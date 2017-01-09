@@ -19,7 +19,7 @@ let plugin =
    [iter], this code does nothing; in [map], it reconstructs a data
    structure. *)
 
-type variety =
+type scheme =
   | Iter
   | Map
 
@@ -39,11 +39,11 @@ module type SETTINGS = sig
      and [map], 2 if one wishes to generate [iter2] and [map2], and so on. *)
   val arity: int
 
-  (* The variety of visitor that we wish to generate (see the definition of
-     the type [variety] above). *)
-  val variety: variety
+  (* The scheme of visitor that we wish to generate (see the definition of
+     the type [scheme] above). *)
+  val scheme: scheme
+
   val variety_string: string (* TEMPORARY *)
-    (* TEMPORARY variety externally means variety+arity internally; clarify *)
 
   (* The type variables that should be treated as nonlocal types. Following
      OCaml's convention, the name of a type variable does not include a
@@ -68,9 +68,9 @@ end
 (* -------------------------------------------------------------------------- *)
 
 (* [parse_variety] takes a variety, which could be "iter", "map2", etc. and
-   returns a pair of a variety and an arity. *)
+   returns a pair of a scheme and an arity. *)
 
-let parse_variety loc (s : string) : variety * int =
+let parse_variety loc (s : string) : scheme * int =
   try
     if prefix "map" s then
       let s = remainder "map" s in
@@ -120,9 +120,9 @@ end)
   let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
   let freeze = ref []
   let irregular = ref false
-  let name = ref "" (* dummy: [name] is mandatory; see below *)
+  let names = ref [] (* dummy: [name] is mandatory; see below *)
   let path = ref []
-  let variety = ref None (* dummy: [variety] is mandatory; see below *)
+  let scheme = ref None (* dummy: [variety] is mandatory; see below *)
   let variety_string = ref "" (* TEMPORARY *)
 
   (* Parse every option. *)
@@ -136,13 +136,13 @@ end)
       | "irregular" ->
           irregular := bool e
       | "name" ->
-          name := string e;
+          names := string e :: !names;
       | "path" ->
           path := strings e
       | "variety" ->
           variety_string := string e;
           let v, a = parse_variety loc (string e) in
-          variety := Some v;
+          scheme := Some v;
           arity := a;
       | _ ->
           raise_errorf ~loc "%s: option %s is not supported." plugin o
@@ -154,32 +154,42 @@ end)
   let arity = !arity
   let freeze = !freeze
   let irregular = !irregular
-  let name = !name
   let path = !path
-  let variety = !variety
+  let scheme = !scheme
   let variety_string = !variety_string
 
   (* Perform sanity checking. *)
 
-  (* The parameter [name] is not optional. TEMPORARY also, it should be given multiple times *)
-  let () =
-    if String.length name = 0 then
+  (* The parameter [name] is not optional. Also, it should be given multiple
+     times. So, we first accumulate a list of names, then check that this list
+     has length 1. *)
+  let name =
+    if List.length !names = 0 then
       raise_errorf ~loc
         "%s: please specify the name of the generated class.\n\
          e.g. [@@deriving visitors { name = \"traverse\" }]" plugin;
-    if not (is_valid_ocaml_class_name name) then
+    if List.length !names > 1 then
       raise_errorf ~loc
-        "%s: %s must be a valid class name." plugin name
+        "%s: please specify only ONE name for the generated class." plugin;
+    match !names with
+    | [ name ] ->
+        if not (is_valid_ocaml_class_name name) then
+          raise_errorf ~loc
+            "%s: %s must be a valid class name." plugin name;
+        name
+    | []
+    | _ :: _ :: _ ->
+        assert false (* already checked length *)
 
   (* The parameter [variety] is not optional. *)
-  let variety =
-    match variety with
+  let scheme =
+    match scheme with
     | None ->
         raise_errorf ~loc
           "%s: please specify the variety of the generated class.\n\
            e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
-    | Some variety ->
-        variety
+    | Some scheme ->
+        scheme
 
   (* TEMPORARY check that every string in the list is a valid module name *)
   (* We always open [VisitorsRuntime], but allow it to be shadowed by
