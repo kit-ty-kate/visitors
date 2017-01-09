@@ -64,8 +64,8 @@ module Atom2DeBruijn : sig
       env -> Atom.t * 'term1 -> unit * 'term2
   end
 
-  class map : object
-    method visit_'fn : env -> Atom.t -> int
+  module Fn : sig
+    val map: env -> Atom.t -> int
   end
 
 end

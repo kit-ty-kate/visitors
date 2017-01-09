@@ -6,8 +6,8 @@ type ('fn, 'bn) term =
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
     visitors { name = "iter"; variety = "iter"; nonlocal = ["Atom2Unit"]; freeze=["bn"] },
-    visitors { name = "map"; variety = "map"; nonlocal = ["Atom2DeBruijn"]; freeze=["bn"] },
-    visitors { name = "import"; variety = "map"; nonlocal = ["String2Atom"]; freeze=["bn"; "fn"] }
+    visitors { name = "atom2bruijn"; variety = "map"; nonlocal = ["Atom2DeBruijn"]; freeze=["bn"; "fn"] },
+    visitors { name = "string2atom"; variety = "map"; nonlocal = ["String2Atom"]; freeze=["bn"; "fn"] }
   ]
 
 (* Nominal. *)
@@ -29,15 +29,11 @@ let fa (t : nominal_term) : Atom.Set.t =
   o # visit_term Atom2Unit.empty t;
   o # accu
 
-let nominal2debruijn (t : nominal_term) : db_term =
-  let o = object
-    inherit [_] map
-    inherit Atom2DeBruijn.map
-  end in
-  o # visit_term Atom2DeBruijn.empty t
+let atom2debruijn (t : nominal_term) : db_term =
+  new atom2bruijn # visit_term Atom2DeBruijn.empty t
 
-let import (t : raw_term) : nominal_term =
-  new import # visit_term String2Atom.empty t
+let string2atom (t : raw_term) : nominal_term =
+  new string2atom # visit_term String2Atom.empty t
 
 let x = Atom.freshh "x"
 

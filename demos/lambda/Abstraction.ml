@@ -123,9 +123,9 @@ module Atom2DeBruijn = struct
       (), f (m, n) body
   end
 
-  class map = object
+  module Fn = struct
 
-    method visit_'fn (env, n) x =
+    let map (env, n) x =
       try
         (* Lookup the de Bruijn level associated with [x]. *)
         let k = Atom.Map.find x env in
