@@ -5,8 +5,8 @@ type ('fn, 'bn) term =
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
-    visitors { name = "iter"; variety = "iter"; nonlocal = ["Nominal"] },
-    visitors { name = "map"; variety = "map"; nonlocal = ["Nominal2DeBruijn"] },
+    visitors { name = "iter"; variety = "iter"; nonlocal = ["Atom2Unit"] },
+    visitors { name = "map"; variety = "map"; nonlocal = ["Atom2DeBruijn"] },
     visitors { name = "import"; variety = "map"; nonlocal = ["String2Atom"] }
   ]
 
