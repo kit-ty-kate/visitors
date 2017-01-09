@@ -4,18 +4,32 @@ type ('bn, 'term) abstraction =
   'bn * 'term
 
 module String2Atom : sig
-  type env = Atom.t StringMap.t
+
+  type env
+
+  val empty: env
+
   module Abstraction : sig
     val map:
       _ ->
       (env -> 'term1 -> 'term2) ->
       env -> string * 'term1 -> Atom.t * 'term2
   end
+
+  exception Unbound of string
+
+  class map : object
+    method visit_'fn : env -> string -> Atom.t
+    method visit_'bn : void -> void -> Atom.t
+  end
+
 end
 
 module Atom2Unit : sig
 
-  type env = Atom.Set.t
+  type env
+
+  val empty: env
 
   module Abstraction : sig
     val iter :
@@ -25,8 +39,7 @@ module Atom2Unit : sig
   end
 
   class fa : object
-    val mutable accu : env
-    method accu : env
+    method accu : Atom.Set.t
     method visit_'fn : env -> Atom.t -> unit
     method visit_'bn : void -> void -> unit
   end
@@ -34,19 +47,21 @@ module Atom2Unit : sig
 end
 
 module Atom2DeBruijn : sig
-  type env = int Atom.Map.t * int (* TEMPORARY abstract *)
+
+  type env
+
+  val empty: env
+
   module Abstraction : sig
     val map :
       _ ->
       (env -> 'term1 -> 'term2) ->
       env -> Atom.t * 'term1 -> unit * 'term2
   end
-end
 
-(* TEMPORARY clean up *)
-
-class n2db :
-  object
-    method visit_'fn : int Atom.Map.t * int -> Atom.Map.key -> int
+  class map : object
+    method visit_'fn : env -> Atom.t -> int
     method visit_'bn : void -> void -> unit
   end
+
+end

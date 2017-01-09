@@ -12,6 +12,9 @@ type ('fn, 'bn) term =
 
 (* Nominal. *)
 
+type raw_term =
+  (string, string) term
+
 type nominal_term =
   (Atom.t, Atom.t) term
 
@@ -23,15 +26,22 @@ let fa (t : nominal_term) : Atom.Set.t =
     inherit [_] iter
     inherit Atom2Unit.fa
   end in
-  o # visit_term Atom.Set.empty t;
+  o # visit_term Atom2Unit.empty t;
   o # accu
 
-let n2db (t : nominal_term) : db_term =
+let nominal2debruijn (t : nominal_term) : db_term =
   let o = object
     inherit [_] map
-    inherit n2db
+    inherit Atom2DeBruijn.map
   end in
-  o # visit_term (Atom.Map.empty, 0) t
+  o # visit_term Atom2DeBruijn.empty t
+
+let import (t : raw_term) : nominal_term =
+  let o = object
+    inherit [_] import
+    inherit String2Atom.map
+  end in
+  o # visit_term String2Atom.empty t
 
 let x = Atom.freshh "x"
 

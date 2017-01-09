@@ -29,13 +29,35 @@ type ('bn, 'term) abstraction =
    right away, that is, we map each binding occurrence to a fresh atom. *)
 
 module String2Atom = struct
+
   type env = Atom.t StringMap.t
+
+  let empty =
+    StringMap.empty
+
   module Abstraction = struct
     let map _ f (env : env) (s, body) =
       let a = Atom.freshh s in
       let env = StringMap.add s a env in
       a, f env body
   end
+
+  exception Unbound of string
+
+  class map = object
+
+    method visit_'fn (env : env) x =
+      try
+        StringMap.find x env
+      with Not_found ->
+        raise (Unbound x)
+
+    method visit_'bn (_ : void) (_ : void) : Atom.t =
+      (* This method is never invoked. *)
+      assert false
+
+  end
+
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -46,6 +68,9 @@ module Atom2Unit = struct
 
   type env = Atom.Set.t
 
+  let empty =
+    Atom.Set.empty
+
   module Abstraction = struct
     let iter _ f env (x, body) =
       let env = Atom.Set.add x env in
@@ -53,13 +78,18 @@ module Atom2Unit = struct
   end
 
   class fa = object
+
     val mutable accu = Atom.Set.empty
     method accu = accu
+
     method visit_'fn env x =
       if not (Atom.Set.mem x env) then
         accu <- Atom.Set.add x accu
+
     method visit_'bn (_ : void) (_ : void) : unit =
-      assert false (* never invoked *)
+      (* This method is never invoked. *)
+      assert false
+
   end
 
 end
@@ -71,20 +101,43 @@ end
    level [n]. *)
 
 module Atom2DeBruijn = struct
+
   type env = int Atom.Map.t * int
+
+  let empty =
+    (Atom.Map.empty, 0)
+
   module Abstraction = struct
     let map _ f (m, n : env) (x, body) =
+      (* Increment the current de Bruijn level [n]. *)
+      let n = n + 1 in
+      (* Record a mapping of the name [x] to the de Bruijn level [n],
+         so if [x] was looked up right now, it would receive level [n],
+         therefore index [0]. *)
       let m = Atom.Map.add x n m in
-      (), f (m, n+1) body
+      (* Traverse the body in the extended environment [m, n]. *)
+      (), f (m, n) body
   end
+
+  class map = object
+
+    method visit_'fn (env, n) x =
+      try
+        (* Lookup the de Bruijn level associated with [x]. *)
+        let k = Atom.Map.find x env in
+        (* Convert it to a de Bruijn index. *)
+        n - k
+      with Not_found ->
+        (* The name [x] is unknown. This should not happen if the environment
+           was properly set up. *)
+        assert false
+
+    method visit_'bn (_ : void) (_ : void) : unit =
+      (* This method is never invoked. *)
+      assert false
+
+  end
+
 end
 
 (* -------------------------------------------------------------------------- *)
-
-class n2db = object
-  method visit_'fn (env, n) x =
-    let level = Atom.Map.find x env in
-    n - level
-  method visit_'bn (_ : void) (_ : void) : unit =
-    assert false (* never invoked *)
-end
