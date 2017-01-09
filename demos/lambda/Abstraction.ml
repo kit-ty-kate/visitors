@@ -56,9 +56,9 @@ module String2Atom = struct
 
   exception Unbound of string
 
-  class map = object
+  module Fn = struct
 
-    method visit_'fn (env : env) x =
+    let map env x =
       try
         StringMap.find x env
       with Not_found ->

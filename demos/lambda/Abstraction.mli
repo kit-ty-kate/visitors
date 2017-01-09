@@ -25,8 +25,8 @@ module String2Atom : sig
 
   exception Unbound of string
 
-  class map : object
-    method visit_'fn : env -> string -> Atom.t
+  module Fn : sig
+    val map: env -> string -> Atom.t
   end
 
 end

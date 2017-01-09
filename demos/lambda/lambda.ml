@@ -7,7 +7,7 @@ type ('fn, 'bn) term =
   [@@deriving
     visitors { name = "iter"; variety = "iter"; nonlocal = ["Atom2Unit"]; freeze=["bn"] },
     visitors { name = "map"; variety = "map"; nonlocal = ["Atom2DeBruijn"]; freeze=["bn"] },
-    visitors { name = "import"; variety = "map"; nonlocal = ["String2Atom"]; freeze=["bn"] }
+    visitors { name = "import"; variety = "map"; nonlocal = ["String2Atom"]; freeze=["bn"; "fn"] }
   ]
 
 (* Nominal. *)
@@ -37,11 +37,7 @@ let nominal2debruijn (t : nominal_term) : db_term =
   o # visit_term Atom2DeBruijn.empty t
 
 let import (t : raw_term) : nominal_term =
-  let o = object
-    inherit [_] import
-    inherit String2Atom.map
-  end in
-  o # visit_term String2Atom.empty t
+  new import # visit_term String2Atom.empty t
 
 let x = Atom.freshh "x"
 
