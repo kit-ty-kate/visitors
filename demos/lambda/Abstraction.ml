@@ -1,3 +1,5 @@
+type void
+
 (* -------------------------------------------------------------------------- *)
 
 (* A universal type of single-name abstractions. *)
@@ -41,12 +43,25 @@ end
 (* During a free atom computation, the environment is a set of atoms. *)
 
 module Atom2Unit = struct
+
   type env = Atom.Set.t
+
   module Abstraction = struct
-    let iter _ f (env : env) (x, body) =
+    let iter _ f env (x, body) =
       let env = Atom.Set.add x env in
       f env body
   end
+
+  class fa = object
+    val mutable accu = Atom.Set.empty
+    method accu = accu
+    method visit_'fn env x =
+      if not (Atom.Set.mem x env) then
+        accu <- Atom.Set.add x accu
+    method visit_'bn (_ : void) (_ : void) : unit =
+      assert false (* never invoked *)
+  end
+
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -66,25 +81,10 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-type void
-
-class ['self] visit_'bn = object (_ : 'self)
-  method visit_'bn (_ : void) (_ : void) : _ =
-    assert false (* never invoked *)
-end
-
-class fv = object
-  val mutable accu = Atom.Set.empty
-  method visit_'fn (env : 'env) x =
-    if not (Atom.Set.mem x env) then
-      accu <- Atom.Set.add x accu
-  method accu = accu
-end
-
 class n2db = object
   method visit_'fn (env, n) x =
     let level = Atom.Map.find x env in
     n - level
-  method visit_'bn (_ : Atom2DeBruijn.env) (_ : void) : unit =
+  method visit_'bn (_ : void) (_ : void) : unit =
     assert false (* never invoked *)
 end

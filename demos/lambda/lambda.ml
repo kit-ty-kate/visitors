@@ -18,11 +18,10 @@ type nominal_term =
 type db_term =
   (int, unit) term
 
-let fv (t : nominal_term) : Atom.Set.t =
+let fa (t : nominal_term) : Atom.Set.t =
   let o = object
     inherit [_] iter
-    inherit fv
-    inherit [_] visit_'bn
+    inherit Atom2Unit.fa
   end in
   o # visit_term Atom.Set.empty t;
   o # accu
@@ -46,12 +45,12 @@ let idy =
   TApp (identity, y)
 
 let () =
-  print_endline "fv(\\x.x):";
-  print_endline (Atom.Set.print (fv identity));
-  print_endline "fv(y):";
-  print_endline (Atom.Set.print (fv y));
-  print_endline "fv((\\x.x) y):";
-  print_endline (Atom.Set.print (fv idy))
+  print_endline "fa(\\x.x):";
+  print_endline (Atom.Set.print (fa identity));
+  print_endline "fa(y):";
+  print_endline (Atom.Set.print (fa y));
+  print_endline "fa((\\x.x) y):";
+  print_endline (Atom.Set.print (fa idy))
 
 (*
 
@@ -76,5 +75,5 @@ let subst (sigma : name -> name) (t : term) : term =
 
 
 let () =
-  print (fv (subst (function "x" -> "z" | x -> x) idy))
+  print (fa (subst (function "x" -> "z" | x -> x) idy))
  *)

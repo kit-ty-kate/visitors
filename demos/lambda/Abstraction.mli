@@ -1,3 +1,5 @@
+type void
+
 type ('bn, 'term) abstraction =
   'bn * 'term
 
@@ -12,17 +14,27 @@ module String2Atom : sig
 end
 
 module Atom2Unit : sig
+
   type env = Atom.Set.t
+
   module Abstraction : sig
     val iter :
       _ ->
       (env -> 'term -> unit) ->
       env -> Atom.t * 'term -> unit
   end
+
+  class fa : object
+    val mutable accu : env
+    method accu : env
+    method visit_'fn : env -> Atom.t -> unit
+    method visit_'bn : void -> void -> unit
+  end
+
 end
 
 module Atom2DeBruijn : sig
-  type env = int Atom.Map.t * int (* TEMPORARY *)
+  type env = int Atom.Map.t * int (* TEMPORARY abstract *)
   module Abstraction : sig
     val map :
       _ ->
@@ -32,20 +44,9 @@ module Atom2DeBruijn : sig
 end
 
 (* TEMPORARY clean up *)
-type void
-class ['a] visit_'bn :
-  object ('a)
-    constraint 'a = < visit_'bn : void -> void -> 'b; .. >
-    method visit_'bn : void -> void -> 'b
-  end
-class fv :
-  object
-    val mutable accu : Atom.Set.t
-    method accu : Atom.Set.t
-    method visit_'fn : Atom.Set.t -> Atom.Set.elt -> unit
-  end
+
 class n2db :
   object
-    method visit_'bn : Atom2DeBruijn.env -> void -> unit
     method visit_'fn : int Atom.Map.t * int -> Atom.Map.key -> int
+    method visit_'bn : void -> void -> unit
   end
