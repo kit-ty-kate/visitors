@@ -67,7 +67,8 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* Option processing. *)
+(* [parse_variety] takes a variety, which could be "iter", "map2", etc. and
+   returns a pair of a variety and an arity. *)
 
 let parse_variety loc (s : string) : variety * int =
   try
@@ -76,7 +77,6 @@ let parse_variety loc (s : string) : variety * int =
       let i = if s = "" then 1 else int_of_string s in
       if i <= 0 then failwith "negative integer";
       Map, i
-      (* TEMPORARY should allow positive integer only *)
     else if prefix "iter" s then
       let s = remainder "iter" s in
       let i = if s = "" then 1 else int_of_string s in
@@ -86,39 +86,47 @@ let parse_variety loc (s : string) : variety * int =
       failwith "unexpected prefix"
   with
   | Failure _ ->
-      raise_errorf ~loc "%s: invalid variety.\n\
-                         A valid variety is iter, map, iter2, map2, etc." plugin
+      raise_errorf ~loc
+      "%s: invalid variety.\n\
+       A valid variety is iter, map, iter2, map2, etc." plugin
+
+(* -------------------------------------------------------------------------- *)
 
 (* TEMPORARY should implement [is_valid_ocaml_class_name] properly *)
 let is_valid_ocaml_class_name (c : classe) : bool =
   String.length c > 0 && String.uncapitalize_ascii c = c
 
+(* -------------------------------------------------------------------------- *)
+
 (* The option processing code constructs a module of type [SETTINGS]. *)
 
 module Parse (O : sig
   val loc: Location.t
-  val options: (string * expression) list
   val decls: type_declaration list
+  val options: (string * expression) list
 end)
 : SETTINGS
 = struct
   open O
 
   (* Set up a few parsers. *)
+
   let bool = Arg.get_expr ~deriver:plugin Arg.bool
   let string = Arg.get_expr ~deriver:plugin Arg.string
   let strings = Arg.get_expr ~deriver:plugin (Arg.list Arg.string)
 
-  (* Default values are specified here. *)
-  let arity = ref 1
+  (* Default values. *)
+
+  let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
   let freeze = ref []
   let irregular = ref false
-  let name = ref ""
+  let name = ref "" (* dummy: [name] is mandatory; see below *)
   let path = ref []
-  let variety = ref None
-  let variety_string = ref ""
+  let variety = ref None (* dummy: [variety] is mandatory; see below *)
+  let variety_string = ref "" (* TEMPORARY *)
 
   (* Parse every option. *)
+
   let () =
     iter (fun (o, e) ->
       let loc = e.pexp_loc in
@@ -141,6 +149,7 @@ end)
     ) options
 
   (* Export the results. *)
+
   let decls = decls
   let arity = !arity
   let freeze = !freeze
