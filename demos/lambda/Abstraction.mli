@@ -35,7 +35,7 @@ module Atom2Unit : sig
 
   type env
 
-  val empty: env
+  val empty: Atom.Set.t ref -> env
 
   module Abstraction : sig
     val iter :
@@ -44,9 +44,8 @@ module Atom2Unit : sig
       env -> Atom.t * 'term -> unit
   end
 
-  class fa : object
-    method accu : Atom.Set.t
-    method visit_'fn : env -> Atom.t -> unit
+  module Fn : sig
+    val iter: env -> Atom.t -> unit
   end
 
 end

@@ -5,12 +5,10 @@ type ('fn, 'bn) term =
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
-    visitors { name = "iter"; variety = "iter"; nonlocal = ["Atom2Unit"]; freeze=["bn"] },
+    visitors { name = "atom2unit"; variety = "iter"; nonlocal = ["Atom2Unit"]; freeze=["bn"; "fn"] },
     visitors { name = "atom2bruijn"; variety = "map"; nonlocal = ["Atom2DeBruijn"]; freeze=["bn"; "fn"] },
     visitors { name = "string2atom"; variety = "map"; nonlocal = ["String2Atom"]; freeze=["bn"; "fn"] }
   ]
-
-(* Nominal. *)
 
 type raw_term =
   (string, string) term
@@ -22,12 +20,10 @@ type db_term =
   (int, unit) term
 
 let fa (t : nominal_term) : Atom.Set.t =
-  let o = object
-    inherit [_] iter
-    inherit Atom2Unit.fa
-  end in
-  o # visit_term Atom2Unit.empty t;
-  o # accu
+  let accu = ref Atom.Set.empty in
+  let env = Atom2Unit.empty accu in
+  new atom2unit # visit_term env t;
+  !accu
 
 let atom2debruijn (t : nominal_term) : db_term =
   new atom2bruijn # visit_term Atom2DeBruijn.empty t
@@ -78,4 +74,18 @@ let subst (sigma : name -> name) (t : term) : term =
 
 let () =
   print (fa (subst (function "x" -> "z" | x -> x) idy))
+ *)
+
+(* TODO:
+
+capture-avoiding substitution (nominal)
+alpha-equivalence test (nominal)
+test x \in fv(t) (nominal)
+entering a binder (and testing for global uniqueness)
+simultaneous opening? (nominal)
+printing (conversion from nominal back to raw)
+copying (generating fresh bound names to maintain global uniqueness)
+well-formedness checking (just traversing the term and checking for global uniqueness)
+-- test for global uniqueness everywhere an environment is extended
+
  *)

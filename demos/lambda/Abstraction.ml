@@ -70,29 +70,28 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* During a free atom computation, the environment is a set of atoms. *)
+(* During a free atom computation, the environment is a pair of a set of atoms
+   (the atoms that are currently in scope) and a reference to a set of atoms
+   (the free atoms that have been accumulated so far). *)
 
 module Atom2Unit = struct
 
-  type env = Atom.Set.t
+  type env = Atom.Set.t * Atom.Set.t ref
 
-  let empty =
-    Atom.Set.empty
+  let empty accu =
+    Atom.Set.empty, accu
 
   module Abstraction = struct
-    let iter _ f env (x, body) =
+    let iter _ f (env, accu) (x, body) =
       let env = Atom.Set.add x env in
-      f env body
+      f (env, accu) body
   end
 
-  class fa = object
+  module Fn = struct
 
-    val mutable accu = Atom.Set.empty
-    method accu = accu
-
-    method visit_'fn env x =
+    let iter (env, accu) x =
       if not (Atom.Set.mem x env) then
-        accu <- Atom.Set.add x accu
+        accu := Atom.Set.add x !accu
 
   end
 
