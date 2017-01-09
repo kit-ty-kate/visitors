@@ -58,12 +58,12 @@ let irregular =
 let name =
   ref "" (* dummy *)
 
-(* The option [nonlocal], accompanied with a list of module names, allows
+(* The option [path], accompanied with a list of module names, allows
    setting the modules that are searched for nonlocal functions, such as
    [List.iter]. The modules that appear first in the list are searched
    last. *)
 
-let nonlocal : Longident.t list ref =
+let path : Longident.t list ref =
   ref [] (* dummy *)
 
 (* The option [variety] indicates what kind of visitor we are generating.
@@ -105,7 +105,7 @@ let parse_options loc options =
   freeze := [];
   irregular := false;
   name := "";
-  nonlocal := [ Lident "VisitorsRuntime" ];
+  path := [ Lident "VisitorsRuntime" ];
   variety := None;
   (* Analysis. *)
   iter (fun (o, e) ->
@@ -120,11 +120,11 @@ let parse_options loc options =
         if String.length !name = 0 || String.uncapitalize_ascii !name <> !name then
           (* TEMPORARY should implement [is_valid_ocaml_class_name] properly *)
           raise_errorf ~loc "%s: %s must be a valid class name." plugin o
-    | "nonlocal" ->
+    | "path" ->
         (* TEMPORARY should check that every string in the list is a valid module name *)
         (* Always open [VisitorsRuntime], but allow it to be shadowed by
            user-specified modules. *)
-        nonlocal := map Longident.parse ("VisitorsRuntime" :: strings e)
+        path := map Longident.parse ("VisitorsRuntime" :: strings e)
     | "variety" ->
         let v, a = parse_variety loc (string e) in
         variety := Some v;
@@ -659,13 +659,13 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        mechanism to show the generated code in the documentation. *)
     floating "VISITORS.BEGIN" [] ::
     (* Open the module [VisitorsRuntime], as well as all modules specified
-       by the user via the [nonlocal] option. In theory it would be preferable
+       by the user via the [path] option. In theory it would be preferable
        to use a tight [let open] declaration around every reference to an
        external function. However, the generated code looks nicer if we use
        a single series of [open] declarations at the beginning. These [open]
        declarations have local scope because [with_warnings] creates a local
        module using [include struct ... end]. *)
-    stropen !nonlocal @
+    stropen !path @
     (* Produce a class definition. *)
     class1 [ ty_self, Invariant ] current pself (dump current) ::
     floating "VISITORS.END" [] ::

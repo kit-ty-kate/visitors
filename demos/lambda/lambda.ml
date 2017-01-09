@@ -5,9 +5,9 @@ type ('fn, 'bn) term =
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
-    visitors { name = "atom2unit"; variety = "iter"; nonlocal = ["Atom2Unit"]; freeze=["bn"; "fn"] },
-    visitors { name = "atom2bruijn"; variety = "map"; nonlocal = ["Atom2DeBruijn"]; freeze=["bn"; "fn"] },
-    visitors { name = "string2atom"; variety = "map"; nonlocal = ["String2Atom"]; freeze=["bn"; "fn"] }
+    visitors { name = "atom2unit"; variety = "iter"; path = ["Atom2Unit"]; freeze=["bn"; "fn"] },
+    visitors { name = "atom2bruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze=["bn"; "fn"] },
+    visitors { name = "string2atom"; variety = "map"; path = ["String2Atom"]; freeze=["bn"; "fn"] }
   ]
 
 type raw_term =
