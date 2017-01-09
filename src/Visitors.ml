@@ -30,13 +30,13 @@ type variety =
 
 (* Here are the various parameters that can be set by the user. *)
 
-module type PARAMETERS = sig
+module type SETTINGS = sig
 
   (* The type declarations that we are processing. *)
   val decls: type_declaration list
 
   (* The name of the generated class. *)
-  val current: classe
+  val name: classe
 
   (* The arity of the generated code, e.g., 1 if one wishes to generate [iter]
      and [map], 2 if one wishes to generate [iter2] and [map2], and so on. *)
@@ -45,6 +45,26 @@ module type PARAMETERS = sig
   (* The variety of visitor that we wish to generate (see the definition of
      the type [variety] above). *)
   val variety: variety
+  val variety_string: string (* TEMPORARY *)
+    (* TEMPORARY variety externally means variety+arity internally; clarify *)
+
+  (* A list of type variables that should be treated as nonlocal types.
+     Following OCaml's convention, the name of a type variable does not
+     include a leading quote. *)
+  val freeze: string list
+
+  (* The option [irregular = true] suppresses the regularity check and allows
+     a local parameterized type to be instantiated. The definition of ['a t]
+     can then refer to [int t]. However, in most situations, this will lead to
+     ill-typed generated code. The generated code should be well-typed if [t]
+     is always instantiated in the same manner, e.g., if there are references
+     to [int t] but not to other instances of [t]. *)
+  val irregular: bool
+
+  (* A list of module names that should be searched for nonlocal functions,
+     such as [List.iter]. The modules that appear first in the list are
+     searched last. *)
+  val path: Longident.t list
 
 end
 
@@ -52,53 +72,7 @@ end
 
 (* Option processing. *)
 
-(* The option [arity], accompanied with an integer parameter, allows setting
-   the arity at which we generate code. *)
-
-let arity =
-  ref 0 (* dummy *)
-
-(* The option [freeze], accompanied with a list of type variables, indicates
-   which parameters of the type definition should be treated as nonlocal types. *)
-
-let freeze =
-  ref [] (* dummy *)
-
-(* The option [irregular = true] suppresses the regularity check and allows a
-   local parameterized type to be instantiated; e.g., the definition of ['a t]
-   can then refer to [int t]. However, in most situations, this will lead to
-   ill-typed generated code. The generated code should be well-typed if [t] is
-   always instantiated in the same manner, e.g., if there are references to
-   [int t] but not to other instances of [t]. *)
-
-let irregular =
-  ref false (* dummy *)
-
-(* The option [name] specifies the name of the generated class. It is NOT
-   optional. *)
-
-let name =
-  ref "" (* dummy *)
-
-(* The option [path], accompanied with a list of module names, allows
-   setting the modules that are searched for nonlocal functions, such as
-   [List.iter]. The modules that appear first in the list are searched
-   last. *)
-
-let path : Longident.t list ref =
-  ref [] (* dummy *)
-
-(* The option [variety] indicates what kind of visitor we are generating.
-   We support two kinds: [iter] and [map]. *)
-
-let variety : variety option ref =
-  ref None (* dummy *)
-
-let variety_string =
-  ref "" (* TEMPORARY moche *)
-
-let parse_variety loc (s : string) =
-  variety_string := s;
+let parse_variety loc (s : string) : variety * int =
   try
     if prefix "map" s then
       let s = remainder "map" s in
@@ -118,54 +92,129 @@ let parse_variety loc (s : string) =
       raise_errorf ~loc "%s: invalid variety.\n\
                          A valid variety is iter, map, iter2, map2, etc." plugin
 
-let parse_options loc options =
+(* TEMPORARY should implement [is_valid_ocaml_class_name] properly *)
+let is_valid_ocaml_class_name (c : classe) : bool =
+  String.length c > 0 && String.uncapitalize_ascii c = c
+
+(* The option processing code constructs a module of type [SETTINGS]. *)
+
+module Parse (O : sig
+  val loc: Location.t
+  val options: (string * expression) list
+  val decls: type_declaration list
+end)
+: SETTINGS
+= struct
+  open O
+
+  (* Set up a few parsers. *)
   let bool = Arg.get_expr ~deriver:plugin Arg.bool
-  and string = Arg.get_expr ~deriver:plugin Arg.string
-  and strings = Arg.get_expr ~deriver:plugin (Arg.list Arg.string) in
-  (* The default values are specified here. *)
-  arity := 1;
-  freeze := [];
-  irregular := false;
-  name := "";
-  path := [ Lident "VisitorsRuntime" ];
-  variety := None;
-  (* Analysis. *)
-  iter (fun (o, e) ->
-    let loc = e.pexp_loc in
-    match o with
-    | "freeze" ->
-         freeze := strings e
-    | "irregular" ->
-        irregular := bool e
-    | "name" ->
-        name := string e;
-        if String.length !name = 0 || String.uncapitalize_ascii !name <> !name then
-          (* TEMPORARY should implement [is_valid_ocaml_class_name] properly *)
-          raise_errorf ~loc "%s: %s must be a valid class name." plugin o
-    | "path" ->
-        (* TEMPORARY should check that every string in the list is a valid module name *)
-        (* Always open [VisitorsRuntime], but allow it to be shadowed by
-           user-specified modules. *)
-        path := map Longident.parse ("VisitorsRuntime" :: strings e)
-    | "variety" ->
-        let v, a = parse_variety loc (string e) in
-        variety := Some v;
-        arity := a;
-    | _ ->
-        raise_errorf ~loc "%s: option %s is not supported." plugin o
-  ) options;
-  (* The parameter [name] is not optional. *)
-  if String.length !name = 0 then
-    raise_errorf ~loc "%s: please specify the name of the generated class.\n\
-                       e.g. [@@deriving visitors { name = \"traverse\" }]" plugin;
+  let string = Arg.get_expr ~deriver:plugin Arg.string
+  let strings = Arg.get_expr ~deriver:plugin (Arg.list Arg.string)
+
+  (* Default values are specified here. *)
+  let arity = ref 1
+  let freeze = ref []
+  let irregular = ref false
+  let name = ref ""
+  let path = ref []
+  let variety = ref None
+  let variety_string = ref ""
+
+  (* Parse every option. *)
+  let () =
+    iter (fun (o, e) ->
+      let loc = e.pexp_loc in
+      match o with
+      | "freeze" ->
+           freeze := strings e
+      | "irregular" ->
+          irregular := bool e
+      | "name" ->
+          name := string e;
+      | "path" ->
+          path := strings e
+      | "variety" ->
+          variety_string := string e;
+          let v, a = parse_variety loc (string e) in
+          variety := Some v;
+          arity := a;
+      | _ ->
+          raise_errorf ~loc "%s: option %s is not supported." plugin o
+    ) options
+
+  (* Export the results. *)
+  let decls = decls
+  let arity = !arity
+  let freeze = !freeze
+  let irregular = !irregular
+  let name = !name
+  let path = !path
+  let variety = !variety
+  let variety_string = !variety_string
+
+  (* Perform sanity checking. *)
+
+  (* The parameter [name] is not optional. TEMPORARY also, it should be given multiple times *)
+  let () =
+    if String.length name = 0 then
+      raise_errorf ~loc
+        "%s: please specify the name of the generated class.\n\
+         e.g. [@@deriving visitors { name = \"traverse\" }]" plugin;
+    if not (is_valid_ocaml_class_name name) then
+      raise_errorf ~loc
+        "%s: %s must be a valid class name." plugin name
+
   (* The parameter [variety] is not optional. *)
-  if !variety = None then
-    raise_errorf ~loc "%s: please specify the variety of the generated class.\n\
-                       e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
+  let variety =
+    match variety with
+    | None ->
+        raise_errorf ~loc
+          "%s: please specify the variety of the generated class.\n\
+           e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
+    | Some variety ->
+        variety
+
+  (* TEMPORARY check that every string in the list is a valid module name *)
+  (* We always open [VisitorsRuntime], but allow it to be shadowed by
+     user-specified modules. *)
+  let path =
+    map Longident.parse ("VisitorsRuntime" :: path)
+
+end
 
 (* -------------------------------------------------------------------------- *)
 
-(* We support parameterized type declarations, we require them to be regular.
+(* Per-run global state. *)
+
+module Run (X : SETTINGS) = struct
+
+let is_local =
+  is_local X.decls
+
+let current =
+  X.name (* TEMPORARY *)
+
+let arity =
+  X.arity
+
+let choose e1 e2 =
+  match X.variety with
+  | Iter -> e1
+  | Map  -> e2
+
+let is_frozen (tv : tyvar) =
+  List.mem tv X.freeze (* TEMPORARY clean up *)
+
+(* As we generate several classes at the same time, we maintain, for each
+   generated class, a list of methods that we generate as we go. The following
+   line brings [generate] and [dump] into scope. *)
+
+include ClassFieldStore(struct end)
+
+(* -------------------------------------------------------------------------- *)
+
+(* We support parameterized type declarations. We require them to be regular.
    That is, for instance, if a type ['a term] is being defined, then every
    use of [_ term] in the definition should be ['a term]; it cannot be, say,
    [int term] or [('a * 'a) term]. *)
@@ -183,41 +232,12 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
       (number (length formals) "type parameter")
       (number (length actuals) "type parameter");
   (* Check that the parameters match. *)
-  if not !irregular && not (
+  if not X.irregular && not (
     fold_left2 (fun ok formal actual ->
       ok && actual.ptyp_desc = Ptyp_var formal
     ) true formals actuals
   ) then
     raise_errorf ~loc "%s: the type constructor %s is irregular." plugin tycon
-
-(* -------------------------------------------------------------------------- *)
-
-(* Per-run global state. *)
-
-module Run (X : PARAMETERS) = struct
-
-let is_local =
-  is_local X.decls
-
-let current =
-  X.current
-
-let arity =
-  X.arity
-
-let choose e1 e2 =
-  match X.variety with
-  | Iter -> e1
-  | Map  -> e2
-
-let is_frozen (tv : tyvar) =
-  List.mem tv !freeze (* TEMPORARY clean up *)
-
-(* As we generate several classes at the same time, we maintain, for each
-   generated class, a list of methods that we generate as we go. The following
-   line brings [generate] and [dump] into scope. *)
-
-include ClassFieldStore(struct end)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -279,7 +299,7 @@ let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
 
 let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
   (* For [list], we need [List.map]. *)
-  Ldot (nonlocal_tycon_module tycon, !variety_string)
+  Ldot (nonlocal_tycon_module tycon, X.variety_string)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -640,18 +660,14 @@ end
    is the type of [self]. This trick allows us to omit the types of the
    virtual methods, even if these types include type variables. *)
 
-(* TEMPORARY move [parse_options] down here and avoid needless global state *)
-
 let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   assert (decls <> []);
-  let loc = (VisitorsList.last decls).ptype_loc in (* an approximation *)
-  parse_options loc options;
-  let module R = Run(struct
+  let module P = Parse(struct
+    let loc = (VisitorsList.last decls).ptype_loc (* an approximation *)
+    let options = options
     let decls = decls
-    let variety = match !variety with None -> assert false | Some v -> v
-    let arity = !arity
-    let current = !name
   end) in
+  let module R = Run(P) in
   let open R in
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
@@ -671,7 +687,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        a single series of [open] declarations at the beginning. These [open]
        declarations have local scope because [with_warnings] creates a local
        module using [include struct ... end]. *)
-    stropen !path @
+    stropen P.path @
     (* Produce a class definition. *)
     class1 [ ty_self, Invariant ] current pself (dump current) ::
     floating "VISITORS.END" [] ::
