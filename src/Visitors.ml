@@ -1,6 +1,7 @@
 open VisitorsList
 open VisitorsString
 open Longident
+open Location
 open List
 let sprintf = Printf.sprintf
 open Asttypes
@@ -34,6 +35,12 @@ type variety =
 
 let arity =
   ref 0 (* dummy *)
+
+(* The option [freeze], accompanied with a list of type variables, indicates
+   which parameters of the type definition should be treated as nonlocal types. *)
+
+let freeze =
+  ref [] (* dummy *)
 
 (* The option [irregular = true] suppresses the regularity check and allows a
    local parameterized type to be instantiated; e.g., the definition of ['a t]
@@ -95,6 +102,7 @@ let parse_options loc options =
   and strings = Arg.get_expr ~deriver:plugin (Arg.list Arg.string) in
   (* The default values are specified here. *)
   arity := 1;
+  freeze := [];
   irregular := false;
   name := "";
   nonlocal := [ Lident "VisitorsRuntime" ];
@@ -103,6 +111,8 @@ let parse_options loc options =
   iter (fun (o, e) ->
     let loc = e.pexp_loc in
     match o with
+    | "freeze" ->
+         freeze := strings e
     | "irregular" ->
         irregular := bool e
     | "name" ->
@@ -193,6 +203,9 @@ let choose e1 e2 =
   match X.variety with
   | Iter -> e1
   | Map  -> e2
+
+let is_frozen (tv : tyvar) =
+  List.mem tv !freeze (* TEMPORARY clean up *)
 
 (* As we generate several classes at the same time, we maintain, for each
    generated class, a list of methods that we generate as we go. The following
@@ -404,13 +417,21 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
             (map (visit_type false) tys)
       end
 
-  (* A type variable [tv] is handled by a virtual method visitor. *)
+  (* A type variable [tv] is normally handled by a virtual method visitor.
+     However, if this type variable has been marked as [frozen] by the user,
+     then it is treated as if it were a nonlocal type by the same name. *)
   | false,
     { ptyp_desc = Ptyp_var tv; _ } ->
-      generate current (virtual_method (tyvar_visitor_method tv));
-      send self
-        (tyvar_visitor_method tv)
-        []
+      if is_frozen tv then
+        visit_type
+          env_in_scope
+          { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
+      else begin
+        generate current (virtual_method (tyvar_visitor_method tv));
+        send self
+          (tyvar_visitor_method tv)
+          []
+        end
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)
