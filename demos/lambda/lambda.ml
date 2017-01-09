@@ -1,43 +1,4 @@
-type ('bn, 'term) abstraction =
-  'bn * 'term
-
-module Nominal = struct
-  module Abstraction = struct
-    let iter _ f env (x, body) =
-      let env = Atom.Set.add x env in
-      f env body
-  end
-end
-
-module Nominal2DeBruijn = struct
-  type env =
-    int Atom.Map.t * int
-  module Abstraction = struct
-    let map _ f (env, n) (x, body) =
-      let env = Atom.Map.add x n env in
-      (), f (env, n+1) body
-  end
-end
-
-type void
-
-class fv = object
-  val mutable accu = Atom.Set.empty
-  method visit_'fn (env : 'env) x =
-    if not (Atom.Set.mem x env) then
-      accu <- Atom.Set.add x accu
-  method visit_'bn (_ : 'env) (_ : void) : unit =
-    assert false (* never invoked *)
-  method accu = accu
-end
-
-class import = object
-  method visit_'fn (env, n) x =
-    let level = Atom.Map.find x env in
-    n - level
-  method visit_'bn (_ : Nominal2DeBruijn.env) (_ : void) : unit =
-    assert false (* never invoked *)
-end
+open Abstraction
 
 type ('fn, 'bn) term =
   | TVar of 'fn
@@ -45,7 +6,8 @@ type ('fn, 'bn) term =
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
     visitors { name = "iter"; variety = "iter"; nonlocal = ["Nominal"] },
-    visitors { name = "map"; variety = "map"; nonlocal = ["Nominal2DeBruijn"] }
+    visitors { name = "map"; variety = "map"; nonlocal = ["Nominal2DeBruijn"] },
+    visitors { name = "import"; variety = "map"; nonlocal = ["String2Atom"] }
   ]
 
 (* Nominal. *)
@@ -60,14 +22,15 @@ let fv (t : nominal_term) : Atom.Set.t =
   let o = object
     inherit [_] iter
     inherit fv
+    inherit [_] visit_'bn
   end in
   o # visit_term Atom.Set.empty t;
   o # accu
 
-let import (t : nominal_term) : db_term =
+let n2db (t : nominal_term) : db_term =
   let o = object
     inherit [_] map
-    inherit import
+    inherit n2db
   end in
   o # visit_term (Atom.Map.empty, 0) t
 
