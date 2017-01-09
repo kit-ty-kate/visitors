@@ -127,7 +127,7 @@ let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
 
 let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
   (* For [list], we need [List.map]. *)
-  Ldot (nonlocal_tycon_module tycon, X.variety_string)
+  Ldot (nonlocal_tycon_module tycon, X.variety)
 
 (* -------------------------------------------------------------------------- *)
 

@@ -43,7 +43,9 @@ module type SETTINGS = sig
      the type [scheme] above). *)
   val scheme: scheme
 
-  val variety_string: string (* TEMPORARY *)
+  (* [variety] combines the information in [scheme] and [arity]. It is just
+     the string provided by the user. *)
+  val variety: string
 
   (* The type variables that should be treated as nonlocal types. Following
      OCaml's convention, the name of a type variable does not include a
@@ -122,8 +124,8 @@ end)
   let irregular = ref false
   let names = ref [] (* dummy: [name] is mandatory; see below *)
   let path = ref []
-  let scheme = ref None (* dummy: [variety] is mandatory; see below *)
-  let variety_string = ref "" (* TEMPORARY *)
+  let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
+  let variety = ref None
 
   (* Parse every option. *)
 
@@ -140,10 +142,11 @@ end)
       | "path" ->
           path := strings e
       | "variety" ->
-          variety_string := string e;
-          let v, a = parse_variety loc (string e) in
-          scheme := Some v;
-          arity := a;
+          let v = string e in
+          variety := Some v;
+          let s, a = parse_variety loc v in
+          scheme := s;
+          arity := a
       | _ ->
           raise_errorf ~loc "%s: option %s is not supported." plugin o
     ) options
@@ -156,7 +159,6 @@ end)
   let irregular = !irregular
   let path = !path
   let scheme = !scheme
-  let variety_string = !variety_string
 
   (* Perform sanity checking. *)
 
@@ -182,14 +184,14 @@ end)
         assert false (* already checked length *)
 
   (* The parameter [variety] is not optional. *)
-  let scheme =
-    match scheme with
+  let variety =
+    match !variety with
     | None ->
         raise_errorf ~loc
           "%s: please specify the variety of the generated class.\n\
            e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
-    | Some scheme ->
-        scheme
+    | Some variety ->
+        variety
 
   (* TEMPORARY check that every string in the list is a valid module name *)
   (* We always open [VisitorsRuntime], but allow it to be shadowed by
