@@ -20,9 +20,6 @@ module Run (X : SETTINGS) = struct
 let is_local =
   is_local X.decls
 
-let current =
-  X.name (* TEMPORARY *)
-
 let arity =
   X.arity
 
@@ -31,14 +28,14 @@ let choose e1 e2 =
   | Iter -> e1
   | Map  -> e2
 
-let is_frozen (tv : tyvar) =
-  List.mem tv X.freeze (* TEMPORARY clean up *)
-
 (* As we generate several classes at the same time, we maintain, for each
    generated class, a list of methods that we generate as we go. The following
    line brings [generate] and [dump] into scope. *)
 
 include ClassFieldStore(struct end)
+
+let generate =
+  generate X.name
 
 (* -------------------------------------------------------------------------- *)
 
@@ -218,7 +215,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate a method. The formal parameters [xs] don't need a type
      annotation: because this method has a call site, its type can be
      inferred. *)
-  generate current (concrete_method m (lambdas xs e));
+  generate (concrete_method m (lambdas xs e));
   (* Construct a method call. *)
   send self m (evars xs)
 
@@ -276,12 +273,12 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
      then it is treated as if it were a nonlocal type by the same name. *)
   | false,
     { ptyp_desc = Ptyp_var tv; _ } ->
-      if is_frozen tv then
+      if List.mem tv X.freeze then
         visit_type
           env_in_scope
           { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
       else begin
-        generate current (virtual_method (tyvar_visitor_method tv));
+        generate (virtual_method (tyvar_visitor_method tv));
         send self
           (tyvar_visitor_method tv)
           []
@@ -470,7 +467,7 @@ let visit_decl (decl : type_declaration) : expression =
    declaration [decl], as well as the necessary auxiliary methods. *)
 
 let type_decl (decl : type_declaration) : unit =
-  generate current (
+  generate (
     concrete_method
       (tycon_visitor_method (Lident decl.ptype_name.txt))
       (plambda (pvar env) (visit_decl decl))
@@ -497,6 +494,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   end) in
   let module R = Run(P) in
   let open R in
+  (* TEMPORARY maybe clean up here, move the code below into [R]? *)
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
   (* In the generated code, disable certain warnings, so that the user sees
@@ -517,7 +515,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        module using [include struct ... end]. *)
     stropen P.path @
     (* Produce a class definition. *)
-    class1 [ ty_self, Invariant ] current pself (dump current) ::
+    class1 [ ty_self, Invariant ] P.name pself (dump P.name) ::
     floating "VISITORS.END" [] ::
     []
   )]
