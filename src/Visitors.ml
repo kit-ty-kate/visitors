@@ -28,6 +28,28 @@ type variety =
 
 (* -------------------------------------------------------------------------- *)
 
+(* Here are the various parameters that can be set by the user. *)
+
+module type PARAMETERS = sig
+
+  (* The type declarations that we are processing. *)
+  val decls: type_declaration list
+
+  (* The name of the generated class. *)
+  val current: classe
+
+  (* The arity of the generated code, e.g., 1 if one wishes to generate [iter]
+     and [map], 2 if one wishes to generate [iter2] and [map2], and so on. *)
+  val arity: int
+
+  (* The variety of visitor that we wish to generate (see the definition of
+     the type [variety] above). *)
+  val variety: variety
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* Option processing. *)
 
 (* The option [arity], accompanied with an integer parameter, allows setting
@@ -172,23 +194,7 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
 
 (* Per-run global state. *)
 
-module Run (X : sig
-
-  (* The type declarations that we are processing. *)
-  val decls: type_declaration list
-
-  (* The name of the generated class. *)
-  val current: classe
-
-  (* The arity of the generated code, e.g., 1 if one wishes to generate [iter]
-     and [map], 2 if one wishes to generate [iter2] and [map2], and so on. *)
-  val arity: int
-
-  (* The variety of visitor that we wish to generate (see the definition of
-     the type [variety] above). *)
-  val variety: variety
-
-end) = struct
+module Run (X : PARAMETERS) = struct
 
 let is_local =
   is_local X.decls
