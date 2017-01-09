@@ -38,7 +38,10 @@ TODO (PERHAPS)
 Implement a way of deferring visitor generation.
   (inserting user code between the type definition and the visitor class)
 
-Generate a "fold" class in addition to iter and map?
+Generate a variant of "iter" with an explicit accumulator?
+  Would allow getting rid of mutable variables in user code.
+
+Generate a (bottom-up) "fold" class in addition to iter and map?
   Should not be difficult.
   Create virtual methods for local types. Use external functions for nonlocal types.
     Do something about tuples. (Reconstruct them identically?)
