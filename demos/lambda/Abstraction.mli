@@ -1,3 +1,5 @@
+(* TEMPORARY document *)
+
 type void
 
 type ('bn, 'term) abstraction =
@@ -72,6 +74,25 @@ end
 module Atom2Atom : sig
 
   type env = Atom.subst
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> Atom.t * 'term1 -> Atom.t * 'term2
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> Atom.t
+  end
+
+end
+
+module Copy : sig
+
+  type env
+
+  val empty: env
 
   module Abstraction : sig
     val map:

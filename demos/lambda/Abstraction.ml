@@ -135,7 +135,10 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* During a substitution, *)
+(* Substitution of free atoms for free atoms. *)
+
+(* We require every binding occurrence [x] encountered along the way to be
+   fresh with respect to the substitution [sigma]. *)
 
 module Atom2Atom = struct
 
@@ -158,6 +161,36 @@ module Atom2Atom = struct
          seems preferable not to pay. The well-formedness of terms can be
          checked independently. *)
       x, f sigma body
+  end
+
+  module Fn = struct
+    let map = Atom.Subst.apply
+  end
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Copy, that is, substitution of fresh atoms for bound atoms. *)
+
+module Copy = struct
+
+  type env = Atom.subst
+
+  let empty =
+    Atom.Subst.id
+
+  module Abstraction = struct
+    let map _ f sigma (x, body) =
+      (* Under the global uniqueness assumption, the atom [x] cannot appear
+         in the domain or codomain of the substitution [sigma]. We check at
+         runtime that this is the case. *)
+      assert (Atom.Subst.is_fresh_for x sigma);
+      (* Generate a fresh copy of [x]. *)
+      let x' = Atom.fresha x in
+      (* Extend [sigma] when descending in the body. *)
+      let sigma = Atom.Subst.extend sigma x x' in
+      x', f sigma body
   end
 
   module Fn = struct

@@ -1,38 +1,48 @@
-open Abstraction
+module Term = struct
 
-type ('fn, 'bn) term =
-  | TVar of 'fn
-  | TLambda of ('bn, ('fn, 'bn) term) abstraction
-  | TApp of ('fn, 'bn) term * ('fn, 'bn) term
-  [@@deriving
-    visitors { name = "atom2unit"; variety = "iter"; path = ["Atom2Unit"]; freeze = ["bn"; "fn"]; final = true },
-    visitors { name = "atom2bruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze = ["bn"; "fn"]; final = true },
-    visitors { name = "string2atom"; variety = "map"; path = ["String2Atom"]; freeze = ["bn"; "fn"]; final = true },
-    visitors { name = "atom2atom"; variety = "map"; path = ["Atom2Atom"]; freeze = ["bn"; "fn"]; final = true }
-  ]
+  open Abstraction
+
+  type ('fn, 'bn) term =
+    | TVar of 'fn
+    | TLambda of ('bn, ('fn, 'bn) term) abstraction
+    | TApp of ('fn, 'bn) term * ('fn, 'bn) term
+    [@@deriving
+      visitors { name = "Atom2Unit"; variety = "iter"; path = ["Atom2Unit"]; freeze = ["bn"; "fn"]; final = true },
+      visitors { name = "Atom2DeBruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze = ["bn"; "fn"]; final = true },
+      visitors { name = "String2Atom"; variety = "map"; path = ["String2Atom"]; freeze = ["bn"; "fn"]; final = true },
+      visitors { name = "Atom2Atom"; variety = "map"; path = ["Atom2Atom"]; freeze = ["bn"; "fn"]; final = true },
+      visitors { name = "Copy"; variety = "map"; path = ["Copy"]; freeze = ["bn"; "fn"]; final = true }
+    ]
+
+end
 
 type raw_term =
-  (string, string) term
+  (string, string) Term.term
 
 type nominal_term =
-  (Atom.t, Atom.t) term
+  (Atom.t, Atom.t) Term.term
 
 type db_term =
-  (int, unit) term
+  (int, unit) Term.term
 
 let fa (t : nominal_term) : Atom.Set.t =
   let accu = ref Atom.Set.empty in
-  Atom2unit.visit_term (Atom2Unit.empty accu) t;
+  Term.Atom2Unit.visit_term (Abstraction.Atom2Unit.empty accu) t;
   !accu
 
 let atom2debruijn (t : nominal_term) : db_term =
-  Atom2bruijn.visit_term Atom2DeBruijn.empty t
+  Term.Atom2DeBruijn.visit_term Abstraction.Atom2DeBruijn.empty t
 
 let string2atom (t : raw_term) : nominal_term =
-  String2atom.visit_term String2Atom.empty t
+  Term.String2Atom.visit_term Abstraction.String2Atom.empty t
 
 let subst (sigma : Atom.subst) (t : nominal_term) : nominal_term =
-  Atom2atom.visit_term sigma t
+  Term.Atom2Atom.visit_term sigma t
+
+let copy (t : nominal_term) : nominal_term =
+  Term.Copy.visit_term Abstraction.Copy.empty t
+
+open Term
 
 let x = Atom.freshh "x"
 
