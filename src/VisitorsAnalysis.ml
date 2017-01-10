@@ -90,3 +90,19 @@ let classify (s : string) : classification =
   in
   Location.formatter_for_warnings := backup;
   result
+
+(* -------------------------------------------------------------------------- *)
+
+(* Testing if a string is a valid [mod_longident], i.e., a possibly-qualified
+   module identifier. *)
+
+(* We might wish to use OCaml's parser for this purpose, but [mod_longident] is
+   not declared as a start symbol. Furthermore, that would be perhaps slightly
+   too lenient, e.g., allowing whitespace and comments inside. Our solution is
+   to split at the dots using [Longident.parse], then check that every piece
+   is a valid module name. *)
+
+let is_valid_mod_longident (m : string) : bool =
+  String.length m > 0 &&
+  let pieces = Longident.flatten (Longident.parse m) in
+  List.for_all (fun piece -> classify piece = UIDENT) pieces

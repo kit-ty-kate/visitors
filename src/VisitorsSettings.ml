@@ -179,11 +179,11 @@ end)
      times. So, we first accumulate a list of names, then check that this list
      has length 1. *)
   let name =
-    if List.length !names = 0 then
+    if length !names = 0 then
       raise_errorf ~loc
         "%s: please specify the name of the generated class.\n\
          e.g. [@@deriving visitors { name = \"traverse\" }]" plugin;
-    if List.length !names > 1 then
+    if length !names > 1 then
       raise_errorf ~loc
         "%s: please specify only ONE name for the generated class." plugin;
     match !names with
@@ -211,7 +211,15 @@ end)
     | Some variety ->
         variety
 
-  (* TEMPORARY check that every string in the list is a valid module name *)
+  (* Check that every string in the list [path] is a valid (long) module
+     identifier. *)
+  let () =
+    iter (fun m ->
+      if not (is_valid_mod_longident m) then
+        raise_errorf ~loc
+          "%s: %s is not a valid module identifier." plugin m
+    ) path
+
   (* We always open [VisitorsRuntime], but allow it to be shadowed by
      user-specified modules. *)
   let path =
