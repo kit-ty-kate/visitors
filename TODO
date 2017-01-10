@@ -2,6 +2,8 @@
 
 TODO (REALLY)
 
+Generate a "reduce" visitor, using a monoid.
+
 Check for TEMPORARY.
 
 If there are no virtual methods, then we can produce a let rec nest
@@ -45,10 +47,10 @@ Implement a way of deferring visitor generation.
 Generate a variant of "iter" with an explicit accumulator?
   Would allow getting rid of mutable variables in user code.
 
-Generate a (bottom-up) "fold" class in addition to iter and map?
-  Should not be difficult.
-  Create virtual methods for local types. Use external functions for nonlocal types.
-    Do something about tuples. (Reconstruct them identically?)
+Generate a generic (bottom-up) "fold" class?
+  Create virtual build_ methods for local types.
+  Use external functions for nonlocal types.
+  Do something about tuples. (Reconstruct them identically?)
   Analogous to ppx_tools/genlifter.
   Would allow the user to define subclasses, possibly in several steps. Could be useful.
 
