@@ -167,7 +167,11 @@ end)
           scheme := s;
           arity := a
       | _ ->
-          (* TEMPORARY warn instead of failing, for better forward compatibility *)
+          (* We could emit a warning, instead of an error, if we find an
+             unsupported option. That might be preferable for forward
+             compatibility. That said, I am not sure that ignoring unknown
+             options is a good idea; it might cause us to generate code
+             that does not work as expected by the user. *)
           raise_errorf ~loc "%s: option %s is not supported." plugin o
     ) options
 
