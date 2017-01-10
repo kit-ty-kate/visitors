@@ -1,7 +1,10 @@
 (* -------------------------------------------------------------------------- *)
 
-(* An atom is implemented as a pair of an integer, the atom's identity,
-   and a string, which serves as a printing hint. *)
+(* An atom is implemented as a pair of an integer, the atom's identity, and a
+   string, which serves as a printing hint. We maintain the invariant that a
+   hint is nonempty and does not end in a digit. This allows us to later
+   produce unique identifiers, without risk of collisions, by concatenating a
+   hint and a unique number. *)
 
 type identifier =
     string
@@ -40,10 +43,16 @@ let allocate () =
 
 (* [freshh hint] produces a fresh atom. *)
 
-let freshh hint = {
-  identity = allocate();
-  hint
-}
+let rec freshh hint =
+  let n = String.length hint in
+  (* The argument [hint] must not be a string of digits. *)
+  assert (n > 0);
+  let c = hint.[n-1] in
+  if Char.code '0' <= Char.code c && Char.code c <= Char.code '9' then
+    (* There is a trailing digit. Remove it. *)
+    freshh (String.sub hint 0 (n-1))
+  else
+    { identity = allocate(); hint }
 
 (* [fresha a] returns a fresh atom modeled after the atom [a]. *)
 
