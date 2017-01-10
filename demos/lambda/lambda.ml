@@ -5,9 +5,9 @@ type ('fn, 'bn) term =
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
-    visitors { name = "atom2unit"; variety = "iter"; path = ["Atom2Unit"]; freeze=["bn"; "fn"] },
-    visitors { name = "atom2bruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze=["bn"; "fn"] },
-    visitors { name = "string2atom"; variety = "map"; path = ["String2Atom"]; freeze=["bn"; "fn"] }
+    visitors { name = "atom2unit"; variety = "iter"; path = ["Atom2Unit"]; freeze = ["bn"; "fn"]; final = true },
+    visitors { name = "atom2bruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze = ["bn"; "fn"]; final = true },
+    visitors { name = "string2atom"; variety = "map"; path = ["String2Atom"]; freeze = ["bn"; "fn"]; final = true }
   ]
 
 type raw_term =
@@ -22,14 +22,14 @@ type db_term =
 let fa (t : nominal_term) : Atom.Set.t =
   let accu = ref Atom.Set.empty in
   let env = Atom2Unit.empty accu in
-  new atom2unit # visit_term env t;
+  Atom2unit.visit_term env t;
   !accu
 
 let atom2debruijn (t : nominal_term) : db_term =
-  new atom2bruijn # visit_term Atom2DeBruijn.empty t
+  Atom2bruijn.visit_term Atom2DeBruijn.empty t
 
 let string2atom (t : raw_term) : nominal_term =
-  new string2atom # visit_term String2Atom.empty t
+  String2atom.visit_term String2Atom.empty t
 
 let x = Atom.freshh "x"
 
