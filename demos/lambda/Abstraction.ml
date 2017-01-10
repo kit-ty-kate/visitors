@@ -57,13 +57,11 @@ module String2Atom = struct
   exception Unbound of string
 
   module Fn = struct
-
     let map env x =
       try
         StringMap.find x env
       with Not_found ->
         raise (Unbound x)
-
   end
 
 end
@@ -88,11 +86,9 @@ module Atom2Unit = struct
   end
 
   module Fn = struct
-
     let iter (env, accu) x =
       if not (Atom.Set.mem x env) then
         accu := Atom.Set.add x !accu
-
   end
 
 end
@@ -123,7 +119,6 @@ module Atom2DeBruijn = struct
   end
 
   module Fn = struct
-
     let map (env, n) x =
       try
         (* Lookup the de Bruijn level associated with [x]. *)
@@ -134,9 +129,39 @@ module Atom2DeBruijn = struct
         (* The name [x] is unknown. This should not happen if the environment
            was properly set up. *)
         assert false
-
   end
 
 end
 
 (* -------------------------------------------------------------------------- *)
+
+(* During a substitution, *)
+
+module Atom2Atom = struct
+
+  type env = Atom.subst
+
+  module Abstraction = struct
+    let map _ f sigma (x, body) =
+      (* Under the global uniqueness assumption, the atom [x] cannot appear
+         in the domain or codomain of the substitution [sigma]. We check at
+         runtime that this is the case. *)
+      assert (Atom.Subst.is_fresh_for x sigma);
+      (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
+         freshening of the bound name is required. Thus, we can keep the
+         substitution [sigma], unchanged, under the binder. *)
+      (* One might wish to extend [sigma] with a mapping of [x] to [x], so
+         that [x] is not fresh for the extended [sigma], so that crossing
+         another binding occurrence of [x] causes the above assertion to fail.
+         That said, in principle, the global uniqueness assumption guarantees
+         that we cannot encounter another binding occurrence of [x]. So, it
+         seems preferable not to pay. The well-formedness of terms can be
+         checked independently. *)
+      x, f sigma body
+  end
+
+  module Fn = struct
+    let map = Atom.Subst.apply
+  end
+
+end
