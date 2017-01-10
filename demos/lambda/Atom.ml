@@ -113,26 +113,50 @@ module Map =
 
 (* -------------------------------------------------------------------------- *)
 
-(* A substitution is a map of atoms to atoms. It acts as the identity
-   everywhere except on a finite set (its domain). *)
+(* A substitution is a finite map of atoms to atoms. It acts as the identity
+   outside of its domain (a finite set of atoms). It is not necessarily
+   injective. *)
 
-type subst =
-  atom Map.t
+(* We keep track of the codomain of a substitution, so as to allow checking
+   that an atom [x] is fresh for a substitution [sigma], i.e., [x] appears
+   neither in the domain nor in the codomain of [sigma]. If this check is
+   used only as part of assertions, then it can be disabled. *)
+
+type subst = {
+  graph: atom Map.t;
+  codomain: Set.t;
+}
 
 module Subst = struct
 
-  let id =
-    Map.empty
+  let id = {
+    graph = Map.empty;
+    codomain = Set.empty;
+  }
 
   let apply sigma a =
     try
-      Map.find a sigma
+      Map.find a sigma.graph
     with Not_found ->
-      (* Outside of its explicit domain, the substitution acts
-         as the identity. *)
+      (* Outside of its domain, the substitution acts as the identity. *)
       a
 
   let extend sigma a b =
-    Map.add a b sigma
+    (* This is a strict extension operation: we require [a] not to appear
+       in the domain of [sigma]. *)
+    assert (not (Map.mem a sigma.graph));
+    (* Under the assumption that [a] does not appear in the domain of [sigma],
+       the new codomain is computed as follows. Without this assumption, the
+       codomain computation would be problematic. One might wish to first
+       remove from the codomain the previous image of [a], yet it should not
+       be removed if it is the image of other atoms. *)
+    {
+      graph = Map.add a b sigma.graph;
+      codomain = Set.add b sigma.codomain;
+    }
+
+  let is_fresh_for a sigma =
+    (* The fact that we keep track of codomains is exploited here. *)
+    not (Map.mem a sigma.graph || Set.mem a sigma.codomain)
 
 end
