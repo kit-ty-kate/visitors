@@ -76,7 +76,7 @@ alpha-equivalence test (nominal)
 test x \in fv(t) (nominal)
 entering a binder (and testing for global uniqueness)
 simultaneous opening? (nominal)
-printing (conversion from nominal back to raw)
+efficient printing (conversion from nominal back to raw) with pre-computation of fa
 well-formedness checking (just traversing the term and checking for global uniqueness)
 -- test for global uniqueness everywhere an environment is extended
 
