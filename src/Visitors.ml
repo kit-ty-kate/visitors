@@ -198,6 +198,18 @@ let results (xs : _ list) : variable list =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [call m es] normally emits a method call of the form [self#m es].
+   However, if the [final] option is enabled, it instead produces a
+   function call of the form [m es]. *)
+
+let call (m : methode) (es : expression list) : expression =
+  if X.final then
+    app (evar m) es
+  else
+    send self m es
+
+(* -------------------------------------------------------------------------- *)
+
 (* [hook m xs e] constructs a call of the form [self#m xs], and (as a side
    effect) generates a method [method m xs = e]. The free variables of the
    expression [e] must be (a subset of) [xs]. *)
@@ -212,7 +224,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
      inferred. *)
   generate (concrete_method m (lambdas xs e));
   (* Construct a method call. *)
-  send self m (evars xs)
+  call m (evars xs)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -246,7 +258,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           (* Return the visitor method associated with [tycon]. Contrary to
              the nonlocal case (below), this method must not be applied to the
              visitor functions associated with [tys]. *)
-          send self
+          call
             (tycon_visitor_method tycon)
             []
       | None ->
@@ -273,8 +285,15 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           env_in_scope
           { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
       else begin
+        (* Check that [final] is [false], as we cannot generate virtual
+           methods when [final] is [true]. *)
+        if X.final then
+          raise_errorf ~loc:ty.ptyp_loc
+            "%s: cannot deal with type variables when 'final' is enabled.\n\
+             Please either disable 'final' or 'freeze' this type variable.\n"
+            plugin;
         generate (virtual_method (tyvar_visitor_method tv));
-        send self
+        call
           (tyvar_visitor_method tv)
           []
         end
@@ -509,8 +528,9 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        declarations have local scope because [with_warnings] creates a local
        module using [include struct ... end]. *)
     stropen P.path @
-    (* Produce a class definition. *)
-    dump [ ty_self, Invariant ] P.name pself ::
+    (* Produce either a class definition or a nest of mutually recursive
+       functions, depending on the option [final]. *)
+    (if P.final then nest else dump [ ty_self, Invariant ] pself) P.name ::
     floating "VISITORS.END" [] ::
     []
   )]

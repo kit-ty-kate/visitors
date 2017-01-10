@@ -317,6 +317,9 @@ let meth2vb (Meth (m, oe)) : value_binding =
       Vb.mk (pvar m) e
   | None ->
       (* We check ahead of time that there are no virtual methods. *)
+      (* If this assertion fails, then perhaps a call to [generate]
+         was passed a virtual method without checking that [final]
+         is [false]. *)
       assert false
 
 (* -------------------------------------------------------------------------- *)
@@ -351,8 +354,8 @@ module ClassFieldStore (X : sig end) : sig
      [generate c meth] adds [meth] to the list associated with [c]. *)
   val generate: classe -> meth -> unit
 
-  (* [dump params c self] returns a class definition for the class [c]. *)
-  val dump: (core_type * variance) list -> classe -> pattern -> structure_item
+  (* [dump params self c] returns a class definition for the class [c]. *)
+  val dump: (core_type * variance) list -> pattern -> classe -> structure_item
 
   (* [nest c] returns a nest of mutually recursive functions, corresponding
      to the methods of the class [c]. This requires that there be no virtual
@@ -385,7 +388,7 @@ end = struct
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods
 
-  let dump params c self : structure_item =
+  let dump params self c : structure_item =
     class1 params c self (dump c)
 
   let nest c : value_binding list =
