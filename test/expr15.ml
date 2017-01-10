@@ -4,7 +4,7 @@ module SetupSize = struct
   end
 end
 
-module Monoid = struct
+module IntMonoid = struct
   let zero = 0
   let plus = (+)
 end
@@ -12,7 +12,7 @@ end
 type expr =
   | EConst of int
   | EAdd of expr * expr
-  [@@deriving visitors { name = "Size"; variety = "reduce"; path = ["SetupSize"]; final = true }]
+  [@@deriving visitors { name = "Size"; variety = "reduce"; monoid = "IntMonoid"; path = ["SetupSize"]; final = true }]
 
 let size : expr -> int =
   Size.visit_expr ()

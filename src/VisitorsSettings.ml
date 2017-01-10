@@ -68,6 +68,10 @@ module type SETTINGS = sig
      to [int t] but not to other instances of [t]. *)
   val irregular: bool
 
+  (* If [scheme] is [Reduce], then we need a monoid. This should be the name
+     of a module which provides a unit element and a binary operation. *)
+  val monoid: Longident.t option
+
   (* A list of module names that should be searched for nonlocal functions,
      such as [List.iter]. The modules that appear first in the list are
      searched last. *)
@@ -104,6 +108,13 @@ let parse_variety loc (s : string) : scheme * int =
 
 (* -------------------------------------------------------------------------- *)
 
+let must_be_valid_mod_longident loc m =
+  if not (is_valid_mod_longident m) then
+    raise_errorf ~loc
+      "%s: %s is not a valid module identifier." plugin m
+
+(* -------------------------------------------------------------------------- *)
+
 (* The option processing code constructs a module of type [SETTINGS]. *)
 
 module Parse (O : sig
@@ -127,6 +138,7 @@ end)
   let final = ref false
   let freeze = ref []
   let irregular = ref false
+  let monoid = ref None
   let names = ref [] (* dummy: [name] is mandatory; see below *)
   let path = ref []
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
@@ -144,6 +156,8 @@ end)
            freeze := strings e
       | "irregular" ->
           irregular := bool e
+      | "monoid" ->
+          monoid := Some (string e)
       | "name" ->
           names := string e :: !names;
       | "path" ->
@@ -170,6 +184,7 @@ end)
   let final = !final
   let freeze = !freeze
   let irregular = !irregular
+  let monoid = !monoid
   let path = !path
   let scheme = !scheme
 
@@ -214,15 +229,33 @@ end)
   (* Check that every string in the list [path] is a valid (long) module
      identifier. *)
   let () =
-    iter (fun m ->
-      if not (is_valid_mod_longident m) then
-        raise_errorf ~loc
-          "%s: %s is not a valid module identifier." plugin m
-    ) path
+    iter (must_be_valid_mod_longident loc) path
 
   (* We always open [VisitorsRuntime], but allow it to be shadowed by
      user-specified modules. *)
   let path =
     map Longident.parse ("VisitorsRuntime" :: path)
+
+  (* The parameter [monoid] must be supplied if and only if [scheme] is
+     [Reduce]. Also, if supplied, it must be a valid module name. *)
+  let monoid =
+    match monoid with
+    | Some m ->
+        must_be_valid_mod_longident loc m;
+        Some (Longident.parse m)
+    | None ->
+        None
+
+  let () =
+    match monoid, scheme with
+    | Some _, Reduce
+    | None, (Iter | Map) ->
+        ()
+    | None, Reduce ->
+        raise_errorf ~loc
+          "%s: 'variety = %s' requires specifying a monoid." plugin variety
+    | Some _, (Iter | Map) ->
+        raise_errorf ~loc
+          "%s: 'variety = %s' does not require specifying a monoid." plugin variety
 
 end

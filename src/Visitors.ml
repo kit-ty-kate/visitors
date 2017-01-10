@@ -20,12 +20,6 @@ module Run (X : SETTINGS) = struct
 let arity =
   X.arity
 
-let choose e1 e2 e3 =
-  match X.scheme with
-  | Iter -> e1
-  | Map  -> e2
-  | Reduce -> e3
-
 (* The following brings [generate] and [dump] into scope. *)
 
 include ClassFieldStore(struct end)
@@ -36,6 +30,19 @@ let generate =
 (* The following bring [warning] and [warnings] into scope. *)
 
 include WarningStore(struct end)
+
+(* -------------------------------------------------------------------------- *)
+
+(* [choose] is used to generate different code depending on [scheme]. *)
+
+(* Each branch is described by a function [e] and an argument [x]. We
+   apply [e] to [x] for the desired branch, and only for that branch. *)
+
+let choose e1 x1 e2 x2 e3 x3 =
+  match X.scheme with
+  | Iter -> e1 x1
+  | Map  -> e2 x2
+  | Reduce -> e3 x3
 
 (* -------------------------------------------------------------------------- *)
 
@@ -126,20 +133,19 @@ let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
   (* For [list], we need [List.map]. *)
   Ldot (nonlocal_tycon_module tycon, X.variety)
 
-(* When [scheme] is [Reduce], we need a monoid, that is, a unit and a binary
-   operation. At the moment, we use the fixed names [Monoid.zero] and
-   [Monoid.plus], and assume that the user has bound the name [Monoid]
-   appropriately.
-   TEMPORARY will not suffice when generating multiple reduce visitors; must allow choosing monoid *)
+(* When [scheme] is [Reduce], we need a monoid, that is, a unit [zero] and a
+   binary operation [plus]. The names [zero] and [plus] are fixed. The name
+   of the monoid module is chosen by the user via the [monoid] option. *)
 
-let monoid : Longident.t =
-  Lident "Monoid"
+let monoid () : Longident.t =
+  assert (X.scheme = Reduce);
+  match X.monoid with Some m -> m | None -> assert false
 
-let monoid_unit : expression =
-  eident (Ldot (monoid, "zero"))
+let monoid_unit () : expression =
+  eident (Ldot (monoid(), "zero"))
 
-let monoid_law : expression =
-  eident (Ldot (monoid, "plus"))
+let monoid_law () : expression =
+  eident (Ldot (monoid(), "plus"))
 
 (* -------------------------------------------------------------------------- *)
 
@@ -149,10 +155,10 @@ let monoid_law : expression =
    be of importance if the monoid is not associative-commutative. *)
 
 let reduce es =
-  fold_left1
-    (fun e1 e2 -> app monoid_law [e1; e2])
-    monoid_unit
-    es
+  assert (X.scheme = Reduce);
+  let unit = monoid_unit()
+  and law = monoid_law() in
+  fold_left1 (fun e1 e2 -> app law [e1; e2]) unit es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -343,9 +349,9 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
         (ptuples (transpose arity (pvarss xss)))
         (letn rs (visit_types tys (evarss xss))
           (choose
-            (unit())
-            (tuple (evars rs))
-            (reduce (evars rs))
+            unit()
+            tuple (evars rs)
+            reduce (evars rs)
           )
         )
 
@@ -437,9 +443,9 @@ let constructor_declaration (cd : constructor_declaration) : case =
        (letn
           rs (visit_types tys (evarss xss))
           (choose
-            (unit())
-            (constr datacon (build rs))
-            (reduce (evars rs))
+            unit()
+            (constr datacon) (build rs)
+            reduce (evars rs)
           )
        )
     )
@@ -471,9 +477,9 @@ let visit_decl (decl : type_declaration) : expression =
         let rs = results labels in
         letn rs (visit_types tys (accesses xs labels))
           (choose
-            (unit())
-            (record (combine labels (evars rs)))
-            (reduce (evars rs))
+            unit()
+            record (combine labels (evars rs))
+            reduce (evars rs)
           )
       )
 
