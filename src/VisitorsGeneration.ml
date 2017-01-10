@@ -359,7 +359,9 @@ module ClassFieldStore (X : sig end) : sig
 
   (* [nest c] returns a nest of mutually recursive functions, corresponding
      to the methods of the class [c]. This requires that there be no virtual
-     methods and that any self calls be encoded as function calls. *)
+     methods and that any self calls be encoded as function calls. The
+     function definitions are wrapped in a structure whose name is [c],
+     capitalized. *)
   val nest: classe -> structure_item
 
 end = struct
@@ -396,6 +398,11 @@ end = struct
     List.map meth2vb methods
 
   let nest c : structure_item =
-    Str.value Recursive (nest c)
+    Str.module_ (Mb.mk
+      (mknoloc (String.capitalize_ascii c))
+      (Mod.structure [
+        Str.value Recursive (nest c)
+      ])
+    )
 
 end
