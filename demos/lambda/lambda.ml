@@ -10,6 +10,7 @@ module Term = struct
       visitors { name = "Atom2Unit"; variety = "iter"; path = ["Atom2Unit"]; freeze = ["bn"; "fn"]; final = true },
       visitors { name = "Atom2DeBruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze = ["bn"; "fn"]; final = true },
       visitors { name = "String2Atom"; variety = "map"; path = ["String2Atom"]; freeze = ["bn"; "fn"]; final = true },
+      visitors { name = "Atom2String"; variety = "map"; path = ["Atom2String"]; freeze = ["bn"; "fn"]; final = true },
       visitors { name = "Atom2Atom"; variety = "map"; path = ["Atom2Atom"]; freeze = ["bn"; "fn"]; final = true },
       visitors { name = "Copy"; variety = "map"; path = ["Copy"]; freeze = ["bn"; "fn"]; final = true }
     ]
@@ -35,6 +36,9 @@ let atom2debruijn (t : nominal_term) : db_term =
 
 let string2atom (t : raw_term) : nominal_term =
   Term.String2Atom.visit_term Abstraction.String2Atom.empty t
+
+let atom2string (t : nominal_term) : raw_term =
+  Term.Atom2String.visit_term Abstraction.Atom2String.empty t
 
 let subst (sigma : Atom.subst) (t : nominal_term) : nominal_term =
   Term.Atom2Atom.visit_term sigma t
@@ -73,7 +77,6 @@ test x \in fv(t) (nominal)
 entering a binder (and testing for global uniqueness)
 simultaneous opening? (nominal)
 printing (conversion from nominal back to raw)
-copying (generating fresh bound names to maintain global uniqueness)
 well-formedness checking (just traversing the term and checking for global uniqueness)
 -- test for global uniqueness everywhere an environment is extended
 

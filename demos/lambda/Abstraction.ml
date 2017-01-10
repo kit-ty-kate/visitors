@@ -68,6 +68,68 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* During a conversion from atoms back to strings (that is, printing), the
+   environment is an injective mapping of atoms to strings. We keep track
+   of its codomain by recording a mapping of hints to integers. *)
+
+(* TEMPORARY move the low-level code to [Atom] *)
+
+(* We make the global uniqueness hypothesis. *)
+
+module Atom2String = struct
+
+  type env = {
+    graph: string Atom.Map.t;
+    codomain: int StringMap.t;
+  }
+
+  let empty = {
+    graph = Atom.Map.empty;
+    codomain = StringMap.empty;
+  }
+
+  let next env hint : int =
+    try
+      StringMap.find hint env.codomain
+    with Not_found ->
+      0
+
+  module Abstraction = struct
+    let map _ f env (x, body) =
+      (* Under the GUH, the atom [x] cannot appear in the domain of [env]. *)
+      assert (not (Atom.Map.mem x env.graph));
+      (* We must pick a suitable string to stand for the atom [x]. We must
+         pick a string that does not appear in the image through [env] of
+         the free atoms of [body]. However, at this point, we do not have
+         access to the free atoms of [body], so we must pick a string [s]
+         that does not appear in the codomain of [env]. *)
+      let hint = Atom.hint x in
+      let i = next env hint in
+      let s = Printf.sprintf "%s%d" hint i in
+      let env = {
+        graph = Atom.Map.add x s env.graph;
+        codomain = StringMap.add hint (i+1) env.codomain;
+      } in
+      s, f env body
+  end
+
+  module Fn = struct
+    let map env a =
+      try
+        Atom.Map.find a env.graph
+      with Not_found ->
+        (* The atom [a] must be in the domain of [env]. *)
+        assert false
+  end
+
+end
+
+(* TEMPORARY can we precompute fa(every subterm) ahead of time and
+   attach this info to binders, so that the free atoms are available when
+   printing? *)
+
+(* -------------------------------------------------------------------------- *)
+
 (* During a free atom computation, the environment is a pair of a set of atoms
    (the atoms that are currently in scope) and a reference to a set of atoms
    (the free atoms that have been accumulated so far). *)
