@@ -14,14 +14,16 @@ let plugin =
 
 (* -------------------------------------------------------------------------- *)
 
-(* We can generate two classes, [iter] and [map]. They are mostly identical,
-   and differ only in the code that is executed after the recursive calls. In
-   [iter], this code does nothing; in [map], it reconstructs a data
-   structure. *)
+(* We can generate several classes: as of now, [iter], [map], [reduce]. They
+   are mostly identical, and differ only in the code that is executed after
+   the recursive calls. In [iter], this code does nothing. In [map], it
+   reconstructs a data structure. In [reduce], it combines the results of
+   the recursive calls using a monoid operation. *)
 
 type scheme =
   | Iter
   | Map
+  | Reduce
 
 (* -------------------------------------------------------------------------- *)
 
@@ -77,25 +79,27 @@ end
 (* [parse_variety] takes a variety, which could be "iter", "map2", etc. and
    returns a pair of a scheme and an arity. *)
 
+let rec parse_variety ps (s : string) : scheme * int =
+  match (ps : (string * scheme) list) with
+  | (p, scheme) :: ps ->
+      if prefix p s then
+        let s = remainder p s in
+        let i = if s = "" then 1 else int_of_string s in
+        if i <= 0 then failwith "negative integer"
+        else scheme, i
+      else
+        parse_variety ps s
+  | [] ->
+      failwith "unexpected prefix"
+
 let parse_variety loc (s : string) : scheme * int =
   try
-    if prefix "map" s then
-      let s = remainder "map" s in
-      let i = if s = "" then 1 else int_of_string s in
-      if i <= 0 then failwith "negative integer";
-      Map, i
-    else if prefix "iter" s then
-      let s = remainder "iter" s in
-      let i = if s = "" then 1 else int_of_string s in
-      if i <= 0 then failwith "negative integer";
-      Iter, i
-    else
-      failwith "unexpected prefix"
+    parse_variety ["map", Map; "iter", Iter; "reduce", Reduce] s
   with
   | Failure _ ->
       raise_errorf ~loc
       "%s: invalid variety.\n\
-       A valid variety is iter, map, iter2, map2, etc." plugin
+       A valid variety is iter, map, reduce, iter2, map2, reduce2, etc." plugin
 
 (* -------------------------------------------------------------------------- *)
 

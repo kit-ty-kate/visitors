@@ -24,6 +24,7 @@ let choose e1 e2 =
   match X.scheme with
   | Iter -> e1
   | Map  -> e2
+  | Reduce -> assert false (* TEMPORARY *)
 
 (* The following line brings [generate] and [dump] into scope. *)
 
