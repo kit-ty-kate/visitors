@@ -281,51 +281,47 @@ let inherit_ (c : classe) (tys : core_type list) : class_field =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [concrete_method m e] constructs a public method whose name is [m] and
-   whose body is [e]. *)
+(* An algebraic data type of the methods that we generate. These include
+   concrete methods (with code) and virtual methods (without code). They
+   are public. The method type is not given -- it is inferred by OCaml. *)
 
-let concrete_method (m : methode) (e : expression) : class_field =
-  Cf.method_
-    (mknoloc m)
-    Public
-    (Cf.concrete Fresh e)
+type meth =
+  Meth of methode * expression option
 
-(* -------------------------------------------------------------------------- *)
+let concrete_method m e =
+  Meth (m, Some e)
 
-(* [virtual_method m e] constructs a virtual public method whose name is [m]
-   and whose type is unspecified. *)
-
-let virtual_method (m : methode) : class_field =
-  Cf.method_
-    (mknoloc m)
-    Public
-    (Cf.virtual_ (Typ.any()))
+let virtual_method m =
+  Meth (m, None)
 
 (* -------------------------------------------------------------------------- *)
 
-(* [method_name] extracts a method name out of a class field (which must be
-   a method definition). *)
+(* Converting a method description to OCaml abstract syntax. *)
 
-let method_name (cf : class_field) : string =
-  match cf.pcf_desc with
-  | Pcf_method (m, _, _) ->
-      m.txt
-  | _ ->
-      assert false
+let oe2cfk (oe : expression option) : class_field_kind =
+  match oe with
+  | Some e ->
+     Cf.concrete Fresh e
+  | None ->
+     Cf.virtual_ (Typ.any())
+
+let meth2cf (Meth (m, oe)) : class_field =
+  Cf.method_ (mknoloc m) Public (oe2cfk oe)
 
 (* -------------------------------------------------------------------------- *)
 
-(* [is_virtual] tests whether a class field (which must be a method definition)
-   represents a virtual method. *)
+(* [method_name] extracts a method name out of a method description. *)
 
-let is_virtual (cf : class_field) : bool =
-  match cf.pcf_desc with
-  | Pcf_method (_, _, Cfk_virtual _) ->
-      true
-  | Pcf_method (_, _, Cfk_concrete _) ->
-      false
-  | _ ->
-      assert false
+let method_name (Meth (m, _)) : string =
+  m
+
+(* -------------------------------------------------------------------------- *)
+
+(* [is_virtual] tests whether a method description represents a virtual
+   method. *)
+
+let is_virtual (Meth (_, oe)) : bool =
+  oe = None
 
 (* -------------------------------------------------------------------------- *)
 
@@ -343,7 +339,7 @@ let send (o : variable) (m : methode) (es : expression list) : expression =
 
 module ClassFieldStore (X : sig end) : sig
 
-  val generate: classe -> class_field -> unit
+  val generate: classe -> meth -> unit
   val dump: classe -> class_field list
 
 end = struct
@@ -351,7 +347,7 @@ end = struct
   module StringMap =
     Map.Make(String)
 
-  let store : class_field list StringMap.t ref =
+  let store : meth list StringMap.t ref =
     ref StringMap.empty
 
   let get c =
@@ -361,14 +357,15 @@ end = struct
     store := StringMap.add c (cf :: get c) !store
 
   let dump c =
-    let fields = List.rev (get c) in
+    let methods = List.rev (get c) in
     (* Move all of the virtual methods up front. If two virtual methods have
        the same name, keep only one of them. This is useful because we allow
        a virtual method declaration to be generated several times. In fact,
        OCaml supports this, but it looks tidier if we remove duplicates. *)
-    let virtual_fields, concrete_fields = List.partition is_virtual fields in
-    let cmp cf1 cf2 = compare (method_name cf1) (method_name cf2) in
-    let virtual_fields = VisitorsList.weed cmp virtual_fields in
-    virtual_fields @ concrete_fields
+    let virtual_methods, concrete_methods = List.partition is_virtual methods in
+    let cmp meth1 meth2 = compare (method_name meth1) (method_name meth2) in
+    let virtual_methods = VisitorsList.weed cmp virtual_methods in
+    let methods = virtual_methods @ concrete_methods in
+    List.map meth2cf methods
 
 end
