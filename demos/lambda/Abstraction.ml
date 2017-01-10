@@ -30,6 +30,30 @@ module Bn = struct
   let map _env _x = assert false
   let iter2 _env _x1 _x2 = assert false
   let map2 _env _x1 _x2 = assert false
+  let reduce _env _x = assert false
+  let reduce2 _env _x1 _x2 = assert false
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* A size computation. *)
+
+module Size = struct
+
+  type env = unit
+
+  module Abstraction = struct
+    let reduce _ f env (_x, body) =
+      (* An abstraction per se contributes 0 to the size. Only the number of
+         nodes is usually counted. *)
+      f env body
+  end
+
+  module Fn = struct
+    (* A name per se contributes 0 to the size, for the same reason. *)
+    let reduce _env _x = 0
+  end
+
 end
 
 (* -------------------------------------------------------------------------- *)

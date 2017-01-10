@@ -2,11 +2,17 @@ module Term = struct
 
   open Abstraction
 
+  module Sum = struct
+    let zero = 0
+    let plus = (+)
+  end
+
   type ('fn, 'bn) term =
     | TVar of 'fn
     | TLambda of ('bn, ('fn, 'bn) term) abstraction
     | TApp of ('fn, 'bn) term * ('fn, 'bn) term
     [@@deriving
+      visitors { name = "size"; variety = "reduce"; path = ["Size"]; freeze = ["bn"; "fn"]; monoid = "Sum" },
       visitors { name = "Atom2Unit"; variety = "iter"; path = ["Atom2Unit"]; freeze = ["bn"; "fn"]; final = true },
       visitors { name = "Atom2DeBruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze = ["bn"; "fn"]; final = true },
       visitors { name = "String2Atom"; variety = "map"; path = ["String2Atom"]; freeze = ["bn"; "fn"]; final = true },
@@ -25,6 +31,15 @@ type nominal_term =
 
 type db_term =
   (int, unit) Term.term
+
+let size (t : (_, _) Term.term) : int =
+  let o = object
+    inherit [_] Term.size as super
+    method! visit_term env t =
+      (* Every node counts 1 towards the size. *)
+      1 + super#visit_term env t
+  end in
+  o # visit_term () t
 
 let fa (t : nominal_term) : Atom.Set.t =
   let accu = ref Atom.Set.empty in

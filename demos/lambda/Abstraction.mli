@@ -8,8 +8,27 @@ type ('bn, 'term) abstraction =
 module Bn : sig
   val iter: void -> void -> 'a
   val map: void -> void -> 'a
+  val reduce: void -> void -> 'a
   val iter2: void -> void -> void -> 'a
   val map2: void -> void -> void -> 'a
+  val reduce2: void -> void -> void -> 'a
+end
+
+module Size : sig
+
+  type env = unit
+
+  module Abstraction : sig
+    val reduce:
+      _ ->
+      (env -> 'term -> int) ->
+      env -> (_, 'term) abstraction -> int
+  end
+
+  module Fn : sig
+    val reduce: env -> _ -> int
+  end
+
 end
 
 module String2Atom : sig
