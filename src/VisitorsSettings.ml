@@ -47,6 +47,11 @@ module type SETTINGS = sig
      the string provided by the user. *)
   val variety: string
 
+  (* If [final] is false, which is the default, we generate OCaml classes.
+     If [final] is true, we generate nests of mutually recursive functions.
+     This requires that there be no virtual methods. *)
+  val final: bool
+
   (* The type variables that should be treated as nonlocal types. Following
      OCaml's convention, the name of a type variable does not include a
      leading quote. *)
@@ -120,6 +125,7 @@ end)
   (* Default values. *)
 
   let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
+  let final = ref false
   let freeze = ref []
   let irregular = ref false
   let names = ref [] (* dummy: [name] is mandatory; see below *)
@@ -133,6 +139,8 @@ end)
     iter (fun (o, e) ->
       let loc = e.pexp_loc in
       match o with
+      | "final" ->
+           final := bool e
       | "freeze" ->
            freeze := strings e
       | "irregular" ->
@@ -155,6 +163,7 @@ end)
 
   let decls = decls
   let arity = !arity
+  let final = !final
   let freeze = !freeze
   let irregular = !irregular
   let path = !path
