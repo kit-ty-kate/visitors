@@ -15,7 +15,7 @@ open VisitorsSettings
 
 (* Per-run global state. *)
 
-module Run (X : SETTINGS) = struct
+module Setup (X : SETTINGS) = struct
 
 let arity =
   X.arity
@@ -520,7 +520,8 @@ let visit_decl (decl : type_declaration) : expression =
 (* -------------------------------------------------------------------------- *)
 
 (* [type_decl decl] generates the main visitor method associated with the type
-   declaration [decl], as well as the necessary auxiliary methods. *)
+   declaration [decl], as well as the necessary auxiliary methods. It returns
+   no result. *)
 
 let type_decl (decl : type_declaration) : unit =
   generate (
@@ -529,28 +530,13 @@ let type_decl (decl : type_declaration) : unit =
       (plambda (pvar env) (visit_decl decl))
   )
 
-end
-
 (* -------------------------------------------------------------------------- *)
 
-(* [type_decls decls] produces a list of structure items (that is, toplevel
-   definitions) associated with the type declarations [decls]. *)
+(* [type_decls decls] processes the type declarations [decl] and produces a
+   list of structure items. It is the main entry point inside the body of
+   the functor [Setup]. *)
 
-(* Our classes are parameterized over the type variable ['env]. They are also
-   parameterized over the type variable ['self], with a constraint that this
-   is the type of [self]. This trick allows us to omit the types of the
-   virtual methods, even if these types include type variables. *)
-
-let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
-  assert (decls <> []);
-  let module P = Parse(struct
-    let loc = (VisitorsList.last decls).ptype_loc (* an approximation *)
-    let options = options
-    let decls = decls
-  end) in
-  let module R = Run(P) in
-  let open R in
-  (* TEMPORARY maybe clean up here, move the code below into [R]? *)
+let type_decls (decls : type_declaration list) : structure =
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
   (* Emit our preprocessor warnings (if any). *)
@@ -571,13 +557,34 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        a single series of [open] declarations at the beginning. These [open]
        declarations have local scope because [with_warnings] creates a local
        module using [include struct ... end]. *)
-    stropen P.path @
-    (* Produce either a class definition or a nest of mutually recursive
-       functions, depending on the option [final]. *)
-    (if P.final then nest else dump [ ty_self, Invariant ] pself) P.name ::
+    stropen X.path @
+      (* Produce either a class definition or a nest of mutually recursive
+         functions, depending on the option [final]. *)
+      (* Our classes are parameterized over the type variable ['env]. They are
+         also parameterized over the type variable ['self], with a constraint
+         that this is the type of [self]. This trick allows us to omit the types
+         of the virtual methods, even if these types include type variables. *)
+    (if X.final then nest else dump [ ty_self, Invariant ] pself) X.name ::
     floating "VISITORS.END" [] ::
     []
   )]
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [type_decls decls] produces a list of structure items (that is, toplevel
+   definitions) associated with the type declarations [decls]. It is the
+   main entry point outside of the functor [Setup]. *)
+
+let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
+  assert (decls <> []);
+  let module Process = Setup(Parse(struct
+    let loc = (VisitorsList.last decls).ptype_loc (* an approximation *)
+    let options = options
+    let decls = decls
+  end)) in
+  Process.type_decls decls
 
 (* -------------------------------------------------------------------------- *)
 

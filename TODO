@@ -2,14 +2,8 @@
 
 TODO (REALLY)
 
-Generate a "reduce" visitor, using a monoid.
-
-Check for TEMPORARY.
-
-If there are no virtual methods, then we can produce a let rec nest
-  instead of a class definition.
-
 Develop a real test suite, with expected output.
+  Check for left-to-right traversal order.
 
 Benchmark.
   Compare the speed of visitor-based code w.r.t. a recursive function.
