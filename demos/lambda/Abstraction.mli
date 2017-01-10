@@ -41,7 +41,7 @@ module String2Atom : sig
     val map:
       _ ->
       (env -> 'term1 -> 'term2) ->
-      env -> string * 'term1 -> Atom.t * 'term2
+      env -> (string, 'term1) abstraction -> (Atom.t, 'term2) abstraction
   end
 
   exception Unbound of string
@@ -62,7 +62,7 @@ module Atom2String : sig
     val map:
       _ ->
       (env -> 'term1 -> 'term2) ->
-      env -> Atom.t * 'term1 -> string * 'term2
+      env -> (Atom.t, 'term1) abstraction -> (string, 'term2) abstraction
   end
 
   module Fn : sig
@@ -81,7 +81,7 @@ module Atom2Unit : sig
     val iter :
       _ ->
       (env -> 'term -> unit) ->
-      env -> Atom.t * 'term -> unit
+      env -> (Atom.t, 'term) abstraction -> unit
   end
 
   module Fn : sig
@@ -100,7 +100,7 @@ module Atom2DeBruijn : sig
     val map :
       _ ->
       (env -> 'term1 -> 'term2) ->
-      env -> Atom.t * 'term1 -> unit * 'term2
+      env -> (Atom.t, 'term1) abstraction -> (unit, 'term2) abstraction
   end
 
   module Fn : sig
@@ -117,7 +117,7 @@ module Atom2Atom : sig
     val map:
       _ ->
       (env -> 'term1 -> 'term2) ->
-      env -> Atom.t * 'term1 -> Atom.t * 'term2
+      env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
   end
 
   module Fn : sig
@@ -136,7 +136,7 @@ module Copy : sig
     val map:
       _ ->
       (env -> 'term1 -> 'term2) ->
-      env -> Atom.t * 'term1 -> Atom.t * 'term2
+      env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
   end
 
   module Fn : sig
