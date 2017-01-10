@@ -20,11 +20,11 @@ module Run (X : SETTINGS) = struct
 let arity =
   X.arity
 
-let choose e1 e2 =
+let choose e1 e2 e3 =
   match X.scheme with
   | Iter -> e1
   | Map  -> e2
-  | Reduce -> assert false (* TEMPORARY *)
+  | Reduce -> e3
 
 (* The following line brings [generate] and [dump] into scope. *)
 
@@ -121,6 +121,34 @@ let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
 let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
   (* For [list], we need [List.map]. *)
   Ldot (nonlocal_tycon_module tycon, X.variety)
+
+(* When [scheme] is [Reduce], we need a monoid, that is, a unit and a binary
+   operation. At the moment, we use the fixed names [Monoid.zero] and
+   [Monoid.plus], and assume that the user has bound the name [Monoid]
+   appropriately.
+   TEMPORARY will not suffice when generating multiple reduce visitors; must allow choosing monoid *)
+
+let monoid : Longident.t =
+  Lident "Monoid"
+
+let monoid_unit : expression =
+  eident (Ldot (monoid, "zero"))
+
+let monoid_law : expression =
+  eident (Ldot (monoid, "plus"))
+
+(* -------------------------------------------------------------------------- *)
+
+(* [reduce es] is used when [scheme] is [Reduce]. It reduces the expressions
+   [es], that is, it combines them, using a monoid, which provides a unit and
+   a binary operation. The reduction is performed left-to-right. This could
+   be of importance if the monoid is not associative-commutative. *)
+
+let reduce es =
+  fold_left1
+    (fun e1 e2 -> app monoid_law [e1; e2])
+    monoid_unit
+    es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -281,7 +309,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
      then it is treated as if it were a nonlocal type by the same name. *)
   | false,
     { ptyp_desc = Ptyp_var tv; _ } ->
-      if List.mem tv X.freeze then
+      if mem tv X.freeze then
         visit_type
           env_in_scope
           { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
@@ -313,6 +341,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           (choose
             (unit())
             (tuple (evars rs))
+            (reduce (evars rs))
           )
         )
 
@@ -406,6 +435,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
           (choose
             (unit())
             (constr datacon (build rs))
+            (reduce (evars rs))
           )
        )
     )
@@ -439,6 +469,7 @@ let visit_decl (decl : type_declaration) : expression =
           (choose
             (unit())
             (record (combine labels (evars rs)))
+            (reduce (evars rs))
           )
       )
 

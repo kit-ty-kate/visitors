@@ -84,7 +84,7 @@ let weed cmp xs =
 (* [fold_right1] is like [fold_right], but uses the last element of the list
    (if the list is nonempty) as the initial accumulator, saving one call to
    the binary operation [f]. This is equivalent to [fold_right] if [accu] is
-   a unit for [f]. *)
+   a right unit for [f]. *)
 
 let fold_right1 f xs accu =
   match List.rev xs with
@@ -96,3 +96,17 @@ let fold_right1 f xs accu =
          ignore [accu] and use [x] as the initial accumulator in our
          right-to-left sweep of the list. *)
       List.fold_right f xs x
+
+(* [fold_left1] is like [fold_left], but uses the first element of the list
+   (if the list is nonempty) as the initial accumulator, saving one call to
+   the binary operation [f]. This is equivalent to [fold_left] if [accu] is
+   a left unit for [f]. *)
+
+let fold_left1 f accu xs =
+  match xs with
+  | [] ->
+      accu
+  | x :: xs ->
+      (* We can ignore [accu] and use [x] as the initial accumulator in
+         our left-to-right sweep of the list. *)
+      List.fold_left f x xs
