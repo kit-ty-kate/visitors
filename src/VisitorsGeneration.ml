@@ -19,6 +19,22 @@ type tyvar = string
 
 (* -------------------------------------------------------------------------- *)
 
+(* [unit] produces a unit constant. [tuple] produces a tuple. [record]
+   produces a record. These functions already exist; we redefine them without
+   any optional arguments so as avoid OCaml's warning 48 (implicit elimination
+   of optional arguments). *)
+
+let unit() =
+  unit()
+
+let tuple es =
+  tuple es
+
+let record les =
+  record les
+
+(* -------------------------------------------------------------------------- *)
+
 (* [number i thing] constructs an English description of "[i] thing(s)". *)
 
 let number i s =
