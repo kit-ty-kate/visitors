@@ -156,6 +156,7 @@ end)
           scheme := s;
           arity := a
       | _ ->
+          (* TEMPORARY warn instead of failing, for better forward compatibility *)
           raise_errorf ~loc "%s: option %s is not supported." plugin o
     ) options
 
