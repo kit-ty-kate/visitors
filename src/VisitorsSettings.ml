@@ -99,9 +99,16 @@ let parse_variety loc (s : string) : scheme * int =
 
 (* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY should implement [is_valid_ocaml_class_name] properly *)
-let is_valid_ocaml_class_name (c : classe) : bool =
+(* TEMPORARY implement these properly *)
+let is_valid_class_name (c : classe) : bool =
   String.length c > 0 && String.uncapitalize_ascii c = c
+
+let is_valid_module_name (c : classe) : bool =
+  String.length c > 0 && String.capitalize_ascii c = c
+
+let is_valid_name final (c : classe) : bool =
+         final && is_valid_module_name c
+  || not final && is_valid_class_name c
 
 (* -------------------------------------------------------------------------- *)
 
@@ -185,9 +192,11 @@ end)
         "%s: please specify only ONE name for the generated class." plugin;
     match !names with
     | [ name ] ->
-        if not (is_valid_ocaml_class_name name) then
+        if not (is_valid_name final name) then
           raise_errorf ~loc
-            "%s: %s must be a valid class name." plugin name;
+            "%s: %s is not a valid %s name."
+            plugin name
+            (if final then "module" else "class");
         name
     | []
     | _ :: _ :: _ ->

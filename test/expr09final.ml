@@ -8,7 +8,7 @@ type 'info expr_node =
 
 and 'info expr =
   { info: 'info; node: 'info expr_node }
-  [@@deriving visitors { name = "map"; variety = "map"; freeze = ["info"]; final = true }]
+  [@@deriving visitors { name = "Map"; variety = "map"; freeze = ["info"]; final = true }]
 
 let map : int expr -> int expr =
   fun e -> Map.visit_expr () e
