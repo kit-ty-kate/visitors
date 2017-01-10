@@ -4,6 +4,7 @@ open Asttypes
 open Parsetree
 open Ast_helper
 open Ast_convenience
+open VisitorsList
 
 (* This module offers helper functions for code generation. *)
 
@@ -105,17 +106,6 @@ let app (e : expression) (es2 : expression list) : expression =
 (* -------------------------------------------------------------------------- *)
 
 (* [sequence es] constructs a sequence of the expressions in the list [es]. *)
-
-let fold_right1 f xs accu =
-  match List.rev xs with
-  | [] ->
-      accu
-  | x :: xs ->
-      let xs = List.rev xs in
-      (* We have decomposed [xs] as [xs] followed with [x]. We can now
-         ignore [accu] and use [x] as the initial accumulator in our
-         right-to-left sweep of the list. *)
-      List.fold_right f xs x
 
 let sequence (es : expression list) : expression =
   (* Using [fold_right1] instead of [List.fold_right] allows us to get

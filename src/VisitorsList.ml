@@ -80,3 +80,19 @@ let uniq cmp xs =
 
 let weed cmp xs =
   uniq cmp (List.sort cmp xs)
+
+(* [fold_right1] is like [fold_right], but uses the last element of the list
+   (if the list is nonempty) as the initial accumulator, saving one call to
+   the binary operation [f]. This is equivalent to [fold_right] if [accu] is
+   a unit for [f]. *)
+
+let fold_right1 f xs accu =
+  match List.rev xs with
+  | [] ->
+      accu
+  | x :: xs ->
+      let xs = List.rev xs in
+      (* We have decomposed [xs] as [xs] followed with [x]. We can now
+         ignore [accu] and use [x] as the initial accumulator in our
+         right-to-left sweep of the list. *)
+      List.fold_right f xs x
