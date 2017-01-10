@@ -53,3 +53,40 @@ let is_local (decls : type_declaration list) (tycon : Longident.t) : tyvar list 
   | Ldot _
   | Lapply _ ->
       None
+
+(* -------------------------------------------------------------------------- *)
+
+(* Testing whether an identifier is valid. *)
+
+(* We use OCaml's lexer to analyze the string and check if it is a valid
+   identifier. This method is slightly unorthodox, as the lexer can have
+   undesired side effects, such as raising an [Error] exception or printing
+   warnings. We do our best to hide these effects. The strength of this
+   approach is to give us (at little cost) a correct criterion for deciding if
+   an identifier is valid. *)
+
+type classification =
+  | LIDENT
+  | UIDENT
+  | OTHER
+
+let classify (s : string) : classification =
+  let lexbuf = Lexing.from_string s in
+  let backup = !Location.formatter_for_warnings in
+  let null = Format.formatter_of_buffer (Buffer.create 0) in
+  Location.formatter_for_warnings := null;
+  let result = try
+      let token1 = Lexer.token lexbuf in
+      let token2 = Lexer.token lexbuf in
+      match token1, token2 with
+      | Parser.LIDENT _, Parser.EOF ->
+         LIDENT
+      | Parser.UIDENT _, Parser.EOF ->
+         UIDENT
+      | _, _ ->
+         OTHER
+    with Lexer.Error _ ->
+      OTHER
+  in
+  Location.formatter_for_warnings := backup;
+  result

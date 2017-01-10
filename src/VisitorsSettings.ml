@@ -3,6 +3,7 @@ open List
 let sprintf = Printf.sprintf
 open Parsetree
 open Ppx_deriving
+open VisitorsAnalysis
 open VisitorsGeneration
 
 (* -------------------------------------------------------------------------- *)
@@ -103,19 +104,6 @@ let parse_variety loc (s : string) : scheme * int =
 
 (* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY implement these properly *)
-let is_valid_class_name (c : classe) : bool =
-  String.length c > 0 && String.uncapitalize_ascii c = c
-
-let is_valid_module_name (c : classe) : bool =
-  String.length c > 0 && String.capitalize_ascii c = c
-
-let is_valid_name final (c : classe) : bool =
-         final && is_valid_module_name c
-  || not final && is_valid_class_name c
-
-(* -------------------------------------------------------------------------- *)
-
 (* The option processing code constructs a module of type [SETTINGS]. *)
 
 module Parse (O : sig
@@ -200,7 +188,10 @@ end)
         "%s: please specify only ONE name for the generated class." plugin;
     match !names with
     | [ name ] ->
-        if not (is_valid_name final name) then
+       (* If [final] is true, we expect [name] to be a valid module name;
+          otherwise, we expect it to be a valid class name. *)
+       let expected = if final then UIDENT else LIDENT in
+       if classify name <> expected then
           raise_errorf ~loc
             "%s: %s is not a valid %s name."
             plugin name
