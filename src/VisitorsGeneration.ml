@@ -396,3 +396,34 @@ end = struct
     )
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* A facility for emitting preprocessor warnings. *)
+
+(* Warnings must be emitted under the form of [ppwarning] attributes, placed
+   in the generated code. This is not very convenient; we must store these
+   warnings, waiting for a convenient time to emit them. *)
+
+module WarningStore (X : sig end) : sig
+
+  (* [warning loc msg] emits a warning. *)
+  val warning: loc -> string -> unit
+
+  (* [warnings()] returns a list of all warnings emitted so far. *)
+  val warnings: unit -> structure
+
+end = struct
+
+  let warnings : attribute list ref =
+    ref []
+
+  let warning loc msg =
+    warnings := Ast_mapper.attribute_of_warning loc msg :: !warnings
+
+  let warnings () =
+    let ws = !warnings in
+    warnings := [];
+    List.map (fun a -> Str.attribute a) (List.rev ws)
+
+end

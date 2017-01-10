@@ -26,12 +26,16 @@ let choose e1 e2 e3 =
   | Map  -> e2
   | Reduce -> e3
 
-(* The following line brings [generate] and [dump] into scope. *)
+(* The following brings [generate] and [dump] into scope. *)
 
 include ClassFieldStore(struct end)
 
 let generate =
   generate X.name
+
+(* The following bring [warning] and [warnings] into scope. *)
+
+include WarningStore(struct end)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -543,6 +547,8 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
   (* TEMPORARY maybe clean up here, move the code below into [R]? *)
   (* Analyze the type definitions, and populate our classes with methods. *)
   iter type_decl decls;
+  (* Emit our preprocessor warnings (if any). *)
+  warnings() @
   (* In the generated code, disable certain warnings, so that the user sees
      no warnings, even if she explicitly enables them. We disable warnings
      26, 27 (unused variables) and 4 (fragile pattern matching; a feature
