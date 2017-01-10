@@ -1,4 +1,6 @@
-(* TEMPORARY document *)
+(* TEMPORARY document; change the name of this file, as it offers not just
+   the type [abstraction], but also ready-made traversal kits which deal
+   with free names and abstractions. *)
 
 type void
 
