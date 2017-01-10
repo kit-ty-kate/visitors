@@ -333,14 +333,14 @@ let send (o : variable) (m : methode) (es : expression list) : expression =
 (* -------------------------------------------------------------------------- *)
 
 (* A facility for generating several classes at the same time. We maintain,
-   for each generated class, a list of class fields. The call [generate c cf]
-   adds the class field [cf] to the list associated with [c]. The call [dump c]
-   returns the list of class fields associated with [c]. *)
+   for each generated class, a list of methods. The call [generate c meth]
+   adds the method [meth] to the list associated with [c]. The call [dump
+   params c self] returns a class definition for the class [c]. *)
 
 module ClassFieldStore (X : sig end) : sig
 
   val generate: classe -> meth -> unit
-  val dump: classe -> class_field list
+  val dump: (core_type * variance) list -> classe -> pattern -> structure_item
 
 end = struct
 
@@ -356,7 +356,7 @@ end = struct
   let generate c cf =
     store := StringMap.add c (cf :: get c) !store
 
-  let dump c =
+  let dump c : class_field list =
     let methods = List.rev (get c) in
     (* Move all of the virtual methods up front. If two virtual methods have
        the same name, keep only one of them. This is useful because we allow
@@ -367,5 +367,8 @@ end = struct
     let virtual_methods = VisitorsList.weed cmp virtual_methods in
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods
+
+  let dump params c self : structure_item =
+    class1 params c self (dump c)
 
 end

@@ -515,7 +515,7 @@ let type_decls ~options ~path:_ (decls : type_declaration list) : structure =
        module using [include struct ... end]. *)
     stropen P.path @
     (* Produce a class definition. *)
-    class1 [ ty_self, Invariant ] P.name pself (dump P.name) ::
+    dump [ ty_self, Invariant ] P.name pself ::
     floating "VISITORS.END" [] ::
     []
   )]
