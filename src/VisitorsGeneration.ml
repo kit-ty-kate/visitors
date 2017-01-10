@@ -296,17 +296,28 @@ let virtual_method m =
 
 (* -------------------------------------------------------------------------- *)
 
-(* Converting a method description to OCaml abstract syntax. *)
+(* Converting a method description to OCaml abstract syntax. We normally
+   produce OCaml classes, but also have an option to produce mutually
+   recursive functions. The latter option assumes that there are no virtual
+   methods and that any self-calls have been encoded as function calls. *)
 
 let oe2cfk (oe : expression option) : class_field_kind =
   match oe with
   | Some e ->
-     Cf.concrete Fresh e
+      Cf.concrete Fresh e
   | None ->
-     Cf.virtual_ (Typ.any())
+      Cf.virtual_ (Typ.any())
 
 let meth2cf (Meth (m, oe)) : class_field =
   Cf.method_ (mknoloc m) Public (oe2cfk oe)
+
+let meth2vb (Meth (m, oe)) : value_binding =
+  match oe with
+  | Some e ->
+      Vb.mk (pvar m) e
+  | None ->
+      (* We check ahead of time that there are no virtual methods. *)
+      assert false
 
 (* -------------------------------------------------------------------------- *)
 
@@ -332,15 +343,21 @@ let send (o : variable) (m : methode) (es : expression list) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* A facility for generating several classes at the same time. We maintain,
-   for each generated class, a list of methods. The call [generate c meth]
-   adds the method [meth] to the list associated with [c]. The call [dump
-   params c self] returns a class definition for the class [c]. *)
+(* A facility for generating one or more classes at the same time. *)
 
 module ClassFieldStore (X : sig end) : sig
 
+  (* We maintain, for each generated class, a list of methods.
+     [generate c meth] adds [meth] to the list associated with [c]. *)
   val generate: classe -> meth -> unit
+
+  (* [dump params c self] returns a class definition for the class [c]. *)
   val dump: (core_type * variance) list -> classe -> pattern -> structure_item
+
+  (* [nest c] returns a nest of mutually recursive functions, corresponding
+     to the methods of the class [c]. This requires that there be no virtual
+     methods and that any self calls be encoded as function calls. *)
+  val nest: classe -> structure_item
 
 end = struct
 
@@ -370,5 +387,12 @@ end = struct
 
   let dump params c self : structure_item =
     class1 params c self (dump c)
+
+  let nest c : value_binding list =
+    let methods = List.rev (get c) in
+    List.map meth2vb methods
+
+  let nest c : structure_item =
+    Str.value Recursive (nest c)
 
 end
