@@ -25,9 +25,7 @@ let choose e1 e2 =
   | Iter -> e1
   | Map  -> e2
 
-(* As we generate several classes at the same time, we maintain, for each
-   generated class, a list of methods that we generate as we go. The following
-   line brings [generate] and [dump] into scope. *)
+(* The following line brings [generate] and [dump] into scope. *)
 
 include ClassFieldStore(struct end)
 
