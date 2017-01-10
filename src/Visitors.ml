@@ -17,9 +17,6 @@ open VisitorsSettings
 
 module Run (X : SETTINGS) = struct
 
-let is_local =
-  is_local X.decls
-
 let arity =
   X.arity
 
@@ -241,7 +238,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
      [env]. *)
   | false,
     { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
-      begin match is_local tycon with
+      begin match is_local X.decls tycon with
       | Some formals ->
           (* [tycon] is a local type constructor, whose formal type parameters
              are [formals]. *)
