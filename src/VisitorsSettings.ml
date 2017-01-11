@@ -50,6 +50,9 @@ module type SETTINGS = sig
      the string provided by the user. *)
   val variety: string
 
+  (* The classes that the visitor should inherit. *)
+  val ancestors: Longident.t list
+
   (* If [final] is false, which is the default, we generate OCaml classes.
      If [final] is true, we generate nests of mutually recursive functions.
      This requires that there be no virtual methods. *)
@@ -113,6 +116,11 @@ let must_be_valid_mod_longident loc m =
     raise_errorf ~loc
       "%s: %s is not a valid module identifier." plugin m
 
+let must_be_valid_class_longident loc c =
+  if not (is_valid_class_longident c) then
+    raise_errorf ~loc
+      "%s: %s is not a valid class identifier." plugin c
+
 (* -------------------------------------------------------------------------- *)
 
 (* The option processing code constructs a module of type [SETTINGS]. *)
@@ -135,6 +143,7 @@ end)
   (* Default values. *)
 
   let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
+  let ancestors = ref []
   let final = ref false
   let freeze = ref []
   let irregular = ref false
@@ -150,6 +159,8 @@ end)
     iter (fun (o, e) ->
       let loc = e.pexp_loc in
       match o with
+      | "ancestors" ->
+           ancestors := strings e
       | "final" ->
            final := bool e
       | "freeze" ->
@@ -180,6 +191,7 @@ end)
   (* Export the results. *)
 
   let decls = decls
+  let ancestors = !ancestors
   let arity = !arity
   let final = !final
   let freeze = !freeze
@@ -226,7 +238,7 @@ end)
     | Some variety ->
         variety
 
-  (* Check that every string in the list [path] is a valid (long) module
+  (* Every string in the list [path] must be a valid (long) module
      identifier. *)
   let () =
     iter (must_be_valid_mod_longident loc) path
@@ -235,6 +247,14 @@ end)
      user-specified modules. *)
   let path =
     map Longident.parse ("VisitorsRuntime" :: path)
+
+  (* Every string in the list [ancestors] must be a valid (long) class
+     identifier. *)
+  let () =
+    iter (must_be_valid_class_longident loc) ancestors
+
+  let ancestors =
+    map Longident.parse ancestors
 
   (* The parameter [monoid] must be supplied if and only if [scheme] is
      [Reduce]. Also, if supplied, it must be a valid module name. *)
