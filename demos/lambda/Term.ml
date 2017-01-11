@@ -5,6 +5,7 @@ type ('fn, 'bn) term =
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
   [@@deriving
+    visitors { name = "Show"; variety = "map"; path = ["Show"]; freeze = ["bn"; "fn"]; final = true },
     visitors { name = "size"; variety = "reduce"; path = ["Size"]; freeze = ["bn"; "fn"]; monoid = "Monoid.Sum" },
     visitors { name = "Atom2Unit"; variety = "iter"; path = ["Atom2Unit"]; freeze = ["bn"; "fn"]; final = true },
     visitors { name = "Atom2DeBruijn"; variety = "map"; path = ["Atom2DeBruijn"]; freeze = ["bn"; "fn"]; final = true },

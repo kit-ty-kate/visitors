@@ -33,6 +33,23 @@ module Size : sig
 
 end
 
+module Show : sig
+
+  type env = unit
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (Atom.t, 'term1) abstraction -> (string, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> string
+  end
+
+end
+
 module String2Atom : sig
 
   type env

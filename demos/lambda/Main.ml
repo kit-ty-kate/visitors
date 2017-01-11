@@ -14,27 +14,20 @@ let idy =
   TApp (identity, y)
 
 let print_fa t =
+  (* This uses the debugging term printer, not the hygienic term printer. *)
+  (* Similarly, it uses the debugging printer for sets of atoms. *)
   printf "fa(%a) = %a\n%!"
-    Print.term (atom2string t)
+    Print.term (show t)
     Atom.Set.print (fa t)
 
 let () =
-  print_fa identity
-(* TEMPORARY these fail because the terms are not closed:
-let () =
-  print_fa y
-let () =
-  print_fa idy
- *)
+  List.iter print_fa [ y; identity; idy ]
 
 let print_size t =
+  (* This uses the debugging term printer, not the hygienic term printer. *)
   printf "size(%a) = %d\n%!"
-    Print.term (atom2string t)
+    Print.term (show t)
     (size t)
 
 let () =
-  print_size identity
-(* TEMPORARY these fail because the terms are not closed:
-let () =
-  print_size idy
- *)
+  List.iter print_size [ y; identity; idy ]

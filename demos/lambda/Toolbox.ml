@@ -7,6 +7,9 @@ let size (t : (_, _) Term.term) : int =
   end in
   o # visit_term () t
 
+let show (t : Term.nominal_term) : Term.raw_term =
+  Term.Show.visit_term () t
+
 let fa (t : Term.nominal_term) : Atom.Set.t =
   let accu = ref Atom.Set.empty in
   Term.Atom2Unit.visit_term (Abstraction.Atom2Unit.empty accu) t;

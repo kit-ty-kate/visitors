@@ -58,6 +58,27 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* Conversion of (bound and free) atoms to strings, using [Atom.show], for
+   debugging purposes. *)
+
+module Show = struct
+
+  type env = unit
+
+  module Abstraction = struct
+    let map _ f env (x, body) =
+      Atom.show x, f env body
+  end
+
+  module Fn = struct
+    let map _env x =
+      Atom.show x
+  end
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* During a conversion of strings to atoms, the environment maps strings to
    atoms. *)
 
