@@ -16,26 +16,6 @@ module Bn : sig
   val reduce2: void -> void -> void -> 'a
 end
 
-module Invisible : sig
-  module Abstraction : sig
-    val iter: _ ->
-      ('env -> 'term -> unit) ->
-      'env -> ('bn, 'term) abstraction -> unit
-    val map: _ ->
-      ('env -> 'term1 -> 'term2) ->
-      'env -> ('bn, 'term1) abstraction -> ('bn, 'term2) abstraction
-    val reduce: _ ->
-      ('env -> 'term -> 'a) ->
-      'env -> ('bn, 'term) abstraction -> 'a
-    val iter2: _ ->
-      ('env -> 'term1 -> 'term2 -> unit) ->
-      'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> unit
-    val reduce2: _ ->
-      ('env -> 'term1 -> 'term2 -> 'a) ->
-      'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> 'a
-  end
-end
-
 module Size : sig
 
   type env = unit

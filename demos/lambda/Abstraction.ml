@@ -36,27 +36,6 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* Sometimes (possibly even oftentimes), traversing an abstraction involves
-   just traversing its body, ignoring the presence of an abstraction. These
-   traversal functions, which consider the abstraction invisible, are defined
-   here, and can be re-used in several places. They are polymorphic in the
-   type of the environment and in the type of the bound name. *)
-
-module Invisible = struct
-  module Abstraction = struct
-    let iter _ f env (_, body) =
-      f env body
-    let map _ f env (x, body) =
-      x, f env body
-    let reduce = iter
-    let iter2 _ f env (_, body1) (_, body2) =
-      f env body1 body2
-    (* [map2] cannot be defined, because we do not know how to combine the
-       two bound atoms [x1] and [x2]. *)
-    let reduce2 = iter2
-  end
-end
-
 module Generic : sig
 
   val iter:
