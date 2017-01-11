@@ -1,4 +1,10 @@
+# Editing:
 *~
+
+# Compilation:
 *.native
 _build
+*.processed.ml
+
+# MacOS:
 .DS_Store
