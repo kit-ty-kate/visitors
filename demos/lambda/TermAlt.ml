@@ -2,7 +2,7 @@ type void
 
 module BnKit = struct
   class ['self] iter = object (self : 'self)
-    method visit_'bn _env _x : void = assert false
+    method visit_'bn (_env : void) (_x : void) : void = assert false
   end
 end
 
@@ -18,28 +18,32 @@ module AbstractionKit = struct
   end
 end
 
+module Foo = struct
+  type env = Atom.Set.t * Atom.Set.t ref
+  class ['self] kit = object
+    method extend x (env, accu : env) =
+      let env = Atom.Set.add x env in
+      env, accu
+    method visit_'fn (env, accu : env) x =
+      if not (Atom.Set.mem x env) then
+          accu := Atom.Set.add x !accu
+  end
+end
+
+open Abstraction
+
 type ('fn, 'bn) term =
   | TVar of 'fn
-  | TLambda of 'bn * ('fn, 'bn) term
+  | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
 
   [@@deriving
 
-    visitors { name = "iter_"; variety = "iter"; ancestors = ["BnKit.iter"; "AbstractionKit.iter"] }
+    visitors { name = "iter"; variety = "iter"; ancestors = ["BnKit.iter"; "AbstractionKit.iter"] }
 
   ]
 
-class virtual ['self] iter = object (self : 'self)
-  inherit [_] iter_
-  method! visit_TLambda env x t =
-    self#visit_abstraction self#visit_'bn self#visit_term env (x, t)
-end
-
 class atom2unit = object
   inherit [_] iter
-  (* TEMPORARY the methods below should form a kit *)
-  method visit_'fn env x =
-    Abstraction.Atom2Unit.Fn.iter env x
-  method extend x env =
-    Abstraction.Atom2Unit.extend x env
+  inherit [_] Foo.kit
 end
