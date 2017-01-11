@@ -16,14 +16,14 @@ all:
 	@ echo 'Re-installing visitors...'
 	@ make -C $(SRC) reinstall >/dev/null 2>/dev/null
 	@ echo 'Compiling...'
-	@ $(OCAMLBUILD) $(TARGET)
+	@ $(OCAMLBUILD) $(TARGET) TermAlt.inferred.mli
 
 test: all
 	@ ./$(TARGET)
 
 include $(SRC)/Makefile.preprocess
 
-processed: Term.processed.ml
+processed: Term.processed.ml TermAlt.processed.ml
 
 clean:
 	@ rm -f *~

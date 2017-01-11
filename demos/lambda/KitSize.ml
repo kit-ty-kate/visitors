@@ -16,3 +16,9 @@ let restrict _x n = n
 module Fn = struct
   let reduce () _x = 0
 end
+
+class ['self] kit = object (_ : 'self)
+  method extend _x () = ()
+  method restrict _x n = n
+  method visit_'fn () _x = 0
+end

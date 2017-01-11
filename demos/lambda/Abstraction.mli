@@ -95,6 +95,7 @@ module Atom2Unit : sig
   type env
 
   val empty: Atom.Set.t ref -> env
+  val extend: Atom.t -> env -> env
 
   module Abstraction : sig
     val iter :

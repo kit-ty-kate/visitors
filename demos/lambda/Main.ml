@@ -114,3 +114,5 @@ let print_wf t =
 
 let () =
   evaluate print_wf
+
+open TermAlt (* TEMPORARY *)
