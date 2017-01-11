@@ -247,10 +247,11 @@ let with_warnings (w : string) (items : structure_item list) : structure_item =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [class1 params name self fields] builds a class declaration and packages it
-   as a structure item. (This implies that it cannot be recursive with other
-   class declarations). The class is declared virtual if and only if at least
-   one virtual method explicitly appears as part of the list [fields]. *)
+(* [class1 ancestors params name self fields] builds a class declaration and
+   packages it as a structure item. (This implies that it cannot be recursive
+   with other class declarations). The class is declared virtual if and only
+   if at least one virtual method explicitly appears as part of the list
+   [fields]. *)
 
 let is_virtual_method (field : class_field) : bool =
   match field.pcf_desc with
@@ -282,8 +283,8 @@ let class1
 (* [inherit_ c tys] builds an [inherit] clause, where the superclass is [c]
    and its actual type parameters are [tys]. No [super] identifier is bound. *)
 
-let inherit_ (c : classe) (tys : core_type list) : class_field =
-  Cf.inherit_ Fresh (Cl.constr (mknoloc (Lident c)) tys) None
+let inherit_ (c : Longident.t) (tys : core_type list) : class_field =
+  Cf.inherit_ Fresh (Cl.constr (mknoloc c) tys) None
 
 (* -------------------------------------------------------------------------- *)
 
@@ -360,8 +361,14 @@ module ClassFieldStore (X : sig end) : sig
      [generate c meth] adds [meth] to the list associated with [c]. *)
   val generate: classe -> meth -> unit
 
-  (* [dump params self c] returns a class definition for the class [c]. *)
-  val dump: (core_type * variance) list -> pattern -> classe -> structure_item
+  (* [dump ancestors params self c] returns a class definition for the
+     class [c]. *)
+  val dump:
+    Longident.t list ->
+    (core_type * variance) list ->
+    pattern ->
+    classe ->
+    structure_item
 
   (* [nest c] returns a nest of mutually recursive functions, corresponding
      to the methods of the class [c]. This requires that there be no virtual
@@ -396,8 +403,13 @@ end = struct
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods
 
-  let dump params self c : structure_item =
-    class1 params c self (dump c)
+  let dump ancestors params self c : structure_item =
+    class1 params c self (
+      (* [inherit] clauses. *) (* TEMPORARY should allow type parameters *)
+      List.map (fun c -> inherit_ c []) ancestors @
+      (* Methods. *)
+      dump c
+    )
 
   let nest c : value_binding list =
     let methods = List.rev (get c) in
