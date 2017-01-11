@@ -39,8 +39,10 @@ clean:
 install: all
 	ocamlfind install $(PACKAGE) META $(patsubst %,_build/%,$(TARGET))
 
+# [make uninstall] attempts to uninstall, but succeeds even if uninstallation
+# fails (probably because the package was not installed in the first place).
 uninstall:
-	ocamlfind remove $(PACKAGE)
+	ocamlfind remove $(PACKAGE) || true
 
 reinstall: uninstall
 	@ $(MAKE) install
