@@ -10,7 +10,7 @@ OCAMLBUILD := \
 SRC := \
   ../../src
 
-.PHONY: all clean test
+.PHONY: all test processed clean
 
 all:
 	@ echo 'Re-installing visitors...'
@@ -21,6 +21,11 @@ all:
 test: all
 	@ ./$(TARGET)
 
+include $(SRC)/Makefile.preprocess
+
+processed: Term.processed.ml
+
 clean:
 	@ rm -f *~
+	@ rm -f *.processed.ml
 	@ $(OCAMLBUILD) -clean
