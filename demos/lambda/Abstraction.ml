@@ -36,18 +36,38 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* Sometimes (possibly even oftentimes), traversing an abstraction involves
+   just traversing its body, ignoring the presence of an abstraction. These
+   traversal functions, which consider the abstraction invisible, are defined
+   here, and can be re-used in several places. They are polymorphic in the
+   type of the environment and in the type of the bound name. *)
+
+module Invisible = struct
+  module Abstraction = struct
+    let iter _ f env (_, body) =
+      f env body
+    let map _ f env (x, body) =
+      x, f env body
+    let reduce = iter
+    let iter2 _ f env (_, body1) (_, body2) =
+      f env body1 body2
+    (* [map2] cannot be defined, because we do not know how to combine the
+       two bound atoms [x1] and [x2]. *)
+    let reduce2 = iter2
+  end
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* A size computation. *)
 
 module Size = struct
 
   type env = unit
 
-  module Abstraction = struct
-    let reduce _ f env (_x, body) =
-      (* An abstraction per se contributes 0 to the size. Only the number of
-         nodes is usually counted. *)
-      f env body
-  end
+  (* An abstraction per se contributes 0 to the size. Only the number of
+     nodes is usually counted. *)
+  module Abstraction = Invisible.Abstraction
 
   module Fn = struct
     (* A name per se contributes 0 to the size, for the same reason. *)
@@ -296,14 +316,15 @@ module Atom2Atom = struct
 
 end
 
+(* TEMPORARY 1. do we need this function at all?
+             2. could we abandon the runtime check and use [Invisible]? *)
+
 (* -------------------------------------------------------------------------- *)
 
 (* Substitution of things (say, terms) for free atoms. *)
 
 (* TEMPORARY note that the environment would be unused if we removed the
-   dynamic check. Then, the type of [env] and the type of [x] would be
-   arbitrary -- this is just a normal traversal. Define it once and for
-   all and share it wherever possible. *)
+   dynamic check. Then, we could use [Invisible]. *)
 
 module Atom2Something = struct
 
