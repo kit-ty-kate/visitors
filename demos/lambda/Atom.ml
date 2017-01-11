@@ -49,10 +49,15 @@ let identity a =
 let hint a =
   a.hint
 
-(* This printing function should be used for debugging purposes only. *)
+(* These printing functions should be used for debugging purposes only. One
+   must understand, here, that only the identity of the atom matters, and
+   the hint is just an indication of where and why this atom was created. *)
 
-let print a =
-  Printf.sprintf "%s%d" a.hint a.identity
+let show a =
+  Printf.sprintf "%s/%d" a.hint a.identity
+
+let print oc a =
+  output_string oc (show a)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -98,22 +103,28 @@ let hash a =
 
 (* -------------------------------------------------------------------------- *)
 
-(* A printing utility. *)
+(* A scratch buffer for printing. *)
 
-let separated_iter_to_string printer separator iter xs =
-  let b = Buffer.create 32 in
+let scratch =
+  Buffer.create 1024
+
+(* [print_separated_sequence] prints a sequence of elements into the [scratch]
+   buffer. The sequence is given by the higher-order iterator [iter], applied
+   to the collection [xs]. The separator is the string [sep]. Each element is
+   transformed to a string by the function [show]. *)
+
+let print_separated_sequence show sep iter xs : unit =
   let first = ref true in
   iter (fun x ->
     if !first then begin
-      Buffer.add_string b (printer x);
+      Buffer.add_string scratch (show x);
       first := false
     end
     else begin
-      Buffer.add_string b separator;
-      Buffer.add_string b (printer x)
+      Buffer.add_string scratch sep;
+      Buffer.add_string scratch (show x)
     end
-  ) xs;
-  Buffer.contents b
+  ) xs
 
 (* -------------------------------------------------------------------------- *)
 
@@ -128,14 +139,24 @@ module Set = struct
 
   include Set.Make(Order)
 
-  (* This printing function should be used for debugging purposes only. *)
+  (* These printing functions should be used for debugging purposes only. *)
 
-  let print xs =
-    separated_iter_to_string
-      print
-      ", "
-      iter
-      xs
+  let print_to_scratch xs =
+    Buffer.clear scratch;
+    Buffer.add_string scratch "{";
+    print_separated_sequence show ", " iter xs;
+    Buffer.add_string scratch "}"
+
+  let show xs =
+    print_to_scratch xs;
+    let result = Buffer.contents scratch in
+    Buffer.reset scratch;
+    result
+
+  let print oc xs =
+    print_to_scratch xs;
+    Buffer.output_buffer oc scratch;
+    Buffer.reset scratch
 
 end
 

@@ -9,7 +9,8 @@ type t =
 
 val identity: atom -> int
 val hint: atom -> string
-val print: atom -> string
+val show: atom -> string
+val print: out_channel -> atom -> unit
 
 (* Producing fresh atoms. *)
 
@@ -26,7 +27,8 @@ val hash: atom -> int
 
 module Set : sig
   include Set.S with type elt = atom
-  val print: t -> string
+  val show: t -> string
+  val print: out_channel -> t -> unit
 end
 
 (* Maps. *)
