@@ -2,21 +2,18 @@
 
 (* Atoms. *)
 
-type identifier =
-    string
-
 type atom
 
 type t =
     atom
 
 val identity: atom -> int
-val hint: atom -> identifier
+val hint: atom -> string
 val print: atom -> string
 
 (* Producing fresh atoms. *)
 
-val freshh: identifier -> atom
+val freshh: string -> atom
 val fresha: atom -> atom
 
 (* Comparison of atoms. *)

@@ -1,21 +1,47 @@
 (* -------------------------------------------------------------------------- *)
 
-(* An atom is implemented as a pair of an integer, the atom's identity, and a
-   string, which serves as a printing hint. We maintain the invariant that a
-   hint is nonempty and does not end in a digit. This allows us to later
-   produce unique identifiers, without risk of collisions, by concatenating a
-   hint and a unique number. *)
+(* We impose maximal sharing on strings so as to reduce the total amount of
+   space that they occupy. This is done using a weak hash set. *)
 
-type identifier =
-    string
+module StringStorage =
+  Weak.Make(struct
+    type t = string
+    let equal (s1 : string) (s2 : string) = (s1 = s2)
+    let hash = Hashtbl.hash
+  end)
 
-type atom = {
-    identity: int;
-        hint: identifier
-  }
+let share : string -> string =
+  StringStorage.merge (StringStorage.create 128)
 
-type t =
-    atom
+(* -------------------------------------------------------------------------- *)
+
+(* Removing any trailing digits in a string. *)
+
+let is_digit c =
+  Char.code '0' <= Char.code c && Char.code c <= Char.code '9'
+
+let remove_trailing_digits (s : string) : string =
+  let n = ref (String.length s) in
+  while !n > 0 && is_digit s.[!n-1] do n := !n-1 done;
+  (* We assume that there is at least one non-digit character in the string. *)
+  assert (!n > 0);
+  String.sub s 0 !n
+
+(* -------------------------------------------------------------------------- *)
+
+(* An atom is implemented as a pair of an integer identity and a string that
+   serves as a printing hint. *)
+
+(* We maintain the invariant that a hint is nonempty and does not end in a
+   digit. This allows us to later produce unique identifiers, without risk of
+   collisions, by concatenating a hint and a unique number. *)
+
+(* To preserve space, hints are maximally shared. This is not essential for
+   correctness, though. *)
+
+type atom = { identity: int; hint: string }
+
+type t = atom
 
 let identity a =
   a.identity
@@ -43,16 +69,12 @@ let allocate () =
 
 (* [freshh hint] produces a fresh atom. *)
 
-let rec freshh hint =
-  let n = String.length hint in
-  (* The argument [hint] must not be a string of digits. *)
-  assert (n > 0);
-  let c = hint.[n-1] in
-  if Char.code '0' <= Char.code c && Char.code c <= Char.code '9' then
-    (* There is a trailing digit. Remove it. *)
-    freshh (String.sub hint 0 (n-1))
-  else
-    { identity = allocate(); hint }
+(* The argument [hint] must not be a string of digits. *)
+
+let freshh hint =
+  let identity = allocate()
+  and hint = share (remove_trailing_digits hint) in
+  { identity; hint }
 
 (* [fresha a] returns a fresh atom modeled after the atom [a]. *)
 
