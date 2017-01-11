@@ -405,8 +405,10 @@ end = struct
 
   let dump ancestors params self c : structure_item =
     class1 params c self (
-      (* [inherit] clauses. *) (* TEMPORARY should allow type parameters *)
-      List.map (fun c -> inherit_ c []) ancestors @
+      (* [inherit] clauses. *)
+      (* We ARBITRARILY assume that every ancestor class is parameterized
+         with ONE type parameter. *)
+      List.map (fun c -> inherit_ c [ Typ.any() ]) ancestors @
       (* Methods. *)
       dump c
     )
