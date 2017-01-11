@@ -51,10 +51,10 @@ module Print = struct
   and term2 t =
     match t with
     | TLambda (x, t) ->
-        backslash ^^
-        string x ^^
-        dot ^/^
-        term2 t
+        block
+          (backslash ^^ string x ^^ dot)
+          (term2 t)
+          empty
     | _ ->
         term1 t
 
