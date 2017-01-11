@@ -54,6 +54,11 @@ module Generic : sig
     ('env -> 'term -> 'a) ->
     'env -> ('bn, 'term) abstraction -> 'a
 
+  val iter2:
+    ('bn1 -> 'bn2 -> 'env -> 'env) ->
+    ('env -> 'term1 -> 'term2 -> unit) ->
+    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> unit
+
 end = struct
 
   let iter extend f env (x, body) =
@@ -67,6 +72,10 @@ end = struct
   let reduce extend restrict f env (x, body) =
     let env' = extend x env in
     restrict x (f env' body)
+
+  let iter2 extend f env (x1, body1) (x2, body2) =
+    let env' = extend x1 x2 env in
+    f env' body1 body2
 
 end
 
@@ -452,12 +461,14 @@ module Equiv = struct
     assert (not (Atom.Map.mem x m));
     Atom.Map.add x n m
 
+  let extend x1 x2 (m1, m2, n) =
+    let m1 = extend m1 n x1
+    and m2 = extend m2 n x2
+    and n = n + 1 in
+    m1, m2, n
+
   module Abstraction = struct
-    let iter2 _ f (m1, m2, n) (x1, body1) (x2, body2) =
-      let m1 = extend m1 n x1
-      and m2 = extend m2 n x2
-      and n = n + 1 in
-      f (m1, m2, n) body1 body2
+    let iter2 _ = Generic.iter2 extend
   end
 
   module Fn = struct
