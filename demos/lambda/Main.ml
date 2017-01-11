@@ -90,3 +90,19 @@ let () =
   print_substitute1 (TVar y) x (TVar y);
   print_substitute1 delta x delta_body;
   ()
+
+let print_equiv t1 t2 =
+  printf "equiv: %a ~ %a = %b\n%!"
+    nhprint t1
+    nhprint t2
+    (equiv t1 t2)
+
+let () =
+  print_equiv id id;
+  print_equiv id (TVar x);
+  print_equiv (TVar x) (TVar y);
+  print_equiv delta (copy delta);
+  print_equiv omega (copy omega);
+  print_equiv (TLambda (x, TVar x)) (TLambda (y, TVar y));
+  print_equiv (TLambda (x, TVar x)) (TLambda (y, TVar x));
+  ()

@@ -70,3 +70,10 @@ let substitute1 u x t =
    either a static affinity hypothesis (each variable in the
    domain of [sigma] occurs at most once in [t]) or a dynamic
    occurrence counting mechanism. *)
+
+let equiv (t1 : Term.nominal_term) (t2 : Term.nominal_term) : bool =
+  try
+    Term.Equiv.visit_term Abstraction.Equiv.empty t1 t2;
+    true
+  with VisitorsRuntime.StructuralMismatch ->
+    false

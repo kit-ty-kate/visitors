@@ -45,7 +45,11 @@ type ('fn, 'bn) term =
 
     visitors { name = "atom2Something";
                variety = "map"; path = ["Atom2Something"];
-               freeze = ["bn"; "fn"]; final = false }
+               freeze = ["bn"; "fn"]; final = false },
+
+    visitors { name = "Equiv";
+               variety = "iter2"; path = ["Equiv"];
+               freeze = ["bn"; "fn"]; final = true }
 
   ]
 

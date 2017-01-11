@@ -1,5 +1,4 @@
 Operations on terms:
-  alpha-equivalence test (nominal)
   test x \in fv(t) (nominal)
   simultaneous opening? (nominal)
   efficient printing (conversion from nominal back to raw) with pre-computation of fa
@@ -11,6 +10,9 @@ Operations on each kind of environment:
 
 Add printers for Atom.Map, Atom.Subst,
 and possibly the various kinds of environments that we use.
+
+Document the precondition and postcondition of every function
+  in terms of ownership of atoms.
 
 ------------------------------------------------------------------------------
 
