@@ -84,22 +84,10 @@ end
 (* A size computation. *)
 
 module Size = struct
-
-  type env = unit
-
-  (* An abstraction per se contributes 0 to the size. Only the number of
-     nodes is usually counted. *)
-  let extend _x env = env
-  let restrict _x n = n
+  include KitSize
   module Abstraction = struct
     let reduce _ = Generic.reduce extend restrict
   end
-
-  module Fn = struct
-    (* A name per se contributes 0 to the size, for the same reason. *)
-    let reduce _env _x = 0
-  end
-
 end
 
 (* -------------------------------------------------------------------------- *)
