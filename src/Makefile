@@ -42,5 +42,5 @@ install: all
 uninstall:
 	ocamlfind remove $(PACKAGE)
 
-reinstall: uninstall clean
+reinstall: uninstall
 	@ $(MAKE) install
