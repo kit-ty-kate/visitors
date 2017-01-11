@@ -145,6 +145,24 @@ module Atom2Atom : sig
 
 end
 
+module Atom2Something : sig
+
+  type 'term env =
+    'term Atom.Map.t
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      ('term env -> 'term -> 'term) ->
+      'term env -> (Atom.t, 'term) abstraction -> (Atom.t, 'term) abstraction
+  end
+
+  module Fn : sig
+    val map: 'term env -> Atom.t -> Atom.t
+  end
+
+end
+
 module Copy : sig
 
   type env

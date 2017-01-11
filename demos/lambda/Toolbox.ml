@@ -32,3 +32,32 @@ let subst (sigma : Atom.subst) (t : Term.nominal_term) : Term.nominal_term =
 
 let copy (t : Term.nominal_term) : Term.nominal_term =
   Term.Copy.visit_term Abstraction.Copy.empty t
+
+type substitution =
+  Term.nominal_term Atom.Map.t
+
+let substitute (sigma : substitution) (t : Term.nominal_term) =
+  let v = object
+    inherit [_] Term.atom2Something
+    method! visit_TVar _sigma x =
+      (* This [sigma] is in fact the same as the [sigma] we started with,
+         since the substitution is not modified in any way when a binder
+         is entered. *)
+      assert (sigma == _sigma);
+      match Atom.Map.find x sigma with
+      | u ->
+          (* Do not forget to copy the term that is being grafted, so as
+             to maintain the GUH. *)
+          copy u
+      | exception Not_found ->
+          (* [x] lies outside the domain of [sigma]. *)
+          Term.TVar x
+  end in
+  v # visit_term sigma t
+
+let substitute1 u x t =
+  substitute (Atom.Map.singleton x u) t
+
+(* In [substitute], the precondition is [sigma * t]
+   and the postcondition is [sigma * \result].
+   The caller loses the permission to use [t]. *)

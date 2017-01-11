@@ -278,6 +278,37 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* Substitution of things (say, terms) for free atoms. *)
+
+module Atom2Something = struct
+
+  type 'term env =
+    'term Atom.Map.t
+
+  module Abstraction = struct
+    let map _ f (sigma : _ env) (x, body) =
+      (* We would like to check that [x] is fresh for [sigma], but can only
+         perform the domain check. The codomain check cannot be performed
+         since the type of things is abstract here. *)
+      assert (not (Atom.Map.mem x sigma));
+      (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
+         freshening of the bound name is required. Thus, we can keep the
+         substitution [sigma], unchanged, under the binder. *)
+      x, f sigma body
+  end
+
+  module Fn = struct
+    let map _sigma _x =
+      (* We cannot deal with the case where [x] is outside the domain of
+         [sigma]. Really, this function should not be called; instead,
+         the user should override the [visitor] method for variable nodes. *)
+      assert false
+  end
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* Copy, that is, substitution of fresh atoms for bound atoms. *)
 
 module Copy = struct

@@ -12,7 +12,8 @@ type ('fn, 'bn) term =
     visitors { name = "String2Atom"; variety = "map"; path = ["String2Atom"]; freeze = ["bn"; "fn"]; final = true },
     visitors { name = "Atom2String"; variety = "map"; path = ["Atom2String"]; freeze = ["bn"; "fn"]; final = true },
     visitors { name = "Atom2Atom"; variety = "map"; path = ["Atom2Atom"]; freeze = ["bn"; "fn"]; final = true },
-    visitors { name = "Copy"; variety = "map"; path = ["Copy"]; freeze = ["bn"; "fn"]; final = true }
+    visitors { name = "Copy"; variety = "map"; path = ["Copy"]; freeze = ["bn"; "fn"]; final = true },
+    visitors { name = "atom2Something"; variety = "map"; path = ["Atom2Something"]; freeze = ["bn"; "fn"] }
   ]
 
 type raw_term =

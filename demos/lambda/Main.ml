@@ -13,8 +13,11 @@ let y =
 let id =
   TLambda (x, TVar x)
 
+let delta_body =
+  TApp (TVar x, TVar x)
+
 let delta =
-  TLambda (x, TApp (TVar x, TVar x))
+  TLambda (x, delta_body)
 
 let omega =
   TApp (delta, copy delta)
@@ -64,3 +67,16 @@ let print_copy t =
 
 let () =
   evaluate print_copy
+
+let print_substitute1 u x t =
+  printf "substituting %a for %a in %a = ...\n  %a\n%!"
+    nhprint u
+    Atom.print x
+    nhprint t
+    nhprint (substitute1 u x t)
+
+let () =
+  print_substitute1 (TVar y) x (TVar x);
+  print_substitute1 (TVar y) x (TVar y);
+  print_substitute1 delta x delta_body;
+  ()
