@@ -8,3 +8,6 @@ simultaneous opening? (nominal)
 efficient printing (conversion from nominal back to raw) with pre-computation of fa
 well-formedness checking (just traversing the term and checking for global uniqueness)
 -- test for global uniqueness everywhere an environment is extended
+
+Add printers for Atom.Map, Atom.Subst,
+and possibly the various kinds of environments that we use.
