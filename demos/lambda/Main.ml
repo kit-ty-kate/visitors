@@ -13,14 +13,28 @@ let y =
 let idy =
   TApp (identity, y)
 
+let print_fa t =
+  printf "fa(%a) = %a\n%!"
+    Print.term (atom2string t)
+    Atom.Set.print (fa t)
+
 let () =
-  printf "fa(%a):" Print.term (atom2string identity);
-  print_endline (Atom.Set.print (fa identity));
-  print_endline "fa(y):";
-  print_endline (Atom.Set.print (fa y));
-  print_endline "fa((\\x.x) y):";
-  print_endline (Atom.Set.print (fa idy));
-  print_endline "size(\\x.x):";
-  printf  "%d\n" (size identity);
-  print_endline "size((\\x.x) y):";
-  printf  "%d\n" (size idy)
+  print_fa identity
+(* TEMPORARY these fail because the terms are not closed:
+let () =
+  print_fa y
+let () =
+  print_fa idy
+ *)
+
+let print_size t =
+  printf "size(%a) = %d\n%!"
+    Print.term (atom2string t)
+    (size t)
+
+let () =
+  print_size identity
+(* TEMPORARY these fail because the terms are not closed:
+let () =
+  print_size idy
+ *)
