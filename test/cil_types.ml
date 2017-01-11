@@ -1,12 +1,16 @@
 (* Support for the type [Integer.t]. *)
+(* Support for the type [Lexing.position]. *)
 module Integer = struct
   type t = int
-  include VisitorsRuntime.Inert
 end
-(* Support for the type [Lexing.position]. *)
-module Lexing = struct
-  include Lexing
-  module Position = VisitorsRuntime.Inert
+
+module Support = struct
+  class ['self] iter = object
+    method visit_integer_t: 'env . 'env -> Integer.t -> unit
+    = fun _env _i -> ()
+    method visit_lexing_position: 'env . 'env -> Lexing.position -> unit
+    = fun _env _p -> ()
+  end
 end
 
 (****************************************************************************)
@@ -1713,10 +1717,12 @@ and custom_tree = CustomDummy
   | CustomLexpr of lexpr
   | CustomOther of string * (custom_tree list)
 *)
-[@@deriving visitors { name="iter"; variety="iter"; irregular = true },
-            visitors { name="map"; variety="map"; irregular = true },
-            visitors { name="iter2"; variety="iter2"; irregular = true },
-            visitors { name="map2"; variety="map2"; irregular = true }
+[@@deriving visitors { name = "iter"; variety = "iter"; ancestors = ["Support.iter"]; irregular = true }
+(* TEMPORARY
+            visitors { name = "map"; variety = "map"; irregular = true },
+            visitors { name = "iter2"; variety = "iter2"; irregular = true },
+            visitors { name = "map2"; variety = "map2"; irregular = true }
+ *)
 ]
 
 type kinstr =
