@@ -170,8 +170,8 @@ module Atom2Something : sig
   module Abstraction : sig
     val map:
       _ ->
-      ('term env -> 'term -> 'term) ->
-      'term env -> (Atom.t, 'term) abstraction -> (Atom.t, 'term) abstraction
+      ('term env -> 'term1 -> 'term2) ->
+      'term env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
   end
 
   module Fn : sig
