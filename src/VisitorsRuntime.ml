@@ -1,7 +1,15 @@
+(* -------------------------------------------------------------------------- *)
+
+(* An exception used at arity 2 and above. *)
+
 exception StructuralMismatch
 
 let fail () =
   raise StructuralMismatch
+
+(* -------------------------------------------------------------------------- *)
+
+(* Module-based packaging. *)
 
 module Inert = struct
 
