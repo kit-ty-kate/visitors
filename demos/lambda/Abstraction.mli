@@ -198,3 +198,23 @@ module Copy : sig
   end
 
 end
+
+module Equiv : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val iter2:
+      _ ->
+      (env -> 'term -> 'term -> unit) ->
+      env -> (Atom.t, 'term) abstraction -> (Atom.t, 'term) abstraction -> unit
+  end
+
+  module Fn : sig
+    val iter2:
+      env -> Atom.t -> Atom.t -> unit
+  end
+
+end

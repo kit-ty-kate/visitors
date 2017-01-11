@@ -361,3 +361,63 @@ module Copy = struct
   end
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Alpha-equivalence test. *)
+
+module Equiv = struct
+
+  (* The environment contains two maps of atoms to de Bruijn levels, as well
+     as the current de Bruijn level. The equivalence test can in fact be
+     viewed as two independent conversions to a locally-nameless
+     representation, followed with a syntactic comparison of the two terms
+     thus obtained. *)
+
+  type m =
+    int Atom.Map.t
+
+  type env =
+    m * m * int
+
+  let empty =
+    Atom.Map.empty, Atom.Map.empty, 0
+
+  type status =
+    | Local of int (* a de Bruijn level *)
+    | Free         (* a free name *)
+
+  let lookup (m : m) (x : Atom.t) : status =
+    try
+      (* A local name. *)
+      Local (Atom.Map.find x m)
+    with Not_found ->
+      Free
+
+  let extend (m : m) (n : int) (x : Atom.t) : m =
+    assert (not (Atom.Map.mem x m));
+    Atom.Map.add x n m
+
+  module Abstraction = struct
+    let iter2 _ f (m1, m2, n) (x1, body1) (x2, body2) =
+      let m1 = extend m1 n x1
+      and m2 = extend m2 n x2
+      and n = n + 1 in
+      f (m1, m2, n) body1 body2
+  end
+
+  module Fn = struct
+    let iter2 (m1, m2, _) x1 x2 =
+      match lookup m1 x1, lookup m2 x2 with
+      | Local i1, Local i2 ->
+          if i1 <> i2 then
+            VisitorsRuntime.fail()
+      | Free, Free ->
+          if not (Atom.equal x1 x2) then
+            VisitorsRuntime.fail()
+      | Local _, Free
+      | Free, Local _ ->
+          VisitorsRuntime.fail()
+  end
+
+end
