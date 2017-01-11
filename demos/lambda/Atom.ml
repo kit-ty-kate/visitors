@@ -139,6 +139,9 @@ module Set = struct
 
   include Set.Make(Order)
 
+  let zero = empty
+  let plus = union
+
   (* These printing functions should be used for debugging purposes only. *)
 
   let print_to_scratch xs =

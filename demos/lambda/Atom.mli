@@ -27,6 +27,8 @@ val hash: atom -> int
 
 module Set : sig
   include Set.S with type elt = atom
+  val zero: t
+  val plus: t -> t -> t
   val show: t -> string
   val print: out_channel -> t -> unit
 end
