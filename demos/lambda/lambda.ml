@@ -27,6 +27,45 @@ type nominal_term =
 type db_term =
   (int, unit) Term.term
 
+module Print = struct
+
+  open PPrint
+  open PPrintAux
+  open Term
+
+  let rec term0 t =
+    match t with
+    | TVar x ->
+        string x
+    | TLambda _
+    | TApp (_, _) ->
+        parens (term t)
+
+  and term1 t =
+    match t with
+    | TApp (t1, t2) ->
+        app (term1 t1) (term0 t2)
+    | _ ->
+        term0 t
+
+  and term2 t =
+    match t with
+    | TLambda (x, t) ->
+        backslash ^^
+        string x ^^
+        dot ^/^
+        term2 t
+    | _ ->
+        term1 t
+
+  and term t =
+    term2 t
+
+  let term (oc : out_channel) (t : raw_term) : unit =
+    output oc (term t)
+
+end
+
 let size (t : (_, _) Term.term) : int =
   let o = object
     inherit [_] Term.size as super
@@ -40,6 +79,9 @@ let fa (t : nominal_term) : Atom.Set.t =
   let accu = ref Atom.Set.empty in
   Term.Atom2Unit.visit_term (Abstraction.Atom2Unit.empty accu) t;
   !accu
+
+(* TEMPORARY some of the following functions are restricted to closed
+   terms, and should not be *)
 
 let atom2debruijn (t : nominal_term) : db_term =
   Term.Atom2DeBruijn.visit_term Abstraction.Atom2DeBruijn.empty t
@@ -72,7 +114,7 @@ let idy =
 open Printf
 
 let () =
-  print_endline "fa(\\x.x):";
+  printf "fa(%a):" Print.term (atom2string identity);
   print_endline (Atom.Set.print (fa identity));
   print_endline "fa(y):";
   print_endline (Atom.Set.print (fa y));
