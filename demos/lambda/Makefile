@@ -1,5 +1,5 @@
 TARGET := \
-  lambda.native
+  Main.native
 
 OCAMLBUILD := \
   ocamlbuild \
@@ -10,12 +10,15 @@ OCAMLBUILD := \
 SRC := \
   ../../src
 
-.PHONY: all clean
+.PHONY: all clean test
 
 all:
-	@ make -C $(SRC) uninstall || true
-	@ make -C $(SRC) install
+	@ echo 'Re-installing visitors...'
+	@ make -C $(SRC) reinstall >/dev/null 2>/dev/null
+	@ echo 'Compiling...'
 	@ $(OCAMLBUILD) $(TARGET)
+
+test: all
 	@ ./$(TARGET)
 
 clean:
