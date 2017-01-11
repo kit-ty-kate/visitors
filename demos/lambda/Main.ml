@@ -50,6 +50,16 @@ let print_fa t =
 let () =
   evaluate print_fa
 
+let print_fa' t =
+  (* This uses the debugging term printer, not the hygienic term printer. *)
+  (* Similarly, it uses the debugging printer for sets of atoms. *)
+  printf "fa'(%a) = %a\n%!"
+    nhprint t
+    Atom.Set.print (fa' t)
+
+let () =
+  evaluate print_fa'
+
 let print_size t =
   (* This uses the debugging term printer, not the hygienic term printer. *)
   printf "size(%a) = %d\n%!"

@@ -109,6 +109,23 @@ module Atom2Unit : sig
 
 end
 
+module Fa : sig
+
+  type env = unit
+
+  module Abstraction : sig
+    val reduce:
+      _ ->
+      (env -> 'term -> Atom.Set.t) ->
+      env -> (Atom.t, 'term) abstraction -> Atom.Set.t
+  end
+
+  module Fn : sig
+    val reduce: env -> Atom.t -> Atom.Set.t
+  end
+
+end
+
 module Atom2DeBruijn : sig
 
   type env

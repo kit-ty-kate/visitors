@@ -1,13 +1,20 @@
-capture-avoiding substitution with freshening (nominal w/o GUH)
-substitution of terms for variables (must copy term when grafting)
-linear substitution of term for variable (w/o copying; check linearity at runtime?)
-alpha-equivalence test (nominal)
-test x \in fv(t) (nominal)
-entering a binder (and testing for global uniqueness)
-simultaneous opening? (nominal)
-efficient printing (conversion from nominal back to raw) with pre-computation of fa
-well-formedness checking (just traversing the term and checking for global uniqueness)
--- test for global uniqueness everywhere an environment is extended
+Operations on terms:
+  alpha-equivalence test (nominal)
+  test x \in fv(t) (nominal)
+  simultaneous opening? (nominal)
+  efficient printing (conversion from nominal back to raw) with pre-computation of fa
+  well-formedness checking (just traversing the term and checking for global uniqueness)
+  -- test for global uniqueness everywhere an environment is extended
+
+Operations on each kind of environment:
+  Entering a binder (and testing for global uniqueness).
 
 Add printers for Atom.Map, Atom.Subst,
 and possibly the various kinds of environments that we use.
+
+------------------------------------------------------------------------------
+
+TODO (POSSIBLY):
+
+Operations in nominal style, without the GUH.
+  Capture-avoiding substitution with freshening of bound names.

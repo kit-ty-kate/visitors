@@ -202,6 +202,26 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* Free atom computation, viewed as a reduction. *)
+
+module Fa = struct
+
+  type env = unit
+
+  module Abstraction = struct
+    let reduce _ f env (x, body) =
+      Atom.Set.remove x (f env body)
+  end
+
+  module Fn = struct
+    let reduce _env x =
+      Atom.Set.singleton x
+  end
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* During a conversion of nominal style to de Bruijn style, the environment is
    a pair of a map [m] of atoms to de Bruijn levels and a current de Bruijn
    level [n]. *)

@@ -15,6 +15,9 @@ let fa (t : Term.nominal_term) : Atom.Set.t =
   Term.Atom2Unit.visit_term (Abstraction.Atom2Unit.empty accu) t;
   !accu
 
+let fa' (t : Term.nominal_term) : Atom.Set.t =
+  Term.Fa.visit_term () t
+
 (* TEMPORARY some of the following functions are restricted to closed
    terms, and should not be *)
 
@@ -61,3 +64,9 @@ let substitute1 u x t =
 (* In [substitute], the precondition is [sigma * t]
    and the postcondition is [sigma * \result].
    The caller loses the permission to use [t]. *)
+(* One could design other variants, e.g. one where the caller
+   loses [sigma], so copying is not needed when a variable [x]
+   is encountered for the first time. In that case, we need
+   either a static affinity hypothesis (each variable in the
+   domain of [sigma] occurs at most once in [t]) or a dynamic
+   occurrence counting mechanism. *)
