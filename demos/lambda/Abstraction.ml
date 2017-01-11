@@ -57,6 +57,40 @@ module Invisible = struct
   end
 end
 
+module Generic : sig
+
+  val iter:
+    ('bn -> 'env -> 'env) ->
+    ('env -> 'term -> unit) ->
+    'env -> ('bn, 'term) abstraction -> unit
+
+  val map:
+    ('bn1 -> 'env -> 'bn2 * 'env) ->
+    ('env -> 'term1 -> 'term2) ->
+    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction
+
+  val reduce:
+    ('bn -> 'env -> 'env) ->
+    ('bn -> 'a -> 'a) ->
+    ('env -> 'term -> 'a) ->
+    'env -> ('bn, 'term) abstraction -> 'a
+
+end = struct
+
+  let iter extend f env (x, body) =
+    let env' = extend x env in
+    f env' body
+
+  let map extend f env (x, body) =
+    let x', env' = extend x env in
+    x', f env' body
+
+  let reduce extend restrict f env (x, body) =
+    let env' = extend x env in
+    restrict x (f env' body)
+
+end
+
 (* -------------------------------------------------------------------------- *)
 
 (* A size computation. *)
@@ -67,7 +101,11 @@ module Size = struct
 
   (* An abstraction per se contributes 0 to the size. Only the number of
      nodes is usually counted. *)
-  module Abstraction = Invisible.Abstraction
+  let extend _x env = env
+  let restrict _x n = n
+  module Abstraction = struct
+    let reduce _ = Generic.reduce extend restrict
+  end
 
   module Fn = struct
     (* A name per se contributes 0 to the size, for the same reason. *)
@@ -85,9 +123,10 @@ module Show = struct
 
   type env = unit
 
+  let extend x env = Atom.show x, env
+
   module Abstraction = struct
-    let map _ f env (x, body) =
-      Atom.show x, f env body
+    let map _ = Generic.map extend
   end
 
   module Fn = struct
@@ -112,11 +151,13 @@ module String2Atom = struct
   let empty =
     StringMap.empty
 
+  let extend s env =
+    let a = Atom.freshh s in
+    let env = StringMap.add s a env in
+    a, env
+
   module Abstraction = struct
-    let map _ f (env : env) (s, body) =
-      let a = Atom.freshh s in
-      let env = StringMap.add s a env in
-      a, f env body
+    let map _ = Generic.map extend
   end
 
   exception Unbound of string
@@ -159,23 +200,25 @@ module Atom2String = struct
     with Not_found ->
       0
 
+  let extend x env =
+    (* Under the GUH, the atom [x] cannot appear in the domain of [env]. *)
+    assert (not (Atom.Map.mem x env.graph));
+    (* We must pick a suitable string to stand for the atom [x]. We must
+       pick a string that does not appear in the image through [env] of
+       the free atoms of [body]. However, at this point, we do not have
+       access to the free atoms of [body], so we must pick a string [s]
+       that does not appear in the codomain of [env]. *)
+    let hint = Atom.hint x in
+    let i = next env hint in
+    let s = Printf.sprintf "%s%d" hint i in
+    let env = {
+      graph = Atom.Map.add x s env.graph;
+      codomain = StringMap.add hint (i+1) env.codomain;
+    } in
+    s, env
+
   module Abstraction = struct
-    let map _ f env (x, body) =
-      (* Under the GUH, the atom [x] cannot appear in the domain of [env]. *)
-      assert (not (Atom.Map.mem x env.graph));
-      (* We must pick a suitable string to stand for the atom [x]. We must
-         pick a string that does not appear in the image through [env] of
-         the free atoms of [body]. However, at this point, we do not have
-         access to the free atoms of [body], so we must pick a string [s]
-         that does not appear in the codomain of [env]. *)
-      let hint = Atom.hint x in
-      let i = next env hint in
-      let s = Printf.sprintf "%s%d" hint i in
-      let env = {
-        graph = Atom.Map.add x s env.graph;
-        codomain = StringMap.add hint (i+1) env.codomain;
-      } in
-      s, f env body
+    let map _ = Generic.map extend
   end
 
   module Fn = struct
@@ -206,10 +249,12 @@ module Atom2Unit = struct
   let empty accu =
     Atom.Set.empty, accu
 
+  let extend x (env, accu) =
+    let env = Atom.Set.add x env in
+    env, accu
+
   module Abstraction = struct
-    let iter _ f (env, accu) (x, body) =
-      let env = Atom.Set.add x env in
-      f (env, accu) body
+    let iter _ = Generic.iter extend
   end
 
   module Fn = struct
@@ -228,9 +273,11 @@ module Fa = struct
 
   type env = unit
 
+  let extend _x env = env
+  let restrict = Atom.Set.remove
+
   module Abstraction = struct
-    let reduce _ f env (x, body) =
-      Atom.Set.remove x (f env body)
+    let reduce _ = Generic.reduce extend restrict
   end
 
   module Fn = struct
@@ -253,16 +300,17 @@ module Atom2DeBruijn = struct
   let empty =
     (Atom.Map.empty, 0)
 
+  let extend x (m, n : env) =
+    (* Increment the current de Bruijn level [n]. *)
+    let n = n + 1 in
+    (* Record a mapping of the name [x] to the de Bruijn level [n],
+       so if [x] was looked up right now, it would receive level [n],
+       therefore index [0]. *)
+    let m = Atom.Map.add x n m in
+    (), (m, n)
+
   module Abstraction = struct
-    let map _ f (m, n : env) (x, body) =
-      (* Increment the current de Bruijn level [n]. *)
-      let n = n + 1 in
-      (* Record a mapping of the name [x] to the de Bruijn level [n],
-         so if [x] was looked up right now, it would receive level [n],
-         therefore index [0]. *)
-      let m = Atom.Map.add x n m in
-      (* Traverse the body in the extended environment [m, n]. *)
-      (), f (m, n) body
+    let map _ = Generic.map extend
   end
 
   module Fn = struct
@@ -291,23 +339,25 @@ module Atom2Atom = struct
 
   type env = Atom.subst
 
+  let extend x sigma =
+    (* Under the global uniqueness assumption, the atom [x] cannot appear
+       in the domain or codomain of the substitution [sigma]. We check at
+       runtime that this is the case. *)
+    assert (Atom.Subst.is_fresh_for x sigma);
+    (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
+       freshening of the bound name is required. Thus, we can keep the
+       substitution [sigma], unchanged, under the binder. *)
+    (* One might wish to extend [sigma] with a mapping of [x] to [x], so
+       that [x] is not fresh for the extended [sigma], so that crossing
+       another binding occurrence of [x] causes the above assertion to fail.
+       That said, in principle, the global uniqueness assumption guarantees
+       that we cannot encounter another binding occurrence of [x]. So, it
+       seems preferable not to pay. The well-formedness of terms can be
+       checked independently. *)
+    x, sigma
+
   module Abstraction = struct
-    let map _ f sigma (x, body) =
-      (* Under the global uniqueness assumption, the atom [x] cannot appear
-         in the domain or codomain of the substitution [sigma]. We check at
-         runtime that this is the case. *)
-      assert (Atom.Subst.is_fresh_for x sigma);
-      (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
-         freshening of the bound name is required. Thus, we can keep the
-         substitution [sigma], unchanged, under the binder. *)
-      (* One might wish to extend [sigma] with a mapping of [x] to [x], so
-         that [x] is not fresh for the extended [sigma], so that crossing
-         another binding occurrence of [x] causes the above assertion to fail.
-         That said, in principle, the global uniqueness assumption guarantees
-         that we cannot encounter another binding occurrence of [x]. So, it
-         seems preferable not to pay. The well-formedness of terms can be
-         checked independently. *)
-      x, f sigma body
+    let map _ = Generic.map extend
   end
 
   module Fn = struct
@@ -331,16 +381,18 @@ module Atom2Something = struct
   type 'term env =
     'term Atom.Map.t
 
+  let extend x sigma =
+    (* We would like to check that [x] is fresh for [sigma], but can only
+       perform the domain check. The codomain check cannot be performed
+       since the type of things is abstract here. *)
+    assert (not (Atom.Map.mem x sigma));
+    (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
+       freshening of the bound name is required. Thus, we can keep the
+       substitution [sigma], unchanged, under the binder. *)
+    x, sigma
+
   module Abstraction = struct
-    let map _ f (sigma : _ env) (x, body) =
-      (* We would like to check that [x] is fresh for [sigma], but can only
-         perform the domain check. The codomain check cannot be performed
-         since the type of things is abstract here. *)
-      assert (not (Atom.Map.mem x sigma));
-      (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
-         freshening of the bound name is required. Thus, we can keep the
-         substitution [sigma], unchanged, under the binder. *)
-      x, f sigma body
+    let map _ = Generic.map extend
   end
 
   module Fn = struct
@@ -364,17 +416,19 @@ module Copy = struct
   let empty =
     Atom.Subst.id
 
+  let extend x sigma =
+    (* Under the global uniqueness assumption, the atom [x] cannot appear
+       in the domain or codomain of the substitution [sigma]. We check at
+       runtime that this is the case. *)
+    assert (Atom.Subst.is_fresh_for x sigma);
+    (* Generate a fresh copy of [x]. *)
+    let x' = Atom.fresha x in
+    (* Extend [sigma] when descending in the body. *)
+    let sigma = Atom.Subst.extend sigma x x' in
+    x', sigma
+
   module Abstraction = struct
-    let map _ f sigma (x, body) =
-      (* Under the global uniqueness assumption, the atom [x] cannot appear
-         in the domain or codomain of the substitution [sigma]. We check at
-         runtime that this is the case. *)
-      assert (Atom.Subst.is_fresh_for x sigma);
-      (* Generate a fresh copy of [x]. *)
-      let x' = Atom.fresha x in
-      (* Extend [sigma] when descending in the body. *)
-      let sigma = Atom.Subst.extend sigma x x' in
-      x', f sigma body
+    let map _ = Generic.map extend
   end
 
   module Fn = struct
@@ -454,14 +508,15 @@ module Wf = struct
   let empty =
     Atom.Set.empty
 
+  let extend x env =
+    (* Check the GUH. *)
+    if Atom.Set.mem x env then
+      VisitorsRuntime.fail();
+    (* Enrich the environment. *)
+    Atom.Set.add x env
+
   module Abstraction = struct
-    let iter _ f env (x, body) =
-      (* Check the GUH. *)
-      if Atom.Set.mem x env then
-        VisitorsRuntime.fail();
-      (* Enrich the environment and check the body. *)
-      let env = Atom.Set.add x env in
-      f env body
+    let iter _ = Generic.iter extend
   end
 
   module Fn = struct
