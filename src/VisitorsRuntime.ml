@@ -184,3 +184,65 @@ end
 module String = Inert
 
 module Unit = Inert
+
+(* -------------------------------------------------------------------------- *)
+
+(* Class-based packaging. *)
+
+class ['self] iter = object
+
+  method visit_array: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a array -> unit
+  = Array.iter
+
+  method visit_bool: 'env .
+    'env -> bool -> unit
+  = Bool.iter
+
+  method visit_char: 'env .
+    'env -> char -> unit
+  = Char.iter
+
+  method visit_float: 'env .
+    'env -> float -> unit
+  = Float.iter
+
+  method visit_int: 'env .
+    'env -> int -> unit
+  = Int.iter
+
+  method visit_int32: 'env .
+    'env -> int32 -> unit
+  = Int32.iter
+
+  method visit_int64: 'env .
+    'env -> int64 -> unit
+  = Int64.iter
+
+  method visit_list: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a list -> unit
+  = List.iter
+
+  method visit_option: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a option -> unit
+  = Option.iter
+
+  method visit_ref: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a ref -> unit
+  = Ref.iter
+
+  method visit_result: 'env 'a 'e.
+    ('env -> 'a -> unit) ->
+    ('env -> 'e -> unit) ->
+     'env -> ('a, 'e) result -> unit
+  = Result.iter
+
+  method visit_string: 'env .
+    'env -> string -> unit
+  = String.iter
+
+  method visit_unit: 'env .
+    'env -> unit -> unit
+  = Unit.iter
+
+end

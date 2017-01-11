@@ -107,3 +107,52 @@ module Unit : sig
   val iter2: 'env -> unit -> unit -> unit
   val map2:  'env -> unit -> unit -> unit
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Class-based packaging. *)
+
+class ['self] iter : object
+
+  method visit_array: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a array -> unit
+
+  method visit_bool: 'env .
+    'env -> bool -> unit
+
+  method visit_char: 'env .
+    'env -> char -> unit
+
+  method visit_float: 'env .
+    'env -> float -> unit
+
+  method visit_int: 'env .
+    'env -> int -> unit
+
+  method visit_int32: 'env .
+    'env -> int32 -> unit
+
+  method visit_int64: 'env .
+    'env -> int64 -> unit
+
+  method visit_list: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a list -> unit
+
+  method visit_option: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a option -> unit
+
+  method visit_ref: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a ref -> unit
+
+  method visit_result: 'env 'a 'e.
+    ('env -> 'a -> unit) ->
+    ('env -> 'e -> unit) ->
+     'env -> ('a, 'e) result -> unit
+
+  method visit_string: 'env .
+    'env -> string -> unit
+
+  method visit_unit: 'env .
+    'env -> unit -> unit
+
+end
