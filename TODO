@@ -3,13 +3,10 @@
 TODO (REALLY)
 
 Re-think the treatment of nonlocal types.
-  Implement [inherit] option.
   Add [virtual] option to force [virtual] status, which cannot be guessed.
-  Disallow [final] as soon as [ancestors] is nonempty?
-  Issue method calls (without generating a virtual method) for nonlocal types.
-  Therefore, nonlocal types must be handled by an inherited class.
-  No need for [path] anymore. (Could still be convenient?)
-  [VisitorsRuntime] must offer a class that is inherited by default.
+  Disallow [final] as soon as [ancestors] is nonempty? (It is always!) Remove [final] altogether?
+  No need for [path] anymore. (Could still be convenient, though?)
+  Implement all necessary classes in [VisitorsRuntime].
   Maybe remove [freeze]?
 
 Develop a real test suite, with expected output.
