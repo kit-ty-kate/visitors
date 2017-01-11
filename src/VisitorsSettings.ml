@@ -253,8 +253,10 @@ end)
   let () =
     iter (must_be_valid_class_longident loc) ancestors
 
+  (* When the variety is [iter], the class [VisitorsRuntime.iter] is an
+     implicit ancestor, and similarly for every variety. *)
   let ancestors =
-    map Longident.parse ancestors
+    map Longident.parse (("VisitorsRuntime." ^ variety) :: ancestors)
 
   (* The parameter [monoid] must be supplied if and only if [scheme] is
      [Reduce]. Also, if supplied, it must be a valid module name. *)
