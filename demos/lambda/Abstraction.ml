@@ -300,6 +300,11 @@ end
 
 (* Substitution of things (say, terms) for free atoms. *)
 
+(* TEMPORARY note that the environment would be unused if we removed the
+   dynamic check. Then, the type of [env] and the type of [x] would be
+   arbitrary -- this is just a normal traversal. Define it once and for
+   all and share it wherever possible. *)
+
 module Atom2Something = struct
 
   type 'term env =
