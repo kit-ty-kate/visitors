@@ -49,6 +49,10 @@ type ('fn, 'bn) term =
 
     visitors { name = "Equiv";
                variety = "iter2"; path = ["Equiv"];
+               freeze = ["bn"; "fn"]; final = true },
+
+    visitors { name = "Wf";
+               variety = "iter"; path = ["Wf"];
                freeze = ["bn"; "fn"]; final = true }
 
   ]

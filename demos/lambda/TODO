@@ -1,8 +1,8 @@
 Operations on terms:
   test x \in fv(t) (nominal)
+  test closed(t)
   simultaneous opening? (nominal)
   efficient printing (conversion from nominal back to raw) with pre-computation of fa
-  well-formedness checking (just traversing the term and checking for global uniqueness)
   -- test for global uniqueness everywhere an environment is extended
 
 Operations on each kind of environment:
@@ -13,6 +13,8 @@ and possibly the various kinds of environments that we use.
 
 Document the precondition and postcondition of every function
   in terms of ownership of atoms.
+
+Deal with more complex forms of binding.
 
 ------------------------------------------------------------------------------
 

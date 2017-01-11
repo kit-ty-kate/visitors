@@ -77,3 +77,10 @@ let equiv (t1 : Term.nominal_term) (t2 : Term.nominal_term) : bool =
     true
   with VisitorsRuntime.StructuralMismatch ->
     false
+
+let wf (t : Term.nominal_term) : bool =
+  try
+    Term.Wf.visit_term Abstraction.Wf.empty t;
+    true
+  with VisitorsRuntime.StructuralMismatch ->
+    false

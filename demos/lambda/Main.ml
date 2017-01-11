@@ -106,3 +106,11 @@ let () =
   print_equiv (TLambda (x, TVar x)) (TLambda (y, TVar y));
   print_equiv (TLambda (x, TVar x)) (TLambda (y, TVar x));
   ()
+
+let print_wf t =
+  printf "wf(%a) = %b\n%!"
+    nhprint t
+    (wf t)
+
+let () =
+  evaluate print_wf

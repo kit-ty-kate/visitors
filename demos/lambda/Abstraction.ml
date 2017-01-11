@@ -421,3 +421,34 @@ module Equiv = struct
   end
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Well-formedness checking. *)
+
+module Wf = struct
+
+  type env = Atom.Set.t
+
+  let empty =
+    Atom.Set.empty
+
+  module Abstraction = struct
+    let iter _ f env (x, body) =
+      (* Check the GUH. *)
+      if Atom.Set.mem x env then
+        VisitorsRuntime.fail();
+      (* Enrich the environment and check the body. *)
+      let env = Atom.Set.add x env in
+      f env body
+  end
+
+  module Fn = struct
+    let iter env x =
+      (* Check that every atom is known. *)
+      if not (Atom.Set.mem x env) then
+        VisitorsRuntime.fail()
+  end
+
+end
+(* TEMPORARY could construct error messages *)

@@ -218,3 +218,22 @@ module Equiv : sig
   end
 
 end
+
+module Wf : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val iter:
+      _ ->
+      (env -> 'term -> unit) ->
+      env -> (Atom.t, 'term) abstraction -> unit
+  end
+
+  module Fn : sig
+    val iter: env -> Atom.t -> unit
+  end
+
+end
