@@ -104,5 +104,21 @@ let classify (s : string) : classification =
 
 let is_valid_mod_longident (m : string) : bool =
   String.length m > 0 &&
-  let pieces = Longident.flatten (Longident.parse m) in
-  List.for_all (fun piece -> classify piece = UIDENT) pieces
+  let ms = Longident.flatten (Longident.parse m) in
+  List.for_all (fun m -> classify m = UIDENT) ms
+
+(* -------------------------------------------------------------------------- *)
+
+(* Testing if a string is a valid [class_longident], i.e., a possibly-qualified
+   class identifier. *)
+
+let is_valid_class_longident (m : string) : bool =
+  String.length m > 0 &&
+  match Longident.parse m with
+  | Lident c ->
+      classify c = LIDENT
+  | Ldot (m, c) ->
+      List.for_all (fun m -> classify m = UIDENT) (Longident.flatten m) &&
+      classify c = LIDENT
+  | Lapply _ ->
+      assert false (* this cannot happen *)
