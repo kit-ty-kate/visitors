@@ -75,6 +75,14 @@ end
 let import : KitImport.env -> raw_term -> nominal_term =
   new import # visit_term
 
+class ['self] export = object (_ : 'self)
+  inherit [_] map
+  inherit [_] KitExport.map
+end
+
+let export : KitExport.env -> nominal_term -> raw_term =
+  new export # visit_term
+
 class atom2unit = object
   inherit [_] iter
   inherit [_] Foo.kit

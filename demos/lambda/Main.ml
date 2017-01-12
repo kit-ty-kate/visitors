@@ -33,6 +33,14 @@ let samples = [
     import KitImport.empty (TLambda ("z", TLambda ("z", TVar "z")));
   ]
 
+let closed_samples = [
+    id;
+    TApp (id, copy id);
+    delta;
+    omega;
+    import KitImport.empty (TLambda ("z", TLambda ("z", TVar "z")));
+  ]
+
 let evaluate f =
   List.iter f samples
 
@@ -42,8 +50,13 @@ let evaluate f =
 let nhprint oc t =
   Print.term oc (show t)
 
+(* A hygienic term printer. This printer uses [export]. *)
+
+let hprint oc t =
+  (* works for closed terms only, as of now *)
+  Print.term oc (export KitExport.empty t)
+
 let print_size t =
-  (* This uses the debugging term printer, not the hygienic term printer. *)
   printf "size(%a) = %d\n%!"
     nhprint t
     (size t)
@@ -52,13 +65,20 @@ let () =
   evaluate print_size
 
 let print_copy t =
-  (* This uses the debugging term printer, not the hygienic term printer. *)
   printf "copy(%a) = %a\n%!"
     nhprint t
     nhprint (copy t)
 
 let () =
   evaluate print_copy
+
+let print_export t =
+  printf "export(%a) = %a\n%!"
+    nhprint t
+    hprint t
+
+let () =
+  List.iter print_export closed_samples
 
 (* TEMPORARY
 let print_fa t =
