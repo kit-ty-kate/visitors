@@ -4,7 +4,6 @@ TODO (REALLY)
 
 Re-think the treatment of nonlocal types.
   Add [virtual] option to force [virtual] status, which cannot be guessed.
-  No need for [path] anymore. (Could still be convenient, though?)
   Maybe remove [freeze]?
 
 Use private methods in some (hand-written) classes,
