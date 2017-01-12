@@ -29,6 +29,10 @@ type ('fn, 'bn) term =
     visitors { name = "show"; variety = "map";
                ancestors = ["Bn.map"; "Abstraction.map"; "KitShow.map"];
                concrete = true }
+    ,
+    visitors { name = "copy"; variety = "map";
+               ancestors = ["Bn.map"; "Abstraction.map"; "KitCopy.map"];
+               concrete = true }
 
   ]
 
@@ -53,6 +57,9 @@ let size : 'fn 'bn . ('fn, 'bn) term -> int =
 
 let show : nominal_term -> raw_term =
   new show # visit_term ()
+
+let copy : nominal_term -> nominal_term =
+  new copy # visit_term KitCopy.empty
 
 class atom2unit = object
   inherit [_] iter

@@ -399,38 +399,6 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* Copy, that is, substitution of fresh atoms for bound atoms. *)
-
-module Copy = struct
-
-  type env = Atom.subst
-
-  let empty =
-    Atom.Subst.id
-
-  let extend x sigma =
-    (* Under the global uniqueness assumption, the atom [x] cannot appear
-       in the domain or codomain of the substitution [sigma]. We check at
-       runtime that this is the case. *)
-    assert (Atom.Subst.is_fresh_for x sigma);
-    (* Generate a fresh copy of [x]. *)
-    let x' = Atom.fresha x in
-    (* Extend [sigma] when descending in the body. *)
-    let sigma = Atom.Subst.extend sigma x x' in
-    x', sigma
-
-  module Abstraction = struct
-    let map _ = Generic.map extend
-  end
-
-  module Fn = struct
-    let map = Atom.Subst.apply
-  end
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* Alpha-equivalence test. *)
 
 module Equiv = struct
@@ -651,25 +619,6 @@ module Atom2Something : sig
 
   module Fn : sig
     val map: 'term env -> Atom.t -> Atom.t
-  end
-
-end
-
-module Copy : sig
-
-  type env
-
-  val empty: env
-
-  module Abstraction : sig
-    val map:
-      _ ->
-      (env -> 'term1 -> 'term2) ->
-      env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
-  end
-
-  module Fn : sig
-    val map: env -> Atom.t -> Atom.t
   end
 
 end

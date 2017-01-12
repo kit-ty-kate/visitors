@@ -19,18 +19,16 @@ let delta_body =
 let delta =
   TLambda (x, delta_body)
 
-(*
 let omega =
   TApp (delta, copy delta)
- *)
 
 let samples = [
     TVar y;
     id;
     TApp (id, TVar y);
-    (* TApp (id, copy id); *)
+    TApp (id, copy id);
     delta;
-    (* omega; *)
+    omega;
   ]
 
 let evaluate f =
@@ -50,6 +48,15 @@ let print_size t =
 
 let () =
   evaluate print_size
+
+let print_copy t =
+  (* This uses the debugging term printer, not the hygienic term printer. *)
+  printf "copy(%a) = %a\n%!"
+    nhprint t
+    nhprint (copy t)
+
+let () =
+  evaluate print_copy
 
 (* TEMPORARY
 let print_fa t =
@@ -71,15 +78,6 @@ let print_fa' t =
 
 let () =
   evaluate print_fa'
-
-let print_copy t =
-  (* This uses the debugging term printer, not the hygienic term printer. *)
-  printf "copy(%a) = %a\n%!"
-    nhprint t
-    nhprint (copy t)
-
-let () =
-  evaluate print_copy
 
 let print_substitute1 u x t =
   printf "substituting %a for %a in %a = ...\n  %a\n%!"
