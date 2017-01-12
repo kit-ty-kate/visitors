@@ -2,6 +2,15 @@ exception StructuralMismatch
 
 val fail: unit -> 'a
 
+(* -------------------------------------------------------------------------- *)
+
+(* A virtual base class for monoids. *)
+
+class virtual ['z] monoid : object
+  method private virtual zero: 'z
+  method private virtual plus: 'z -> 'z -> 'z
+end
+
 module Inert : sig
   val iter:  'env -> 'a -> unit
   val map:   'env -> 'a ->  'a
@@ -199,5 +208,52 @@ class ['self] map : object
 
   method visit_unit: 'env .
     'env -> unit -> unit
+
+end
+
+class virtual ['self] reduce : object
+
+  inherit ['z] monoid
+
+  method visit_array: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
+
+  method visit_bool: 'env .
+    'env -> bool -> 'z
+
+  method visit_char: 'env .
+    'env -> char -> 'z
+
+  method visit_float: 'env .
+    'env -> float -> 'z
+
+  method visit_int: 'env .
+    'env -> int -> 'z
+
+  method visit_int32: 'env .
+    'env -> int32 -> 'z
+
+  method visit_int64: 'env .
+    'env -> int64 -> 'z
+
+  method visit_list: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
+
+  method visit_option: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
+
+  method visit_ref: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a ref -> 'z
+
+  method visit_result: 'env 'a 'e .
+    ('env -> 'a -> 'z) ->
+    ('env -> 'e -> 'z) ->
+     'env -> ('a, 'e) result -> 'z
+
+  method visit_string: 'env .
+    'env -> string -> 'z
+
+  method visit_unit: 'env .
+    'env -> unit -> 'z
 
 end

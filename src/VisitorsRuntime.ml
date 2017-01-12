@@ -1,3 +1,6 @@
+module A = Array (* TEMPORARY *)
+module L = List
+
 (* -------------------------------------------------------------------------- *)
 
 (* An exception used at arity 2 and above. *)
@@ -6,6 +9,15 @@ exception StructuralMismatch
 
 let fail () =
   raise StructuralMismatch
+
+(* -------------------------------------------------------------------------- *)
+
+(* A virtual base class for monoids. *)
+
+class virtual ['z] monoid = object
+  method private virtual zero: 'z
+  method private virtual plus: 'z -> 'z -> 'z
+end
 
 (* -------------------------------------------------------------------------- *)
 
@@ -310,5 +322,78 @@ class ['self] map = object
   method visit_unit: 'env .
     'env -> unit -> unit
   = Unit.map
+
+end
+
+class virtual ['self] reduce = object (self : 'self)
+
+  inherit ['z] monoid
+
+  method visit_array: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
+  = fun f env xs ->
+      A.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+
+  method visit_bool: 'env .
+    'env -> bool -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_char: 'env .
+    'env -> char -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_float: 'env .
+    'env -> float -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_int: 'env .
+    'env -> int -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_int32: 'env .
+    'env -> int32 -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_int64: 'env .
+    'env -> int64 -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_list: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
+  = fun f env xs ->
+      L.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+
+  method visit_option: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
+  = fun f env ox ->
+      match ox with
+      | Some x ->
+          f env x
+      | None ->
+          self#zero
+
+  method visit_ref: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a ref -> 'z
+  = fun f env rx ->
+      f env !rx
+
+  method visit_result: 'env 'a 'e .
+    ('env -> 'a -> 'z) ->
+    ('env -> 'e -> 'z) ->
+     'env -> ('a, 'e) result -> 'z
+  = fun f g env r ->
+      match r with
+      | Ok a ->
+          f env a
+      | Error b ->
+          g env b
+
+  method visit_string: 'env .
+    'env -> string -> 'z
+  = fun _env _ -> self#zero
+
+  method visit_unit: 'env .
+    'env -> unit -> 'z
+  = fun _env _ -> self#zero
 
 end
