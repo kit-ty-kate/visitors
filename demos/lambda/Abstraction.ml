@@ -15,9 +15,20 @@ type ('bn, 'term) abstraction =
 
 (* The main effect of an abstraction is to cause the environment to be
    enriched when the abstraction is traversed. The following classes define
-   where the environment is enriched. That said, they do not know the type of
-   the environment, and do not know how it is enriched; the latter task is
+   where the environment is enriched. They do not know the type of the
+   environment, and do not know how it is enriched; the latter task is
    delegated to virtual methods, such as [extend]. *)
+
+(* We need one class per variety of visitor, which is a bit painful. *)
+
+(* The method [visit_abstraction] is polymorphic in the type of terms. This is
+   important, as it means that one can use several instances of [abstraction]
+   in a single type definition and still be able to construct well-typed
+   visitors. *)
+
+(* The virtual methods [extend] and [restrict] are not polymorphic in the
+   types of bound names and environments. On the contrary, they may well
+   be specific to certain types. *)
 
 class virtual ['self] iter = object (self : 'self)
 
@@ -76,6 +87,38 @@ class virtual ['self] iter2 = object (self : 'self)
       f env' body1 body2
 
 end
+
+class virtual ['self] map2 = object (self : 'self)
+
+  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'bn3 * 'env
+
+  method visit_abstraction: 'term1 'term2 'term3 .
+    _ ->
+    ('env -> 'term1 -> 'term2 -> 'term3) ->
+    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> ('bn3, 'term3) abstraction
+  = fun _ f env (x1, body1) (x2, body2) ->
+      let x3, env' = self#extend x1 x2 env in
+      x3, f env' body1 body2
+
+end
+
+class virtual ['self] reduce2 = object (self : 'self)
+
+  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
+
+  method virtual restrict: 'bn1 -> 'bn2 -> 'z -> 'z
+
+  method visit_abstraction: 'term1 'term2 .
+    _ ->
+    ('env -> 'term1 -> 'term2 -> 'z) ->
+    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> 'z
+  = fun _ f env (x1, body1) (x2, body2) ->
+      let env' = self#extend x1 x2 env in
+      self#restrict x1 x2 (f env' body1 body2)
+
+end
+
+
 
 (* -------------------------------------------------------------------------- *)
 
