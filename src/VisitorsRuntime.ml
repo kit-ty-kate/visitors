@@ -455,3 +455,61 @@ class ['self] iter2 = object
   = Unit.iter2
 
 end
+
+class ['self] map2 = object
+
+  method visit_array: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c) -> 'env -> 'a array -> 'b array -> 'c array
+  = Array.map2
+
+  method visit_bool: 'env .
+    'env -> bool -> bool -> bool
+  = Bool.map2
+
+  method visit_char: 'env .
+    'env -> char -> char -> char
+  = Char.map2
+
+  method visit_float: 'env .
+    'env -> float -> float -> float
+  = Float.map2
+
+  method visit_int: 'env .
+    'env -> int -> int -> int
+  = Int.map2
+
+  method visit_int32: 'env .
+    'env -> int32 -> int32 -> int32
+  = Int32.map2
+
+  method visit_int64: 'env .
+    'env -> int64 -> int64 -> int64
+  = Int64.map2
+
+  method visit_list: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
+  = List.map2
+
+  method visit_option: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
+  = Option.map2
+
+  method visit_ref: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c) -> 'env -> 'a ref -> 'b ref -> 'c ref
+  = Ref.map2
+
+  method visit_result: 'env 'a 'b 'c 'e 'f 'g .
+    ('env -> 'a -> 'b -> 'c) ->
+    ('env -> 'e -> 'f -> 'g) ->
+     'env -> ('a, 'e) result -> ('b, 'f) result -> ('c, 'g) result
+  = Result.map2
+
+  method visit_string: 'env .
+    'env -> string -> string -> string
+  = String.map2
+
+  method visit_unit: 'env .
+    'env -> unit -> unit -> unit
+  = Unit.map2
+
+end
