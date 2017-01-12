@@ -139,31 +139,16 @@ let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
  *)
 
 (* When [scheme] is [Reduce], we need a monoid, that is, a unit [zero] and a
-   binary operation [plus]. The names [zero] and [plus] are fixed. The name
-   of the monoid module is chosen by the user via the [monoid] option. *)
+   binary operation [plus]. The names [zero] and [plus] are fixed. We assume
+   that there exist virtual methods by these names. It is up to the user to
+   provide these methods via inheritance, that is, via the [ancestors]
+   option. *)
 
-let monoid () : Longident.t =
-  assert (X.scheme = Reduce);
-  match X.monoid with Some m -> m | None -> assert false
+let zero =
+  "zero"
 
-let monoid_unit () : expression =
-  eident (Ldot (monoid(), "zero"))
-
-let monoid_law () : expression =
-  eident (Ldot (monoid(), "plus"))
-
-(* -------------------------------------------------------------------------- *)
-
-(* [reduce es] is used when [scheme] is [Reduce]. It reduces the expressions
-   [es], that is, it combines them, using a monoid, which provides a unit and
-   a binary operation. The reduction is performed left-to-right. This could
-   be of importance if the monoid is not associative-commutative. *)
-
-let reduce es =
-  assert (X.scheme = Reduce);
-  let unit = monoid_unit()
-  and law = monoid_law() in
-  fold_left1 (fun e1 e2 -> app law [e1; e2]) unit es
+let plus =
+  "plus"
 
 (* -------------------------------------------------------------------------- *)
 
@@ -251,6 +236,31 @@ let call (m : methode) (es : expression list) : expression =
     app (evar m) es
   else
     send self m es
+
+(* -------------------------------------------------------------------------- *)
+
+(* Access to the monoid operations. *)
+
+let monoid_unit () : expression =
+  assert (X.scheme = Reduce);
+  call zero []
+
+let monoid_law () : expression =
+  assert (X.scheme = Reduce);
+  call plus []
+
+(* -------------------------------------------------------------------------- *)
+
+(* [reduce es] is used when [scheme] is [Reduce]. It reduces the expressions
+   [es], that is, it combines them, using a monoid, which provides a unit and
+   a binary operation. The reduction is performed left-to-right. This could
+   be of importance if the monoid is not associative-commutative. *)
+
+let reduce es =
+  assert (X.scheme = Reduce);
+  let unit = monoid_unit()
+  and law = monoid_law() in
+  fold_left1 (fun e1 e2 -> app law [e1; e2]) unit es
 
 (* -------------------------------------------------------------------------- *)
 

@@ -71,10 +71,6 @@ module type SETTINGS = sig
      to [int t] but not to other instances of [t]. *)
   val irregular: bool
 
-  (* If [scheme] is [Reduce], then we need a monoid. This should be the name
-     of a module which provides a unit element and a binary operation. *)
-  val monoid: Longident.t option
-
   (* A list of module names that should be searched for nonlocal functions,
      such as [List.iter]. The modules that appear first in the list are
      searched last. *)
@@ -147,7 +143,6 @@ end)
   let final = ref false
   let freeze = ref []
   let irregular = ref false
-  let monoid = ref None
   let names = ref [] (* dummy: [name] is mandatory; see below *)
   let path = ref []
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
@@ -167,8 +162,6 @@ end)
            freeze := strings e
       | "irregular" ->
           irregular := bool e
-      | "monoid" ->
-          monoid := Some (string e)
       | "name" ->
           names := string e :: !names;
       | "path" ->
@@ -196,7 +189,6 @@ end)
   let final = !final
   let freeze = !freeze
   let irregular = !irregular
-  let monoid = !monoid
   let path = !path
   let scheme = !scheme
 
@@ -257,27 +249,5 @@ end)
      implicit ancestor, and similarly for every variety. *)
   let ancestors =
     map Longident.parse (("VisitorsRuntime." ^ variety) :: ancestors)
-
-  (* The parameter [monoid] must be supplied if and only if [scheme] is
-     [Reduce]. Also, if supplied, it must be a valid module name. *)
-  let monoid =
-    match monoid with
-    | Some m ->
-        must_be_valid_mod_longident loc m;
-        Some (Longident.parse m)
-    | None ->
-        None
-
-  let () =
-    match monoid, scheme with
-    | Some _, Reduce
-    | None, (Iter | Map) ->
-        ()
-    | None, Reduce ->
-        raise_errorf ~loc
-          "%s: 'variety = %s' requires specifying a monoid." plugin variety
-    | Some _, (Iter | Map) ->
-        raise_errorf ~loc
-          "%s: 'variety = %s' does not require specifying a monoid." plugin variety
 
 end

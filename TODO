@@ -9,8 +9,6 @@ Re-think the treatment of nonlocal types.
   Implement all necessary classes in [VisitorsRuntime].
   Maybe remove [freeze]?
 
-Remove the [monoid] option and use virtual methods instead.
-
 Use private methods in some (hand-written) classes,
   including VisitorsRuntime and certain kits?
 
