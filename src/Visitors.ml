@@ -551,14 +551,6 @@ let type_decls (decls : type_declaration list) : structure =
        used as markers to find and review the generated code. We use this
        mechanism to show the generated code in the documentation. *)
     floating "VISITORS.BEGIN" [] ::
-    (* Open the module [VisitorsRuntime], as well as all modules specified
-       by the user via the [path] option. In theory it would be preferable
-       to use a tight [let open] declaration around every reference to an
-       external function. However, the generated code looks nicer if we use
-       a single series of [open] declarations at the beginning. These [open]
-       declarations have local scope because [with_warnings] creates a local
-       module using [include struct ... end]. *)
-    stropen X.path @
       (* Produce a class definition. *)
       (* Our classes are parameterized over the type variable ['env]. They are
          also parameterized over the type variable ['self], with a constraint

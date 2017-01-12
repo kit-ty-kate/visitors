@@ -66,11 +66,6 @@ module type SETTINGS = sig
      to [int t] but not to other instances of [t]. *)
   val irregular: bool
 
-  (* A list of module names that should be searched for nonlocal functions,
-     such as [List.iter]. The modules that appear first in the list are
-     searched last. *)
-  val path: Longident.t list
-
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -138,7 +133,6 @@ end)
   let freeze = ref []
   let irregular = ref false
   let names = ref [] (* dummy: [name] is mandatory; see below *)
-  let path = ref []
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
   let variety = ref None
 
@@ -156,8 +150,6 @@ end)
           irregular := bool e
       | "name" ->
           names := string e :: !names;
-      | "path" ->
-          path := strings e
       | "variety" ->
           let v = string e in
           variety := Some v;
@@ -180,7 +172,6 @@ end)
   let arity = !arity
   let freeze = !freeze
   let irregular = !irregular
-  let path = !path
   let scheme = !scheme
 
   (* Perform sanity checking. *)
@@ -217,16 +208,6 @@ end)
            e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
     | Some variety ->
         variety
-
-  (* Every string in the list [path] must be a valid (long) module
-     identifier. *)
-  let () =
-    iter (must_be_valid_mod_longident loc) path
-
-  (* We always open [VisitorsRuntime], but allow it to be shadowed by
-     user-specified modules. *)
-  let path =
-    map Longident.parse ("VisitorsRuntime" :: path)
 
   (* Every string in the list [ancestors] must be a valid (long) class
      identifier. *)
