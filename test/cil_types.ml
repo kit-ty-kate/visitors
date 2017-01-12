@@ -11,6 +11,12 @@ module Support = struct
     method visit_lexing_position: 'env . 'env -> Lexing.position -> unit
     = fun _env _p -> ()
   end
+  class ['self] map = object
+    method visit_integer_t: 'env . 'env -> Integer.t -> Integer.t
+    = fun _env i -> i
+    method visit_lexing_position: 'env . 'env -> Lexing.position -> Lexing.position
+    = fun _env p -> p
+  end
 end
 
 (****************************************************************************)
@@ -1717,12 +1723,8 @@ and custom_tree = CustomDummy
   | CustomLexpr of lexpr
   | CustomOther of string * (custom_tree list)
 *)
-[@@deriving visitors { name = "iter"; variety = "iter"; ancestors = ["Support.iter"]; irregular = true }
-(* TEMPORARY
-            visitors { name = "map"; variety = "map"; irregular = true },
-            visitors { name = "iter2"; variety = "iter2"; irregular = true },
-            visitors { name = "map2"; variety = "map2"; irregular = true }
- *)
+[@@deriving visitors { name = "iter"; variety = "iter"; ancestors = ["Support.iter"]; irregular = true },
+            visitors { name = "map"; variety = "map"; ancestors = ["Support.map"]; irregular = true }
 ]
 
 type kinstr =
