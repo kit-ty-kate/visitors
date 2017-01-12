@@ -1,4 +1,4 @@
-(* open Printf *)
+open Printf
 open TermAlt
 (* open Toolbox *)
 
@@ -13,28 +13,36 @@ let y =
 let id =
   TLambda (x, TVar x)
 
-(* TEMPORARY
 let delta_body =
   TApp (TVar x, TVar x)
 
 let delta =
   TLambda (x, delta_body)
 
+(*
 let omega =
   TApp (delta, copy delta)
+ *)
 
 let samples = [
     TVar y;
     id;
     TApp (id, TVar y);
-    TApp (id, copy id);
+    (* TApp (id, copy id); *)
     delta;
-    omega;
+    (* omega; *)
   ]
 
 let evaluate f =
   List.iter f samples
 
+let f t =
+  printf "%d\n" (size t)
+
+let () =
+  evaluate f
+
+(* TEMPORARY
 (* A non-hygienic term printer. This printer shows the real (internal) identity
    of atoms, using [Atom.show]. *)
 

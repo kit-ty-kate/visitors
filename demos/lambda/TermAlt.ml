@@ -19,9 +19,24 @@ type ('fn, 'bn) term =
 
   [@@deriving
 
-    visitors { name = "iter"; variety = "iter"; ancestors = ["Bn.iter"; "Abstraction.iter"] }
+    visitors { name = "iter"; variety = "iter";
+               ancestors = ["Bn.iter"; "Abstraction.iter"] }
+    ,
+    visitors { name = "size_"; variety = "reduce";
+               ancestors = ["Bn.reduce"; "Abstraction.reduce";
+                            "KitTrivial.reduce"; "VisitorsRuntime.addition_monoid"] }
 
   ]
+
+class ['self] size = object (_ : 'self)
+  inherit [_] size_ as super
+  method! visit_term env t =
+    1 + super#visit_term env t
+end
+
+let size : 'fn 'bn . ('fn, 'bn) term -> int =
+  fun t ->
+    new size # visit_term () t
 
 class atom2unit = object
   inherit [_] iter
