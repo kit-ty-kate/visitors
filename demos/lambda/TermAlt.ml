@@ -22,17 +22,11 @@ type ('fn, 'bn) term =
     visitors { name = "iter"; variety = "iter";
                ancestors = ["Bn.iter"; "Abstraction.iter"] }
     ,
-    visitors { name = "size_"; variety = "reduce";
-               ancestors = ["Bn.reduce"; "Abstraction.reduce";
-                            "KitTrivial.reduce"; "VisitorsRuntime.addition_monoid"] }
+    visitors { name = "map"; variety = "map";
+               ancestors = ["Bn.map"; "Abstraction.map"] }
     ,
-    visitors { name = "show"; variety = "map";
-               ancestors = ["Bn.map"; "Abstraction.map"; "KitShow.map"];
-               concrete = true }
-    ,
-    visitors { name = "copy"; variety = "map";
-               ancestors = ["Bn.map"; "Abstraction.map"; "KitCopy.map"];
-               concrete = true }
+    visitors { name = "reduce"; variety = "reduce";
+               ancestors = ["Bn.reduce"; "Abstraction.reduce"] }
 
   ]
 
@@ -46,7 +40,9 @@ type db_term =
   (int, unit) term
 
 class ['self] size = object (_ : 'self)
-  inherit [_] size_ as super
+  inherit [_] reduce as super
+  inherit [_] KitTrivial.reduce
+  inherit [_] VisitorsRuntime.addition_monoid
   method! visit_term env t =
     1 + super#visit_term env t
 end
@@ -55,8 +51,18 @@ let size : 'fn 'bn . ('fn, 'bn) term -> int =
   fun t ->
     new size # visit_term () t
 
+class ['self] show = object (_ : 'self)
+  inherit [_] map
+  inherit [_] KitShow.map
+end
+
 let show : nominal_term -> raw_term =
   new show # visit_term ()
+
+class ['self] copy = object (_ : 'self)
+  inherit [_] map
+  inherit [_] KitCopy.map
+end
 
 let copy : nominal_term -> nominal_term =
   new copy # visit_term KitCopy.empty
