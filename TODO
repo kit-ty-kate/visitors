@@ -20,9 +20,9 @@ Benchmark.
 Test on the Frama-C AST.
   Instantiate visit_'term and visit_'locs and make sure we have working code.
 
-Develop support for names and binders.
-  Try to make it a functor, i.e., independent of the structure of terms.
-  Do we need private methods?
+Develop support for names and binders (demos/lambda).
+  Can we make it a functor, i.e., independent of the structure of terms?
+  Check that every module has an .mli file, except where that would be too heavy.
 
 Try dealing with binding and hash-consing at the same time.
 
