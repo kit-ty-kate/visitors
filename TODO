@@ -2,9 +2,7 @@
 
 TODO (REALLY)
 
-Re-think the treatment of nonlocal types.
-  Add [virtual] option to force [virtual] status, which cannot be guessed.
-  Maybe remove [freeze]?
+Maybe remove [freeze]?
 
 Use private methods in some (hand-written) classes,
   including VisitorsRuntime and certain kits?
