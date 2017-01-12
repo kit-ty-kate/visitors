@@ -32,6 +32,9 @@ Try dealing with binding and hash-consing at the same time.
 Try dealing with suspended substitutions.
   (As a distinct construct. Not necessarily at abstractions.)
 
+Use explicit loops in VisitorsRuntime.Array.
+Remove the old module structure in VisitorsRuntime?
+
 Document everything.
   The name [VisitorsRuntime] must not be shadowed.
 
