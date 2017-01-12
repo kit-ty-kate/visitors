@@ -247,11 +247,15 @@ let with_warnings (w : string) (items : structure_item list) : structure_item =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [class1 ancestors params name self fields] builds a class declaration and
-   packages it as a structure item. (This implies that it cannot be recursive
-   with other class declarations). The class is declared virtual if and only
-   if at least one virtual method explicitly appears as part of the list
-   [fields]. *)
+(* [class1 concrete ancestors params name self fields] builds a class
+   declaration and packages it as a structure item. (This implies that it
+   cannot be recursive with other class declarations). *)
+
+(* If [concrete] is present, then it controls whether the class is declared
+   concrete or virtual. If [concrete] is absent, then the class is declared
+   virtual if and only if at least one virtual method explicitly appears as
+   part of the list [fields]. This default behavior is heuristic and is
+   guaranteed to be optimal only if there are no inherited [ancestors]. *)
 
 let is_virtual_method (field : class_field) : bool =
   match field.pcf_desc with
@@ -264,13 +268,21 @@ let has_virtual_method (fields : class_field list) : bool =
   List.exists is_virtual_method fields
 
 let class1
+  (concrete : bool option)
   (params : (core_type * variance) list)
   (name : classe)
   (self : pattern)
   (fields : class_field list)
   : structure_item =
+  let virt =
+    match concrete with
+    | Some concrete ->
+        if concrete then Concrete else Virtual
+    | None ->
+        if has_virtual_method fields then Virtual else Concrete
+  in
   Str.class_ [{
-    pci_virt = if has_virtual_method fields then Virtual else Concrete;
+    pci_virt = virt;
     pci_params = params;
     pci_name = mknoloc name;
     pci_expr = Cl.structure (Cstr.mk self fields);
@@ -361,9 +373,10 @@ module ClassFieldStore (X : sig end) : sig
      [generate c meth] adds [meth] to the list associated with [c]. *)
   val generate: classe -> meth -> unit
 
-  (* [dump ancestors params self c] returns a class definition for the
+  (* [dump concrete ancestors params self c] returns a class definition for the
      class [c]. *)
   val dump:
+    bool option ->
     Longident.t list ->
     (core_type * variance) list ->
     pattern ->
@@ -403,8 +416,8 @@ end = struct
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods
 
-  let dump ancestors params self c : structure_item =
-    class1 params c self (
+  let dump concrete ancestors params self c : structure_item =
+    class1 concrete params c self (
       (* [inherit] clauses. *)
       (* We ARBITRARILY assume that every ancestor class is parameterized
          with ONE type parameter. *)

@@ -556,7 +556,7 @@ let type_decls (decls : type_declaration list) : structure =
          also parameterized over the type variable ['self], with a constraint
          that this is the type of [self]. This trick allows us to omit the types
          of the virtual methods, even if these types include type variables. *)
-    dump X.ancestors [ ty_self, Invariant ] pself X.name ::
+    dump X.concrete X.ancestors [ ty_self, Invariant ] pself X.name ::
     floating "VISITORS.END" [] ::
     []
   )]

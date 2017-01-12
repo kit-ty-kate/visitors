@@ -53,6 +53,10 @@ module type SETTINGS = sig
   (* The classes that the visitor should inherit. *)
   val ancestors: Longident.t list
 
+  (* [concrete] controls whether the generated class should be concrete or
+     virtual. *)
+  val concrete: bool option
+
   (* The type variables that should be treated as nonlocal types. Following
      OCaml's convention, the name of a type variable does not include a
      leading quote. *)
@@ -128,13 +132,14 @@ end)
 
   (* Default values. *)
 
-  let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
-  let ancestors = ref []
-  let freeze = ref []
-  let irregular = ref false
   let names = ref [] (* dummy: [name] is mandatory; see below *)
+  let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
   let variety = ref None
+  let ancestors = ref []
+  let concrete = ref None
+  let freeze = ref []
+  let irregular = ref false
 
   (* Parse every option. *)
 
@@ -144,6 +149,8 @@ end)
       match o with
       | "ancestors" ->
            ancestors := strings e
+      | "concrete" ->
+           concrete := Some (bool e)
       | "freeze" ->
            freeze := strings e
       | "irregular" ->
@@ -168,11 +175,12 @@ end)
   (* Export the results. *)
 
   let decls = decls
-  let ancestors = !ancestors
   let arity = !arity
+  let scheme = !scheme
+  let ancestors = !ancestors
+  let concrete = !concrete
   let freeze = !freeze
   let irregular = !irregular
-  let scheme = !scheme
 
   (* Perform sanity checking. *)
 
