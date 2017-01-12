@@ -29,6 +29,8 @@ let samples = [
     TApp (id, copy id);
     delta;
     omega;
+    import KitImport.empty (TLambda ("x", TVar "x"));
+    import KitImport.empty (TLambda ("z", TLambda ("z", TVar "z")));
   ]
 
 let evaluate f =

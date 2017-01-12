@@ -67,6 +67,14 @@ end
 let copy : nominal_term -> nominal_term =
   new copy # visit_term KitCopy.empty
 
+class ['self] import = object (_ : 'self)
+  inherit [_] map
+  inherit [_] KitImport.map
+end
+
+let import : KitImport.env -> raw_term -> nominal_term =
+  new import # visit_term
+
 class atom2unit = object
   inherit [_] iter
   inherit [_] Foo.kit

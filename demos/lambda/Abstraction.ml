@@ -130,42 +130,6 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* During a conversion of strings to atoms, the environment maps strings to
-   atoms. *)
-
-(* Even though this is not necessary in principle, we create unique atoms
-   right away, that is, we map each binding occurrence to a fresh atom. *)
-
-module String2Atom = struct
-
-  type env = Atom.t StringMap.t
-
-  let empty =
-    StringMap.empty
-
-  let extend s env =
-    let a = Atom.freshh s in
-    let env = StringMap.add s a env in
-    a, env
-
-  module Abstraction = struct
-    let map _ = Generic.map extend
-  end
-
-  exception Unbound of string
-
-  module Fn = struct
-    let map env x =
-      try
-        StringMap.find x env
-      with Not_found ->
-        raise (Unbound x)
-  end
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* During a conversion from atoms back to strings (that is, printing), the
    environment is an injective mapping of atoms to strings. We keep track
    of its codomain by recording a mapping of hints to integers. *)
@@ -492,27 +456,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module String2Atom : sig
-
-  type env
-
-  val empty: env
-
-  module Abstraction : sig
-    val map:
-      _ ->
-      (env -> 'term1 -> 'term2) ->
-      env -> (string, 'term1) abstraction -> (Atom.t, 'term2) abstraction
-  end
-
-  exception Unbound of string
-
-  module Fn : sig
-    val map: env -> string -> Atom.t
-  end
-
-end
-
 module Atom2String : sig
 
   type env
