@@ -128,47 +128,6 @@ end
 (* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
-(* During a conversion of nominal style to de Bruijn style, the environment is
-   a pair of a map [m] of atoms to de Bruijn levels and a current de Bruijn
-   level [n]. *)
-
-module Atom2DeBruijn = struct
-
-  type env = int Atom.Map.t * int
-
-  let empty =
-    (Atom.Map.empty, 0)
-
-  let extend x (m, n : env) =
-    (* Increment the current de Bruijn level [n]. *)
-    let n = n + 1 in
-    (* Record a mapping of the name [x] to the de Bruijn level [n],
-       so if [x] was looked up right now, it would receive level [n],
-       therefore index [0]. *)
-    let m = Atom.Map.add x n m in
-    (), (m, n)
-
-  module Abstraction = struct
-    let map _ = Generic.map extend
-  end
-
-  module Fn = struct
-    let map (env, n) x =
-      try
-        (* Lookup the de Bruijn level associated with [x]. *)
-        let k = Atom.Map.find x env in
-        (* Convert it to a de Bruijn index. *)
-        n - k
-      with Not_found ->
-        (* The name [x] is unknown. This should not happen if the environment
-           was properly set up. *)
-        assert false
-  end
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* Substitution of free atoms for free atoms. *)
 
 (* We require every binding occurrence [x] encountered along the way to be
@@ -339,25 +298,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module Atom2DeBruijn : sig
-
-  type env
-
-  val empty: env
-
-  module Abstraction : sig
-    val map :
-      _ ->
-      (env -> 'term1 -> 'term2) ->
-      env -> (Atom.t, 'term1) abstraction -> (unit, 'term2) abstraction
-  end
-
-  module Fn : sig
-    val map: env -> Atom.t -> int
-  end
-
-end
-
 module Atom2Atom : sig
 
   type env = Atom.subst

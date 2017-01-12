@@ -2,8 +2,10 @@ Operations on terms:
   test x \in fv(t) (nominal)
   test closed(t)
   simultaneous opening? (nominal)
-  efficient printing (conversion from nominal back to raw) with pre-computation of fa
-  -- test for global uniqueness everywhere an environment is extended
+  conversion from debruijn back to nominal
+  a printer for debruijn terms?
+
+-- test for global uniqueness everywhere an environment is extended?
 
 Operations on each kind of environment:
   Entering a binder (and testing for global uniqueness).

@@ -88,3 +88,19 @@ end
 
 let fa' : nominal_term -> Atom.Set.t =
   new fa' # visit_term ()
+
+class raw2debruijn = object
+  inherit [_] map
+  inherit [_] KitToDeBruijn.String.map
+end
+
+let raw2debruijn : raw_term -> db_term =
+  new raw2debruijn # visit_term KitToDeBruijn.String.empty
+
+class nominal2debruijn = object
+  inherit [_] map
+  inherit [_] KitToDeBruijn.Atom.map
+end
+
+let nominal2debruijn : nominal_term -> db_term =
+  new nominal2debruijn # visit_term KitToDeBruijn.Atom.empty
