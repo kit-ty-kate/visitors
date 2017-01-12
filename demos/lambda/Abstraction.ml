@@ -128,37 +128,6 @@ end
 (* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
-(* A size computation. *)
-
-module Size = struct
-  include KitSize
-  module Abstraction = struct
-    let reduce _ = Generic.reduce extend restrict
-  end
-end
-
-(* -------------------------------------------------------------------------- *)
-
-(* Conversion of (bound and free) atoms to strings, using [Atom.show], for
-   debugging purposes. *)
-
-module Show = struct
-
-  type env = unit
-
-  let extend x env = Atom.show x, env
-
-  module Abstraction = struct
-    let map _ = Generic.map extend
-  end
-
-  module Fn = struct
-    let map _env x =
-      Atom.show x
-  end
-
-end
-
 (* -------------------------------------------------------------------------- *)
 
 (* During a conversion of strings to atoms, the environment maps strings to
@@ -555,40 +524,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module Size : sig
-
-  type env = unit
-
-  module Abstraction : sig
-    val reduce:
-      _ ->
-      (env -> 'term -> int) ->
-      env -> (_, 'term) abstraction -> int
-  end
-
-  module Fn : sig
-    val reduce: env -> _ -> int
-  end
-
-end
-
-module Show : sig
-
-  type env = unit
-
-  module Abstraction : sig
-    val map:
-      _ ->
-      (env -> 'term1 -> 'term2) ->
-      env -> (Atom.t, 'term1) abstraction -> (string, 'term2) abstraction
-  end
-
-  module Fn : sig
-    val map: env -> Atom.t -> string
-  end
-
-end
-
 module String2Atom : sig
 
   type env

@@ -25,8 +25,21 @@ type ('fn, 'bn) term =
     visitors { name = "size_"; variety = "reduce";
                ancestors = ["Bn.reduce"; "Abstraction.reduce";
                             "KitTrivial.reduce"; "VisitorsRuntime.addition_monoid"] }
+    ,
+    visitors { name = "show"; variety = "map";
+               ancestors = ["Bn.map"; "Abstraction.map"; "KitShow.map"];
+               concrete = true }
 
   ]
+
+type raw_term =
+  (string, string) term
+
+type nominal_term =
+  (Atom.t, Atom.t) term
+
+type db_term =
+  (int, unit) term
 
 class ['self] size = object (_ : 'self)
   inherit [_] size_ as super
@@ -37,6 +50,9 @@ end
 let size : 'fn 'bn . ('fn, 'bn) term -> int =
   fun t ->
     new size # visit_term () t
+
+let show : nominal_term -> raw_term =
+  new show # visit_term ()
 
 class atom2unit = object
   inherit [_] iter

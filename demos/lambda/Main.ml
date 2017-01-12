@@ -36,19 +36,22 @@ let samples = [
 let evaluate f =
   List.iter f samples
 
-let f t =
-  printf "%d\n" (size t)
-
-let () =
-  evaluate f
-
-(* TEMPORARY
 (* A non-hygienic term printer. This printer shows the real (internal) identity
    of atoms, using [Atom.show]. *)
 
 let nhprint oc t =
   Print.term oc (show t)
 
+let print_size t =
+  (* This uses the debugging term printer, not the hygienic term printer. *)
+  printf "size(%a) = %d\n%!"
+    nhprint t
+    (size t)
+
+let () =
+  evaluate print_size
+
+(* TEMPORARY
 let print_fa t =
   (* This uses the debugging term printer, not the hygienic term printer. *)
   (* Similarly, it uses the debugging printer for sets of atoms. *)
@@ -68,15 +71,6 @@ let print_fa' t =
 
 let () =
   evaluate print_fa'
-
-let print_size t =
-  (* This uses the debugging term printer, not the hygienic term printer. *)
-  printf "size(%a) = %d\n%!"
-    nhprint t
-    (size t)
-
-let () =
-  evaluate print_size
 
 let print_copy t =
   (* This uses the debugging term printer, not the hygienic term printer. *)
