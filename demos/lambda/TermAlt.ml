@@ -104,3 +104,14 @@ end
 
 let nominal2debruijn : nominal_term -> db_term =
   new nominal2debruijn # visit_term KitToDeBruijn.Atom.empty
+
+class subst = object
+  inherit [_] map
+  inherit [_] KitSubst.map
+end
+
+let subst : Atom.subst -> nominal_term -> nominal_term =
+  new subst # visit_term
+
+let subst1 u x t =
+  subst (Atom.Subst.singleton x u) t

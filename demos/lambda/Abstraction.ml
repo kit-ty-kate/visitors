@@ -128,47 +128,6 @@ end
 (* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
-(* Substitution of free atoms for free atoms. *)
-
-(* We require every binding occurrence [x] encountered along the way to be
-   fresh with respect to the substitution [sigma]. *)
-
-module Atom2Atom = struct
-
-  type env = Atom.subst
-
-  let extend x sigma =
-    (* Under the global uniqueness assumption, the atom [x] cannot appear
-       in the domain or codomain of the substitution [sigma]. We check at
-       runtime that this is the case. *)
-    assert (Atom.Subst.is_fresh_for x sigma);
-    (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
-       freshening of the bound name is required. Thus, we can keep the
-       substitution [sigma], unchanged, under the binder. *)
-    (* One might wish to extend [sigma] with a mapping of [x] to [x], so
-       that [x] is not fresh for the extended [sigma], so that crossing
-       another binding occurrence of [x] causes the above assertion to fail.
-       That said, in principle, the global uniqueness assumption guarantees
-       that we cannot encounter another binding occurrence of [x]. So, it
-       seems preferable not to pay. The well-formedness of terms can be
-       checked independently. *)
-    x, sigma
-
-  module Abstraction = struct
-    let map _ = Generic.map extend
-  end
-
-  module Fn = struct
-    let map = Atom.Subst.apply
-  end
-
-end
-
-(* TEMPORARY 1. do we need this function at all?
-             2. could we abandon the runtime check and use [Invisible]? *)
-
-(* -------------------------------------------------------------------------- *)
-
 (* Substitution of things (say, terms) for free atoms. *)
 
 (* TEMPORARY note that the environment would be unused if we removed the
@@ -298,23 +257,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module Atom2Atom : sig
-
-  type env = Atom.subst
-
-  module Abstraction : sig
-    val map:
-      _ ->
-      (env -> 'term1 -> 'term2) ->
-      env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
-  end
-
-  module Fn : sig
-    val map: env -> Atom.t -> Atom.t
-  end
-
-end
-
 module Atom2Something : sig
 
   type 'term env =
