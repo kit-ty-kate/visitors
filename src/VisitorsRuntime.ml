@@ -397,3 +397,61 @@ class virtual ['self] reduce = object (self : 'self)
   = fun _env _ -> self#zero
 
 end
+
+class ['self] iter2 = object
+
+  method visit_array: 'env 'a 'b .
+    ('env -> 'a -> 'b -> unit) -> 'env -> 'a array -> 'b array -> unit
+  = Array.iter2
+
+  method visit_bool: 'env .
+    'env -> bool -> bool -> unit
+  = Bool.iter2
+
+  method visit_char: 'env .
+    'env -> char -> char -> unit
+  = Char.iter2
+
+  method visit_float: 'env .
+    'env -> float -> float -> unit
+  = Float.iter2
+
+  method visit_int: 'env .
+    'env -> int -> int -> unit
+  = Int.iter2
+
+  method visit_int32: 'env .
+    'env -> int32 -> int32 -> unit
+  = Int32.iter2
+
+  method visit_int64: 'env .
+    'env -> int64 -> int64 -> unit
+  = Int64.iter2
+
+  method visit_list: 'env 'a 'b .
+    ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
+  = List.iter2
+
+  method visit_option: 'env 'a 'b .
+    ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
+  = Option.iter2
+
+  method visit_ref: 'env 'a 'b .
+    ('env -> 'a -> 'b -> unit) -> 'env -> 'a ref -> 'b ref -> unit
+  = Ref.iter2
+
+  method visit_result: 'env 'a 'b 'e 'f .
+    ('env -> 'a -> 'b -> unit) ->
+    ('env -> 'e -> 'f -> unit) ->
+     'env -> ('a, 'e) result -> ('b, 'f) result -> unit
+  = Result.iter2
+
+  method visit_string: 'env .
+    'env -> string -> string -> unit
+  = String.iter2
+
+  method visit_unit: 'env .
+    'env -> unit -> unit -> unit
+  = Unit.iter2
+
+end
