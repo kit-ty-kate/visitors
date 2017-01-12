@@ -227,15 +227,10 @@ let results (xs : _ list) : variable list =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [call m es] normally emits a method call of the form [self#m es].
-   However, if the [final] option is enabled, it instead produces a
-   function call of the form [m es]. *)
+(* [call m es] emits a method call of the form [self#m es]. *)
 
 let call (m : methode) (es : expression list) : expression =
-  if X.final then
-    app (evar m) es
-  else
-    send self m es
+  send self m es
 
 (* -------------------------------------------------------------------------- *)
 
@@ -337,18 +332,11 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           env_in_scope
           { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
       else begin
-        (* Check that [final] is [false], as we cannot generate virtual
-           methods when [final] is [true]. *)
-        if X.final then
-          raise_errorf ~loc:ty.ptyp_loc
-            "%s: cannot deal with type variables when 'final' is enabled.\n\
-             Please either disable 'final' or 'freeze' this type variable.\n"
-            plugin;
         generate (virtual_method (tyvar_visitor_method tv));
         call
           (tyvar_visitor_method tv)
           []
-        end
+      end
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)
@@ -571,13 +559,12 @@ let type_decls (decls : type_declaration list) : structure =
        declarations have local scope because [with_warnings] creates a local
        module using [include struct ... end]. *)
     stropen X.path @
-      (* Produce either a class definition or a nest of mutually recursive
-         functions, depending on the option [final]. *)
+      (* Produce a class definition. *)
       (* Our classes are parameterized over the type variable ['env]. They are
          also parameterized over the type variable ['self], with a constraint
          that this is the type of [self]. This trick allows us to omit the types
          of the virtual methods, even if these types include type variables. *)
-    (if X.final then nest else dump X.ancestors [ ty_self, Invariant ] pself) X.name ::
+    dump X.ancestors [ ty_self, Invariant ] pself X.name ::
     floating "VISITORS.END" [] ::
     []
   )]

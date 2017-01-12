@@ -4,9 +4,7 @@ TODO (REALLY)
 
 Re-think the treatment of nonlocal types.
   Add [virtual] option to force [virtual] status, which cannot be guessed.
-  Disallow [final] as soon as [ancestors] is nonempty? (It is always!) Remove [final] altogether?
   No need for [path] anymore. (Could still be convenient, though?)
-  Implement all necessary classes in [VisitorsRuntime].
   Maybe remove [freeze]?
 
 Use private methods in some (hand-written) classes,

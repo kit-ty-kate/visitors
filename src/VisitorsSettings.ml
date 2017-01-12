@@ -53,11 +53,6 @@ module type SETTINGS = sig
   (* The classes that the visitor should inherit. *)
   val ancestors: Longident.t list
 
-  (* If [final] is false, which is the default, we generate OCaml classes.
-     If [final] is true, we generate nests of mutually recursive functions.
-     This requires that there be no virtual methods. *)
-  val final: bool
-
   (* The type variables that should be treated as nonlocal types. Following
      OCaml's convention, the name of a type variable does not include a
      leading quote. *)
@@ -140,7 +135,6 @@ end)
 
   let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
   let ancestors = ref []
-  let final = ref false
   let freeze = ref []
   let irregular = ref false
   let names = ref [] (* dummy: [name] is mandatory; see below *)
@@ -156,8 +150,6 @@ end)
       match o with
       | "ancestors" ->
            ancestors := strings e
-      | "final" ->
-           final := bool e
       | "freeze" ->
            freeze := strings e
       | "irregular" ->
@@ -186,7 +178,6 @@ end)
   let decls = decls
   let ancestors = !ancestors
   let arity = !arity
-  let final = !final
   let freeze = !freeze
   let irregular = !irregular
   let path = !path
@@ -207,14 +198,11 @@ end)
         "%s: please specify only ONE name for the generated class." plugin;
     match !names with
     | [ name ] ->
-       (* If [final] is true, we expect [name] to be a valid module name;
-          otherwise, we expect it to be a valid class name. *)
-       let expected = if final then UIDENT else LIDENT in
-       if classify name <> expected then
+       (* We expect [name] to be a valid class name. *)
+       if classify name <> LIDENT then
           raise_errorf ~loc
-            "%s: %s is not a valid %s name."
-            plugin name
-            (if final then "module" else "class");
+            "%s: %s is not a valid class name."
+            plugin name;
         name
     | []
     | _ :: _ :: _ ->
