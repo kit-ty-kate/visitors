@@ -513,3 +513,101 @@ class ['self] map2 = object
   = Unit.map2
 
 end
+
+class virtual ['self] reduce2 = object (self : 'self)
+
+  inherit ['z] monoid
+
+  method visit_array: 'env 'a 'b .
+    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a array -> 'b array -> 'z
+  = fun f env xs1 xs2 ->
+      (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2]. *)
+      if A.length xs1 = A.length xs2 then
+        let z = ref self#zero in
+        A.iter2 (fun x1 x2 ->
+            z := self#plus !z (f env x1 x2)
+        ) xs1 xs2;
+        !z
+      else
+        fail()
+
+  method visit_bool: 'env .
+    'env -> bool -> bool -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_char: 'env .
+    'env -> char -> char -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_float: 'env .
+    'env -> float -> float -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_int: 'env .
+    'env -> int -> int -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_int32: 'env .
+    'env -> int32 -> int32 -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_int64: 'env .
+    'env -> int64 -> int64 -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_list: 'env 'a 'b .
+    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a list -> 'b list -> 'z
+  = fun f env xs1 xs2 ->
+      if L.length xs1 = L.length xs2 then
+        L.fold_left2 (fun z x1 x2 -> self#plus z (f env x1 x2)) self#zero xs1 xs2
+      else
+        fail()
+
+  method visit_option: 'env 'a 'b .
+    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a option -> 'b option -> 'z
+  = fun f env ox1 ox2 ->
+      match ox1, ox2 with
+      | Some x1, Some x2 ->
+          f env x1 x2
+      | None, None ->
+          self#zero
+      | Some _, None
+      | None, Some _ ->
+          fail()
+
+  method visit_ref: 'env 'a 'b .
+    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a ref -> 'b ref -> 'z
+  = fun f env rx1 rx2 ->
+      f env !rx1 !rx2
+
+  method visit_result: 'env 'a 'b 'e 'f .
+    ('env -> 'a -> 'b -> 'z) ->
+    ('env -> 'e -> 'f -> 'z) ->
+     'env -> ('a, 'e) result -> ('b, 'f) result -> 'z
+  = fun f g env r1 r2 ->
+      match r1, r2 with
+      | Ok a1, Ok a2 ->
+          f env a1 a2
+      | Error b1, Error b2 ->
+          g env b1 b2
+      | Ok _, Error _
+      | Error _, Ok _ ->
+          fail()
+
+  method visit_string: 'env .
+    'env -> string -> string -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method visit_unit: 'env .
+    'env -> unit -> unit -> 'z
+  = fun _env () () ->
+      self#zero
+
+end
