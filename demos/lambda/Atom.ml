@@ -214,6 +214,9 @@ module Subst = struct
       codomain = Set.add b sigma.codomain;
     }
 
+  let singleton a b =
+    extend id a b
+
   let is_fresh_for a sigma =
     (* The fact that we keep track of codomains is exploited here. *)
     not (Map.mem a sigma.graph || Set.mem a sigma.codomain)

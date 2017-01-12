@@ -52,5 +52,6 @@ module Subst : sig
   val id: subst
   val apply: subst -> atom -> atom
   val extend: subst -> atom -> atom -> subst
+  val singleton: atom -> atom -> subst
   val is_fresh_for: atom -> subst -> bool
 end
