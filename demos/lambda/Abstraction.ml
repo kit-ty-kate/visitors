@@ -1,6 +1,6 @@
 (* -------------------------------------------------------------------------- *)
 
-(* A universal type of single-name abstractions. *)
+(* A universal, concrete type of single-name abstractions. *)
 
 (* We wish to represent all kinds of abstractions -- e.g. in nominal style,
    in de Bruijn style, etc. -- so we parameterize the abstraction over the
@@ -13,56 +13,73 @@ type ('bn, 'term) abstraction =
 
 (* -------------------------------------------------------------------------- *)
 
-(* The main effect of an abstraction is to cause the environment to be enriched
-   when the abstraction is traversed. As different kinds of traversals maintain
-   different types of environments, we offer a variety of functions that enrich
-   an environment. These functions are ready for use in a visitor. *)
+(* The main effect of an abstraction is to cause the environment to be
+   enriched when the abstraction is traversed. The following classes define
+   where the environment is enriched. That said, they do not know the type of
+   the environment, and do not know how it is enriched; the latter task is
+   delegated to virtual methods, such as [extend]. *)
 
-(* -------------------------------------------------------------------------- *)
+class virtual ['self] iter = object (self : 'self)
 
-module Generic : sig
+  method virtual extend: 'bn -> 'env -> 'env
 
-  val iter:
-    ('bn -> 'env -> 'env) ->
+  method visit_abstraction: 'term .
+    _ ->
     ('env -> 'term -> unit) ->
     'env -> ('bn, 'term) abstraction -> unit
-
-  val map:
-    ('bn1 -> 'env -> 'bn2 * 'env) ->
-    ('env -> 'term1 -> 'term2) ->
-    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction
-
-  val reduce:
-    ('bn -> 'env -> 'env) ->
-    ('bn -> 'a -> 'a) ->
-    ('env -> 'term -> 'a) ->
-    'env -> ('bn, 'term) abstraction -> 'a
-
-  val iter2:
-    ('bn1 -> 'bn2 -> 'env -> 'env) ->
-    ('env -> 'term1 -> 'term2 -> unit) ->
-    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> unit
-
-end = struct
-
-  let iter extend f env (x, body) =
-    let env' = extend x env in
-    f env' body
-
-  let map extend f env (x, body) =
-    let x', env' = extend x env in
-    x', f env' body
-
-  let reduce extend restrict f env (x, body) =
-    let env' = extend x env in
-    restrict x (f env' body)
-
-  let iter2 extend f env (x1, body1) (x2, body2) =
-    let env' = extend x1 x2 env in
-    f env' body1 body2
+  = fun _ f env (x, body) ->
+      let env' = self#extend x env in
+      f env' body
 
 end
 
+class virtual ['self] map = object (self : 'self)
+
+  method virtual extend: 'bn1 -> 'env -> 'bn2 * 'env
+
+  method visit_abstraction: 'term1 'term2 .
+    _ ->
+    ('env -> 'term1 -> 'term2) ->
+    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction
+  = fun _ f env (x, body) ->
+      let x', env' = self#extend x env in
+      x', f env' body
+
+end
+
+class virtual ['self] reduce = object (self : 'self)
+
+  method virtual extend: 'bn -> 'env -> 'env
+
+  method virtual restrict: 'bn -> 'z -> 'z
+
+  method visit_abstraction: 'term .
+    _ ->
+    ('env -> 'term -> 'z) ->
+    'env -> ('bn, 'term) abstraction -> 'z
+  = fun _ f env (x, body) ->
+      let env' = self#extend x env in
+      self#restrict x (f env' body)
+
+end
+
+class virtual ['self] iter2 = object (self : 'self)
+
+  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
+
+  method visit_abstraction: 'term1 'term2 .
+    _ ->
+    ('env -> 'term1 -> 'term2 -> unit) ->
+    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> unit
+  = fun _ f env (x1, body1) (x2, body2) ->
+      let env' = self#extend x1 x2 env in
+      f env' body1 body2
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
 (* A size computation. *)
@@ -490,3 +507,228 @@ module Wf = struct
 
 end
 (* TEMPORARY could construct error messages *)
+ *)
+(*
+module Size : sig
+
+  type env = unit
+
+  module Abstraction : sig
+    val reduce:
+      _ ->
+      (env -> 'term -> int) ->
+      env -> (_, 'term) abstraction -> int
+  end
+
+  module Fn : sig
+    val reduce: env -> _ -> int
+  end
+
+end
+
+module Show : sig
+
+  type env = unit
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (Atom.t, 'term1) abstraction -> (string, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> string
+  end
+
+end
+
+module String2Atom : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (string, 'term1) abstraction -> (Atom.t, 'term2) abstraction
+  end
+
+  exception Unbound of string
+
+  module Fn : sig
+    val map: env -> string -> Atom.t
+  end
+
+end
+
+module Atom2String : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (Atom.t, 'term1) abstraction -> (string, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> string
+  end
+
+end
+
+module Atom2Unit : sig
+
+  type env
+
+  val empty: Atom.Set.t ref -> env
+  val extend: Atom.t -> env -> env
+
+  module Abstraction : sig
+    val iter :
+      _ ->
+      (env -> 'term -> unit) ->
+      env -> (Atom.t, 'term) abstraction -> unit
+  end
+
+  module Fn : sig
+    val iter: env -> Atom.t -> unit
+  end
+
+end
+
+module Fa : sig
+
+  type env = unit
+
+  module Abstraction : sig
+    val reduce:
+      _ ->
+      (env -> 'term -> Atom.Set.t) ->
+      env -> (Atom.t, 'term) abstraction -> Atom.Set.t
+  end
+
+  module Fn : sig
+    val reduce: env -> Atom.t -> Atom.Set.t
+  end
+
+end
+
+module Atom2DeBruijn : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val map :
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (Atom.t, 'term1) abstraction -> (unit, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> int
+  end
+
+end
+
+module Atom2Atom : sig
+
+  type env = Atom.subst
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> Atom.t
+  end
+
+end
+
+module Atom2Something : sig
+
+  type 'term env =
+    'term Atom.Map.t
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      ('term env -> 'term1 -> 'term2) ->
+      'term env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: 'term env -> Atom.t -> Atom.t
+  end
+
+end
+
+module Copy : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val map:
+      _ ->
+      (env -> 'term1 -> 'term2) ->
+      env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
+  end
+
+  module Fn : sig
+    val map: env -> Atom.t -> Atom.t
+  end
+
+end
+
+module Equiv : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val iter2:
+      _ ->
+      (env -> 'term -> 'term -> unit) ->
+      env -> (Atom.t, 'term) abstraction -> (Atom.t, 'term) abstraction -> unit
+  end
+
+  module Fn : sig
+    val iter2:
+      env -> Atom.t -> Atom.t -> unit
+  end
+
+end
+
+module Wf : sig
+
+  type env
+
+  val empty: env
+
+  module Abstraction : sig
+    val iter:
+      _ ->
+      (env -> 'term -> unit) ->
+      env -> (Atom.t, 'term) abstraction -> unit
+  end
+
+  module Fn : sig
+    val iter: env -> Atom.t -> unit
+  end
+
+end
+ *)

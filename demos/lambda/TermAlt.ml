@@ -1,15 +1,3 @@
-module AbstractionKit = struct
-  class virtual ['self] iter = object (self : 'self)
-    method virtual extend: 'bn -> 'env -> 'env
-    method visit_abstraction: 'term .
-      _ -> ('env -> 'term -> unit) ->
-      'env -> ('bn, 'term) Abstraction.abstraction -> unit
-    = fun _ f env (x, body) ->
-        let env = self#extend x env in
-        f env body
-  end
-end
-
 module Foo = struct
   type env = Atom.Set.t * Atom.Set.t ref
   class ['self] kit = object
@@ -31,7 +19,7 @@ type ('fn, 'bn) term =
 
   [@@deriving
 
-    visitors { name = "iter"; variety = "iter"; ancestors = ["Bn.iter"; "AbstractionKit.iter"] }
+    visitors { name = "iter"; variety = "iter"; ancestors = ["Bn.iter"; "Abstraction.iter"] }
 
   ]
 
