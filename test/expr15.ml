@@ -1,18 +1,22 @@
-module SetupSize = struct
-  module Int = struct
-    let reduce _env _i = 1
-  end
-end
-
-module IntMonoid = struct
-  let zero = 0
-  let plus = (+)
+class ['self] int_monoid = object
+  method zero = 0
+  method plus = (+)
 end
 
 type expr =
   | EConst of int
   | EAdd of expr * expr
-  [@@deriving visitors { name = "Size"; variety = "reduce"; monoid = "IntMonoid"; path = ["SetupSize"]; final = true }]
+  [@@deriving visitors { name = "size"; variety = "reduce"; ancestors = ["int_monoid"] }]
+
 
 let size : expr -> int =
-  Size.visit_expr ()
+  let o = object
+    inherit [_] size as super
+    method! visit_EConst () (_ : int) = 0
+    method! visit_expr () e =
+      1 + super # visit_expr () e
+  end in
+  o # visit_expr ()
+
+let () =
+  Printf.printf "%d\n" (size (EAdd (EConst 22, EConst 11)))
