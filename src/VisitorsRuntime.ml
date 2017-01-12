@@ -15,8 +15,18 @@ let fail () =
 (* A virtual base class for monoids. *)
 
 class virtual ['z] monoid = object
-  method private virtual zero: 'z
-  method private virtual plus: 'z -> 'z -> 'z
+  method virtual zero: 'z
+  method virtual plus: 'z -> 'z -> 'z
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Common monoids. *)
+
+class ['z] addition_monoid = object
+  inherit ['z] monoid
+  method zero = 0
+  method plus = (+)
 end
 
 (* -------------------------------------------------------------------------- *)
