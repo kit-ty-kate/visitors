@@ -1,5 +1,8 @@
-(* This is a trivial kit. At an abstraction or at a name occurrence, nothing
-   special happens. The type of the environment is undetermined. *)
+(* This is a trivial kit. *)
+
+(* At an abstraction or at a name occurrence, nothing special happens. *)
+
+(* The type of the environment is undetermined. *)
 
 class ['self] iter = object (_ : 'self)
   method extend _x env = env
