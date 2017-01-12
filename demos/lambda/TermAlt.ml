@@ -80,3 +80,11 @@ let fa (t : nominal_term) : Atom.Set.t =
   let fa = new fa in
   fa # visit_term KitFa.empty t;
   fa # accu
+
+class fa' = object
+  inherit [_] reduce
+  inherit [_] KitFa.reduce
+end
+
+let fa' : nominal_term -> Atom.Set.t =
+  new fa' # visit_term ()

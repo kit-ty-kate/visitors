@@ -128,28 +128,6 @@ end
 (* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
-(* Free atom computation, viewed as a reduction. *)
-
-module Fa = struct
-
-  type env = unit
-
-  let extend _x env = env
-  let restrict = Atom.Set.remove
-
-  module Abstraction = struct
-    let reduce _ = Generic.reduce extend restrict
-  end
-
-  module Fn = struct
-    let reduce _env x =
-      Atom.Set.singleton x
-  end
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* During a conversion of nominal style to de Bruijn style, the environment is
    a pair of a map [m] of atoms to de Bruijn levels and a current de Bruijn
    level [n]. *)
@@ -361,23 +339,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module Fa : sig
-
-  type env = unit
-
-  module Abstraction : sig
-    val reduce:
-      _ ->
-      (env -> 'term -> Atom.Set.t) ->
-      env -> (Atom.t, 'term) abstraction -> Atom.Set.t
-  end
-
-  module Fn : sig
-    val reduce: env -> Atom.t -> Atom.Set.t
-  end
-
-end
-
 module Atom2DeBruijn : sig
 
   type env

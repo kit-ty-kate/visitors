@@ -27,8 +27,15 @@ val hash: atom -> int
 
 module Set : sig
   include Set.S with type elt = atom
-  val zero: t
-  val plus: t -> t -> t
+
+  (* Sets of atoms form a monoid under union. *)
+
+  class ['z] monoid : object
+    constraint 'z = t
+    method zero: 'z
+    method plus: 'z -> 'z -> 'z
+  end
+
   val show: t -> string
   val print: out_channel -> t -> unit
 end

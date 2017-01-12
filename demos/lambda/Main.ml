@@ -89,10 +89,7 @@ let print_fa t =
 let () =
   evaluate print_fa
 
-(* TEMPORARY
 let print_fa' t =
-  (* This uses the debugging term printer, not the hygienic term printer. *)
-  (* Similarly, it uses the debugging printer for sets of atoms. *)
   printf "fa'(%a) = %a\n%!"
     nhprint t
     Atom.Set.print (fa' t)
@@ -100,6 +97,7 @@ let print_fa' t =
 let () =
   evaluate print_fa'
 
+(* TEMPORARY
 let print_substitute1 u x t =
   printf "substituting %a for %a in %a = ...\n  %a\n%!"
     nhprint u

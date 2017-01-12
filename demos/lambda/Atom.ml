@@ -139,8 +139,12 @@ module Set = struct
 
   include Set.Make(Order)
 
-  let zero = empty
-  let plus = union
+  (* Sets of atoms form a monoid under union. *)
+
+  class ['z] monoid = object
+    method zero: 'z = empty
+    method plus: 'z -> 'z -> 'z = union
+  end
 
   (* These printing functions should be used for debugging purposes only. *)
 

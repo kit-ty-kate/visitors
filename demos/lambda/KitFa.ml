@@ -33,3 +33,24 @@ class ['self] iter = object (_ : 'self)
       accu <- Atom.Set.add x accu
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* In the bottom-up style, no environment is required. *)
+
+(* type env = unit *)
+
+class ['self] reduce = object (_ : 'self)
+
+  (* The monoid of sets of atoms is used. *)
+  inherit [_] Atom.Set.monoid
+
+  method extend _x () = ()
+
+  (* The atom [x] is removed from the set of free atoms when the scope of [x]
+     is exited. *)
+  method restrict = Atom.Set.remove
+
+  method visit_'fn () x = Atom.Set.singleton x
+
+end
