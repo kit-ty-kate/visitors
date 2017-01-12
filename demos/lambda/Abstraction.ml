@@ -15,9 +15,12 @@ type ('bn, 'term) abstraction =
 
 (* The main effect of an abstraction is to cause the environment to be
    enriched when the abstraction is traversed. The following classes define
-   where the environment is enriched. They do not know the type of the
-   environment, and do not know how it is enriched; the latter task is
-   delegated to virtual methods, such as [extend]. *)
+   where the environment is enriched. *)
+
+(* These classes do not know the type of the environment, and do not know how
+   it is enriched; the latter task is delegated to virtual methods, such as
+   [extend] and [restrict]. The implementation of these methods is provided
+   by separate ``kits''. *)
 
 (* We need one class per variety of visitor, which is a bit painful. *)
 
@@ -27,8 +30,8 @@ type ('bn, 'term) abstraction =
    visitors. *)
 
 (* The virtual methods [extend] and [restrict] are not polymorphic in the
-   types of bound names and environments. On the contrary, they may well
-   be specific to certain types. *)
+   types of bound names and environments. On the contrary, each kit comes
+   with certain specific types of bound names and environments. *)
 
 class virtual ['self] iter = object (self : 'self)
 
