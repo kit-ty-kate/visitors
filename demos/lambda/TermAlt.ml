@@ -1,15 +1,3 @@
-module Foo = struct
-  type env = Atom.Set.t * Atom.Set.t ref
-  class ['self] kit = object
-    method extend x (env, accu : env) =
-      let env = Atom.Set.add x env in
-      env, accu
-    method visit_'fn (env, accu : env) x =
-      if not (Atom.Set.mem x env) then
-          accu := Atom.Set.add x !accu
-  end
-end
-
 open Abstraction
 
 type ('fn, 'bn) term =
@@ -83,7 +71,12 @@ end
 let export : KitExport.env -> nominal_term -> raw_term =
   new export # visit_term
 
-class atom2unit = object
+class fa = object
   inherit [_] iter
-  inherit [_] Foo.kit
+  inherit [_] KitFa.iter
 end
+
+let fa (t : nominal_term) : Atom.Set.t =
+  let fa = new fa in
+  fa # visit_term KitFa.empty t;
+  fa # accu

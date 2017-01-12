@@ -128,35 +128,6 @@ end
 (* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
-(* During a free atom computation, the environment is a pair of a set of atoms
-   (the atoms that are currently in scope) and a reference to a set of atoms
-   (the free atoms that have been accumulated so far). *)
-
-module Atom2Unit = struct
-
-  type env = Atom.Set.t * Atom.Set.t ref
-
-  let empty accu =
-    Atom.Set.empty, accu
-
-  let extend x (env, accu) =
-    let env = Atom.Set.add x env in
-    env, accu
-
-  module Abstraction = struct
-    let iter _ = Generic.iter extend
-  end
-
-  module Fn = struct
-    let iter (env, accu) x =
-      if not (Atom.Set.mem x env) then
-        accu := Atom.Set.add x !accu
-  end
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* Free atom computation, viewed as a reduction. *)
 
 module Fa = struct
@@ -390,26 +361,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module Atom2Unit : sig
-
-  type env
-
-  val empty: Atom.Set.t ref -> env
-  val extend: Atom.t -> env -> env
-
-  module Abstraction : sig
-    val iter :
-      _ ->
-      (env -> 'term -> unit) ->
-      env -> (Atom.t, 'term) abstraction -> unit
-  end
-
-  module Fn : sig
-    val iter: env -> Atom.t -> unit
-  end
-
-end
-
 module Fa : sig
 
   type env = unit
