@@ -156,3 +156,48 @@ class ['self] iter : object
     'env -> unit -> unit
 
 end
+
+class ['self] map : object
+
+  method visit_array: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
+
+  method visit_bool: 'env .
+    'env -> bool -> bool
+
+  method visit_char: 'env .
+    'env -> char -> char
+
+  method visit_float: 'env .
+    'env -> float -> float
+
+  method visit_int: 'env .
+    'env -> int -> int
+
+  method visit_int32: 'env .
+    'env -> int32 -> int32
+
+  method visit_int64: 'env .
+    'env -> int64 -> int64
+
+  method visit_list: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
+
+  method visit_option: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
+
+  method visit_ref: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
+
+  method visit_result: 'env 'a 'b 'e 'f .
+    ('env -> 'a -> 'b) ->
+    ('env -> 'e -> 'f) ->
+     'env -> ('a, 'e) result -> ('b, 'f) result
+
+  method visit_string: 'env .
+    'env -> string -> string
+
+  method visit_unit: 'env .
+    'env -> unit -> unit
+
+end

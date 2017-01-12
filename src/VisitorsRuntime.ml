@@ -254,3 +254,61 @@ class ['self] iter = object
   = Unit.iter
 
 end
+
+class ['self] map = object
+
+  method visit_array: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
+  = Array.map
+
+  method visit_bool: 'env .
+    'env -> bool -> bool
+  = Bool.map
+
+  method visit_char: 'env .
+    'env -> char -> char
+  = Char.map
+
+  method visit_float: 'env .
+    'env -> float -> float
+  = Float.map
+
+  method visit_int: 'env .
+    'env -> int -> int
+  = Int.map
+
+  method visit_int32: 'env .
+    'env -> int32 -> int32
+  = Int32.map
+
+  method visit_int64: 'env .
+    'env -> int64 -> int64
+  = Int64.map
+
+  method visit_list: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
+  = List.map
+
+  method visit_option: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
+  = Option.map
+
+  method visit_ref: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
+  = Ref.map
+
+  method visit_result: 'env 'a 'b 'e 'f .
+    ('env -> 'a -> 'b) ->
+    ('env -> 'e -> 'f) ->
+     'env -> ('a, 'e) result -> ('b, 'f) result
+  = Result.map
+
+  method visit_string: 'env .
+    'env -> string -> string
+  = String.map
+
+  method visit_unit: 'env .
+    'env -> unit -> unit
+  = Unit.map
+
+end
