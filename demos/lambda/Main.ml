@@ -1,6 +1,6 @@
-open Printf
-open Term
-open Toolbox
+(* open Printf *)
+open TermAlt
+(* open Toolbox *)
 
 (* Sample terms. *)
 
@@ -13,6 +13,7 @@ let y =
 let id =
   TLambda (x, TVar x)
 
+(* TEMPORARY
 let delta_body =
   TApp (TVar x, TVar x)
 
@@ -115,4 +116,4 @@ let print_wf t =
 let () =
   evaluate print_wf
 
-open TermAlt (* TEMPORARY *)
+ *)

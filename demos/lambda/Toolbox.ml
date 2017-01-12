@@ -1,3 +1,5 @@
+(*
+
 let size (t : (_, _) Term.term) : int =
   let o = object
     inherit [_] Term.size as super
@@ -84,3 +86,5 @@ let wf (t : Term.nominal_term) : bool =
     true
   with VisitorsRuntime.StructuralMismatch ->
     false
+
+ *)

@@ -1,5 +1,3 @@
-type void
-
 (* -------------------------------------------------------------------------- *)
 
 (* A universal type of single-name abstractions. *)
@@ -19,20 +17,6 @@ type ('bn, 'term) abstraction =
    when the abstraction is traversed. As different kinds of traversals maintain
    different types of environments, we offer a variety of functions that enrich
    an environment. These functions are ready for use in a visitor. *)
-
-(* -------------------------------------------------------------------------- *)
-
-(* The functions associated with the type variable ['bn] are never invoked. *)
-(* TEMPORARY explain why *)
-
-module Bn = struct
-  let iter _env _x = assert false
-  let map _env _x = assert false
-  let iter2 _env _x1 _x2 = assert false
-  let map2 _env _x1 _x2 = assert false
-  let reduce _env _x = assert false
-  let reduce2 _env _x1 _x2 = assert false
-end
 
 (* -------------------------------------------------------------------------- *)
 

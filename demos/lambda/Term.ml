@@ -5,6 +5,7 @@ type ('fn, 'bn) term =
   | TLambda of ('bn, ('fn, 'bn) term) abstraction
   | TApp of ('fn, 'bn) term * ('fn, 'bn) term
 
+(*
   [@@deriving
 
     visitors { name = "Fa";
@@ -56,7 +57,7 @@ type ('fn, 'bn) term =
                freeze = ["bn"; "fn"]; final = true }
 
   ]
-
+ *)
 type raw_term =
   (string, string) term
 

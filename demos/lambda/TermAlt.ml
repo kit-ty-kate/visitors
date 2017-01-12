@@ -1,11 +1,3 @@
-type void
-
-module BnKit = struct
-  class ['self] iter = object (self : 'self)
-    method visit_'bn (_env : void) (_x : void) : void = assert false
-  end
-end
-
 module AbstractionKit = struct
   class virtual ['self] iter = object (self : 'self)
     method virtual extend: 'bn -> 'env -> 'env
@@ -39,7 +31,7 @@ type ('fn, 'bn) term =
 
   [@@deriving
 
-    visitors { name = "iter"; variety = "iter"; ancestors = ["BnKit.iter"; "AbstractionKit.iter"] }
+    visitors { name = "iter"; variety = "iter"; ancestors = ["Bn.iter"; "AbstractionKit.iter"] }
 
   ]
 

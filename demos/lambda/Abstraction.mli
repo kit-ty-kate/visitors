@@ -2,20 +2,10 @@
    the type [abstraction], but also ready-made traversal kits which deal
    with free names and abstractions. *)
 
-type void
-
 type ('bn, 'term) abstraction =
   'bn * 'term
 
-module Bn : sig
-  val iter: void -> void -> 'a
-  val map: void -> void -> 'a
-  val reduce: void -> void -> 'a
-  val iter2: void -> void -> void -> 'a
-  val map2: void -> void -> void -> 'a
-  val reduce2: void -> void -> void -> 'a
-end
-
+(*
 module Size : sig
 
   type env = unit
@@ -238,3 +228,4 @@ module Wf : sig
   end
 
 end
+ *)
