@@ -10,6 +10,9 @@ Use private methods in some (hand-written) classes,
   including VisitorsRuntime and certain kits?
 Perhaps certain auxiliary generated methods could be private, too.
 
+Might wish to allow ancestors to be not just class names
+  but class expressions (e.g. a class name applied to some values).
+
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
 
