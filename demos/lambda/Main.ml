@@ -1,6 +1,5 @@
 open Printf
 open TermAlt
-(* open Toolbox TEMPORARY *)
 
 (* Sample terms. *)
 
@@ -130,7 +129,6 @@ let () =
   ;
   ()
 
-(*
 let print_wf t =
   printf "wf(%a) = %b\n%!"
     nhprint t
@@ -138,5 +136,3 @@ let print_wf t =
 
 let () =
   evaluate print_wf
-
- *)
