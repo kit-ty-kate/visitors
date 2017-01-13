@@ -6,6 +6,9 @@
 
 (* TEMPORARY move the low-level code to [Atom]? *)
 
+module StringMap =
+  Map.Make(String)
+
 type env = {
   graph: string Atom.Map.t;
   codomain: int StringMap.t;

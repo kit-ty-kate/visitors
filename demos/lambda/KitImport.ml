@@ -3,6 +3,9 @@
 
 (* We impose the GUH by mapping each binding occurrence to a fresh atom. *)
 
+module StringMap =
+  Map.Make(String)
+
 type env =
   Atom.t StringMap.t
 

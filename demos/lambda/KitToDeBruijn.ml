@@ -55,7 +55,7 @@ end
 (* Instantiate the functor for strings and for atoms. *)
 
 module String =
-  Make(StringMap)
+  Make(Map.Make(String))
 
 module Atom =
   Make(Atom.Map)
