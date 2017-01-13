@@ -30,6 +30,10 @@ type nominal_term =
 type db_term =
   (int, unit) term
 
+(* TEMPORARY some of the following functions are restricted to closed
+   terms, and should not be. Plus, the code below should be moved to
+   another module (and we should try to make it a functor). *)
+
 class ['self] size = object (_ : 'self)
   inherit [_] reduce as super
   inherit [_] KitTrivial.reduce
