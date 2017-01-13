@@ -1,4 +1,4 @@
-open TermAlt
+open Term
 
 (* TEMPORARY some of the following functions are restricted to closed
    terms, and should not be. *)

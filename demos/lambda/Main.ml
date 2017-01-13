@@ -1,5 +1,5 @@
 open Printf
-open TermAlt
+open Term
 open Toolbox
 
 (* Sample terms. *)

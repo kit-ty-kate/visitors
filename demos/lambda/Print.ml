@@ -1,6 +1,6 @@
 open PPrint
 open PPrintAux
-open TermAlt
+open Term
 
 let rec term0 t =
   match t with
