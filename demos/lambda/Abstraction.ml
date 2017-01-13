@@ -33,19 +33,8 @@ type ('bn, 'term) abstraction =
    types of bound names and environments. On the contrary, each kit comes
    with certain specific types of bound names and environments. *)
 
-class virtual ['self] iter = object (self : 'self)
-
-  method virtual extend: 'bn -> 'env -> 'env
-
-  method visit_abstraction: 'term .
-    _ ->
-    ('env -> 'term -> unit) ->
-    'env -> ('bn, 'term) abstraction -> unit
-  = fun _ f env (x, body) ->
-      let env' = self#extend x env in
-      f env' body
-
-end
+(* Because [iter] and [iter2] are special cases of [reduce] and [reduce2],
+   respectively, we define them that way, so as to save effort. *)
 
 class virtual ['self] map = object (self : 'self)
 
@@ -77,17 +66,11 @@ class virtual ['self] reduce = object (self : 'self)
 
 end
 
-class virtual ['self] iter2 = object (self : 'self)
+class virtual ['self] iter = object (_ : 'self)
 
-  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
+  inherit ['self] reduce
 
-  method visit_abstraction: 'term1 'term2 .
-    _ ->
-    ('env -> 'term1 -> 'term2 -> unit) ->
-    'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> unit
-  = fun _ f env (x1, body1) (x2, body2) ->
-      let env' = self#extend x1 x2 env in
-      f env' body1 body2
+  method restrict _ () = ()
 
 end
 
@@ -118,5 +101,13 @@ class virtual ['self] reduce2 = object (self : 'self)
   = fun _ f env (x1, body1) (x2, body2) ->
       let env' = self#extend x1 x2 env in
       self#restrict x1 x2 (f env' body1 body2)
+
+end
+
+class virtual ['self] iter2 = object (_ : 'self)
+
+  inherit ['self] reduce2
+
+  method restrict _ _ () = ()
 
 end
