@@ -15,6 +15,9 @@ type ('fn, 'bn) term =
     ,
     visitors { name = "reduce"; variety = "reduce";
                ancestors = ["Bn.reduce"; "Abstraction.reduce"] }
+    ,
+    visitors { name = "iter2"; variety = "iter2";
+               ancestors = ["Bn.iter2"; "Abstraction.iter2"] }
 
   ]
 
@@ -147,3 +150,11 @@ let subst1 u x t =
    either a static affinity hypothesis (each variable in the
    domain of [sigma] occurs at most once in [t]) or a dynamic
    occurrence counting mechanism. *)
+
+class equiv = object
+  inherit [_] iter2
+  inherit [_] KitEquiv.iter2
+end
+
+let equiv : nominal_term -> nominal_term -> bool =
+  KitEquiv.wrap2 (new equiv # visit_term KitEquiv.empty)
