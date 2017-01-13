@@ -97,20 +97,20 @@ let print_fa' t =
 let () =
   evaluate print_fa'
 
-(* TEMPORARY
-let print_substitute1 u x t =
+let print_subst1 u x t =
   printf "substituting %a for %a in %a = ...\n  %a\n%!"
     nhprint u
     Atom.print x
     nhprint t
-    nhprint (substitute1 u x t)
+    nhprint (subst1 u x t)
 
 let () =
-  print_substitute1 (TVar y) x (TVar x);
-  print_substitute1 (TVar y) x (TVar y);
-  print_substitute1 delta x delta_body;
+  print_subst1 (TVar y) x (TVar x);
+  print_subst1 (TVar y) x (TVar y);
+  print_subst1 delta x delta_body;
   ()
 
+(*
 let print_equiv t1 t2 =
   printf "equiv: %a ~ %a = %b\n%!"
     nhprint t1

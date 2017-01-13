@@ -115,3 +115,35 @@ let subst_atom : Atom.subst -> nominal_term -> nominal_term =
 
 let subst_atom1 u x t =
   subst_atom (Atom.Subst.singleton x u) t
+
+class subst = object
+  inherit [_] map
+  inherit [_] KitSubst.map
+  method! visit_TVar sigma x =
+    match Atom.Map.find x sigma with
+    | u ->
+        (* Do not forget to copy the term that is being grafted, so as
+           to maintain the GUH. *)
+        copy u
+    | exception Not_found ->
+        TVar x
+end
+
+type substitution =
+  nominal_term Atom.Map.t
+
+let subst : substitution -> nominal_term -> nominal_term =
+  new subst # visit_term
+
+let subst1 u x t =
+  subst (Atom.Map.singleton x u) t
+
+(* In [substitute], the precondition is [sigma * t]
+   and the postcondition is [sigma * \result].
+   The caller loses the permission to use [t]. *)
+(* One could design other variants, e.g. one where the caller
+   loses [sigma], so copying is not needed when a variable [x]
+   is encountered for the first time. In that case, we need
+   either a static affinity hypothesis (each variable in the
+   domain of [sigma] occurs at most once in [t]) or a dynamic
+   occurrence counting mechanism. *)

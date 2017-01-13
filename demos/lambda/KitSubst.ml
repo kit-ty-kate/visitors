@@ -25,4 +25,4 @@ class ['self] map = object (_ : 'self)
 end
 
 (* TEMPORARY could we abandon the runtime check and use [KitTrivial]
-   instead? *)
+   instead? should [KitSubstAtom] be a special case of [KiSubst]? *)

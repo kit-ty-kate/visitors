@@ -128,42 +128,6 @@ end
 (* TEMPORARY
 (* -------------------------------------------------------------------------- *)
 
-(* Substitution of things (say, terms) for free atoms. *)
-
-(* TEMPORARY note that the environment would be unused if we removed the
-   dynamic check. Then, we could use [Invisible]. *)
-
-module Atom2Something = struct
-
-  type 'term env =
-    'term Atom.Map.t
-
-  let extend x sigma =
-    (* We would like to check that [x] is fresh for [sigma], but can only
-       perform the domain check. The codomain check cannot be performed
-       since the type of things is abstract here. *)
-    assert (not (Atom.Map.mem x sigma));
-    (* Since [x] is fresh for [sigma], no capture is possible. Thus, no
-       freshening of the bound name is required. Thus, we can keep the
-       substitution [sigma], unchanged, under the binder. *)
-    x, sigma
-
-  module Abstraction = struct
-    let map _ = Generic.map extend
-  end
-
-  module Fn = struct
-    let map _sigma _x =
-      (* We cannot deal with the case where [x] is outside the domain of
-         [sigma]. Really, this function should not be called; instead,
-         the user should override the [visitor] method for variable nodes. *)
-      assert false
-  end
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* Alpha-equivalence test. *)
 
 module Equiv = struct
@@ -257,24 +221,6 @@ end
 (* TEMPORARY could construct error messages *)
  *)
 (*
-module Atom2Something : sig
-
-  type 'term env =
-    'term Atom.Map.t
-
-  module Abstraction : sig
-    val map:
-      _ ->
-      ('term env -> 'term1 -> 'term2) ->
-      'term env -> (Atom.t, 'term1) abstraction -> (Atom.t, 'term2) abstraction
-  end
-
-  module Fn : sig
-    val map: 'term env -> Atom.t -> Atom.t
-  end
-
-end
-
 module Equiv : sig
 
   type env
