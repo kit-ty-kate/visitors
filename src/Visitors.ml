@@ -496,7 +496,6 @@ let visit_decl (decl : type_declaration) : expression =
         Exp.case
           (ptuple (pvars xs))
           (hook (failure_method tycon) (env :: xs)
-            (* This method ignores its arguments, which can cause warnings. *)
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
