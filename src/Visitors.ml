@@ -27,7 +27,9 @@ include ClassFieldStore(struct end)
 let generate =
   generate X.name
 
-(* The following bring [warning] and [warnings] into scope. *)
+(* -------------------------------------------------------------------------- *)
+
+(* The following brings [warning] and [warnings] into scope. *)
 
 include WarningStore(struct end)
 
