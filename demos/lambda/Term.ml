@@ -7,16 +7,16 @@ type ('fn, 'bn) term =
 
   [@@deriving
 
-    visitors { name = "iter"; variety = "iter";
+    visitors { name = "iter"; variety = "iter"; public = ["visit_term"];
                ancestors = ["Bn.iter"; "Abstraction.iter"] }
     ,
-    visitors { name = "map"; variety = "map";
+    visitors { name = "map"; variety = "map"; public = ["visit_term"];
                ancestors = ["Bn.map"; "Abstraction.map"] }
     ,
-    visitors { name = "reduce"; variety = "reduce";
+    visitors { name = "reduce"; variety = "reduce"; public = ["visit_term"];
                ancestors = ["Bn.reduce"; "Abstraction.reduce"] }
     ,
-    visitors { name = "iter2"; variety = "iter2";
+    visitors { name = "iter2"; variety = "iter2"; public = ["visit_term"];
                ancestors = ["Bn.iter2"; "Abstraction.iter2"] }
 
   ]
