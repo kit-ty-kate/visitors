@@ -15,8 +15,8 @@ let fail () =
 (* A virtual base class for monoids. *)
 
 class virtual ['z] monoid = object
-  method virtual zero: 'z
-  method virtual plus: 'z -> 'z -> 'z
+  method private virtual zero: 'z
+  method private virtual plus: 'z -> 'z -> 'z
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -25,8 +25,8 @@ end
 
 class ['z] addition_monoid = object
   inherit ['z] monoid
-  method zero = 0
-  method plus = (+)
+  method private zero = 0
+  method private plus = (+)
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -221,57 +221,57 @@ module Unit = Inert
 
 class ['self] iter = object
 
-  method visit_array: 'env 'a .
+  method private visit_array: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a array -> unit
   = Array.iter
 
-  method visit_bool: 'env .
+  method private visit_bool: 'env .
     'env -> bool -> unit
   = Bool.iter
 
-  method visit_char: 'env .
+  method private visit_char: 'env .
     'env -> char -> unit
   = Char.iter
 
-  method visit_float: 'env .
+  method private visit_float: 'env .
     'env -> float -> unit
   = Float.iter
 
-  method visit_int: 'env .
+  method private visit_int: 'env .
     'env -> int -> unit
   = Int.iter
 
-  method visit_int32: 'env .
+  method private visit_int32: 'env .
     'env -> int32 -> unit
   = Int32.iter
 
-  method visit_int64: 'env .
+  method private visit_int64: 'env .
     'env -> int64 -> unit
   = Int64.iter
 
-  method visit_list: 'env 'a .
+  method private visit_list: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a list -> unit
   = List.iter
 
-  method visit_option: 'env 'a .
+  method private visit_option: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a option -> unit
   = Option.iter
 
-  method visit_ref: 'env 'a .
+  method private visit_ref: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a ref -> unit
   = Ref.iter
 
-  method visit_result: 'env 'a 'e.
+  method private visit_result: 'env 'a 'e.
     ('env -> 'a -> unit) ->
     ('env -> 'e -> unit) ->
      'env -> ('a, 'e) result -> unit
   = Result.iter
 
-  method visit_string: 'env .
+  method private visit_string: 'env .
     'env -> string -> unit
   = String.iter
 
-  method visit_unit: 'env .
+  method private visit_unit: 'env .
     'env -> unit -> unit
   = Unit.iter
 
@@ -279,57 +279,57 @@ end
 
 class ['self] map = object
 
-  method visit_array: 'env 'a 'b .
+  method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
   = Array.map
 
-  method visit_bool: 'env .
+  method private visit_bool: 'env .
     'env -> bool -> bool
   = Bool.map
 
-  method visit_char: 'env .
+  method private visit_char: 'env .
     'env -> char -> char
   = Char.map
 
-  method visit_float: 'env .
+  method private visit_float: 'env .
     'env -> float -> float
   = Float.map
 
-  method visit_int: 'env .
+  method private visit_int: 'env .
     'env -> int -> int
   = Int.map
 
-  method visit_int32: 'env .
+  method private visit_int32: 'env .
     'env -> int32 -> int32
   = Int32.map
 
-  method visit_int64: 'env .
+  method private visit_int64: 'env .
     'env -> int64 -> int64
   = Int64.map
 
-  method visit_list: 'env 'a 'b .
+  method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
   = List.map
 
-  method visit_option: 'env 'a 'b .
+  method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
   = Option.map
 
-  method visit_ref: 'env 'a 'b .
+  method private visit_ref: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
   = Ref.map
 
-  method visit_result: 'env 'a 'b 'e 'f .
+  method private visit_result: 'env 'a 'b 'e 'f .
     ('env -> 'a -> 'b) ->
     ('env -> 'e -> 'f) ->
      'env -> ('a, 'e) result -> ('b, 'f) result
   = Result.map
 
-  method visit_string: 'env .
+  method private visit_string: 'env .
     'env -> string -> string
   = String.map
 
-  method visit_unit: 'env .
+  method private visit_unit: 'env .
     'env -> unit -> unit
   = Unit.map
 
@@ -339,41 +339,41 @@ class virtual ['self] reduce = object (self : 'self)
 
   inherit ['z] monoid
 
-  method visit_array: 'env 'a .
+  method private visit_array: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
   = fun f env xs ->
       A.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
 
-  method visit_bool: 'env .
+  method private visit_bool: 'env .
     'env -> bool -> 'z
   = fun _env _ -> self#zero
 
-  method visit_char: 'env .
+  method private visit_char: 'env .
     'env -> char -> 'z
   = fun _env _ -> self#zero
 
-  method visit_float: 'env .
+  method private visit_float: 'env .
     'env -> float -> 'z
   = fun _env _ -> self#zero
 
-  method visit_int: 'env .
+  method private visit_int: 'env .
     'env -> int -> 'z
   = fun _env _ -> self#zero
 
-  method visit_int32: 'env .
+  method private visit_int32: 'env .
     'env -> int32 -> 'z
   = fun _env _ -> self#zero
 
-  method visit_int64: 'env .
+  method private visit_int64: 'env .
     'env -> int64 -> 'z
   = fun _env _ -> self#zero
 
-  method visit_list: 'env 'a .
+  method private visit_list: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
   = fun f env xs ->
       L.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
 
-  method visit_option: 'env 'a .
+  method private visit_option: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
   = fun f env ox ->
       match ox with
@@ -382,12 +382,12 @@ class virtual ['self] reduce = object (self : 'self)
       | None ->
           self#zero
 
-  method visit_ref: 'env 'a .
+  method private visit_ref: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a ref -> 'z
   = fun f env rx ->
       f env !rx
 
-  method visit_result: 'env 'a 'e .
+  method private visit_result: 'env 'a 'e .
     ('env -> 'a -> 'z) ->
     ('env -> 'e -> 'z) ->
      'env -> ('a, 'e) result -> 'z
@@ -398,11 +398,11 @@ class virtual ['self] reduce = object (self : 'self)
       | Error b ->
           g env b
 
-  method visit_string: 'env .
+  method private visit_string: 'env .
     'env -> string -> 'z
   = fun _env _ -> self#zero
 
-  method visit_unit: 'env .
+  method private visit_unit: 'env .
     'env -> unit -> 'z
   = fun _env _ -> self#zero
 
@@ -410,57 +410,57 @@ end
 
 class ['self] iter2 = object
 
-  method visit_array: 'env 'a 'b .
+  method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a array -> 'b array -> unit
   = Array.iter2
 
-  method visit_bool: 'env .
+  method private visit_bool: 'env .
     'env -> bool -> bool -> unit
   = Bool.iter2
 
-  method visit_char: 'env .
+  method private visit_char: 'env .
     'env -> char -> char -> unit
   = Char.iter2
 
-  method visit_float: 'env .
+  method private visit_float: 'env .
     'env -> float -> float -> unit
   = Float.iter2
 
-  method visit_int: 'env .
+  method private visit_int: 'env .
     'env -> int -> int -> unit
   = Int.iter2
 
-  method visit_int32: 'env .
+  method private visit_int32: 'env .
     'env -> int32 -> int32 -> unit
   = Int32.iter2
 
-  method visit_int64: 'env .
+  method private visit_int64: 'env .
     'env -> int64 -> int64 -> unit
   = Int64.iter2
 
-  method visit_list: 'env 'a 'b .
+  method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
   = List.iter2
 
-  method visit_option: 'env 'a 'b .
+  method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
   = Option.iter2
 
-  method visit_ref: 'env 'a 'b .
+  method private visit_ref: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a ref -> 'b ref -> unit
   = Ref.iter2
 
-  method visit_result: 'env 'a 'b 'e 'f .
+  method private visit_result: 'env 'a 'b 'e 'f .
     ('env -> 'a -> 'b -> unit) ->
     ('env -> 'e -> 'f -> unit) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> unit
   = Result.iter2
 
-  method visit_string: 'env .
+  method private visit_string: 'env .
     'env -> string -> string -> unit
   = String.iter2
 
-  method visit_unit: 'env .
+  method private visit_unit: 'env .
     'env -> unit -> unit -> unit
   = Unit.iter2
 
@@ -468,57 +468,57 @@ end
 
 class ['self] map2 = object
 
-  method visit_array: 'env 'a 'b 'c .
+  method private visit_array: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a array -> 'b array -> 'c array
   = Array.map2
 
-  method visit_bool: 'env .
+  method private visit_bool: 'env .
     'env -> bool -> bool -> bool
   = Bool.map2
 
-  method visit_char: 'env .
+  method private visit_char: 'env .
     'env -> char -> char -> char
   = Char.map2
 
-  method visit_float: 'env .
+  method private visit_float: 'env .
     'env -> float -> float -> float
   = Float.map2
 
-  method visit_int: 'env .
+  method private visit_int: 'env .
     'env -> int -> int -> int
   = Int.map2
 
-  method visit_int32: 'env .
+  method private visit_int32: 'env .
     'env -> int32 -> int32 -> int32
   = Int32.map2
 
-  method visit_int64: 'env .
+  method private visit_int64: 'env .
     'env -> int64 -> int64 -> int64
   = Int64.map2
 
-  method visit_list: 'env 'a 'b 'c .
+  method private visit_list: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
   = List.map2
 
-  method visit_option: 'env 'a 'b 'c .
+  method private visit_option: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
   = Option.map2
 
-  method visit_ref: 'env 'a 'b 'c .
+  method private visit_ref: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a ref -> 'b ref -> 'c ref
   = Ref.map2
 
-  method visit_result: 'env 'a 'b 'c 'e 'f 'g .
+  method private visit_result: 'env 'a 'b 'c 'e 'f 'g .
     ('env -> 'a -> 'b -> 'c) ->
     ('env -> 'e -> 'f -> 'g) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> ('c, 'g) result
   = Result.map2
 
-  method visit_string: 'env .
+  method private visit_string: 'env .
     'env -> string -> string -> string
   = String.map2
 
-  method visit_unit: 'env .
+  method private visit_unit: 'env .
     'env -> unit -> unit -> unit
   = Unit.map2
 
@@ -528,50 +528,50 @@ class virtual ['self] reduce2 = object (self : 'self)
 
   inherit ['z] monoid
 
-  method visit_array: 'env 'a 'b .
+  method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a array -> 'b array -> 'z
   = fun f env xs1 xs2 ->
       (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2]. *)
       if A.length xs1 = A.length xs2 then
         let z = ref self#zero in
         A.iter2 (fun x1 x2 ->
-            z := self#plus !z (f env x1 x2)
+          z := self#plus !z (f env x1 x2)
         ) xs1 xs2;
         !z
       else
         fail()
 
-  method visit_bool: 'env .
+  method private visit_bool: 'env .
     'env -> bool -> bool -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_char: 'env .
+  method private visit_char: 'env .
     'env -> char -> char -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_float: 'env .
+  method private visit_float: 'env .
     'env -> float -> float -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_int: 'env .
+  method private visit_int: 'env .
     'env -> int -> int -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_int32: 'env .
+  method private visit_int32: 'env .
     'env -> int32 -> int32 -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_int64: 'env .
+  method private visit_int64: 'env .
     'env -> int64 -> int64 -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_list: 'env 'a 'b .
+  method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a list -> 'b list -> 'z
   = fun f env xs1 xs2 ->
       if L.length xs1 = L.length xs2 then
@@ -579,7 +579,7 @@ class virtual ['self] reduce2 = object (self : 'self)
       else
         fail()
 
-  method visit_option: 'env 'a 'b .
+  method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a option -> 'b option -> 'z
   = fun f env ox1 ox2 ->
       match ox1, ox2 with
@@ -591,12 +591,12 @@ class virtual ['self] reduce2 = object (self : 'self)
       | None, Some _ ->
           fail()
 
-  method visit_ref: 'env 'a 'b .
+  method private visit_ref: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a ref -> 'b ref -> 'z
   = fun f env rx1 rx2 ->
       f env !rx1 !rx2
 
-  method visit_result: 'env 'a 'b 'e 'f .
+  method private visit_result: 'env 'a 'b 'e 'f .
     ('env -> 'a -> 'b -> 'z) ->
     ('env -> 'e -> 'f -> 'z) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> 'z
@@ -610,12 +610,12 @@ class virtual ['self] reduce2 = object (self : 'self)
       | Error _, Ok _ ->
           fail()
 
-  method visit_string: 'env .
+  method private visit_string: 'env .
     'env -> string -> string -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method visit_unit: 'env .
+  method private visit_unit: 'env .
     'env -> unit -> unit -> 'z
   = fun _env () () ->
       self#zero
