@@ -2,6 +2,8 @@
 
 TODO (REALLY)
 
+Maybe a generated visitor should always be virtual.
+
 Maybe remove [freeze]?
 
 Use private methods in some (hand-written) classes,
