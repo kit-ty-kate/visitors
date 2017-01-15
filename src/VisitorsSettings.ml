@@ -70,6 +70,10 @@ module type SETTINGS = sig
      to [int t] but not to other instances of [t]. *)
   val irregular: bool
 
+  (* If [public] is present, then every method is declared private, except
+     the methods whose name appears in the list [public]. *)
+  val public: string list option
+
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -140,6 +144,7 @@ end)
   let concrete = ref None
   let freeze = ref []
   let irregular = ref false
+  let public = ref None
 
   (* Parse every option. *)
 
@@ -156,7 +161,9 @@ end)
       | "irregular" ->
           irregular := bool e
       | "name" ->
-          names := string e :: !names;
+          names := string e :: !names
+      | "public" ->
+          public := Some (strings e)
       | "variety" ->
           let v = string e in
           variety := Some v;
@@ -181,6 +188,7 @@ end)
   let concrete = !concrete
   let freeze = !freeze
   let irregular = !irregular
+  let public = !public
 
   (* Perform sanity checking. *)
 

@@ -301,17 +301,18 @@ let inherit_ (c : Longident.t) (tys : core_type list) : class_field =
 (* -------------------------------------------------------------------------- *)
 
 (* An algebraic data type of the methods that we generate. These include
-   concrete methods (with code) and virtual methods (without code). They
-   are public. The method type is not given -- it is inferred by OCaml. *)
+   concrete methods (with code) and virtual methods (without code). They may
+   be public or private. The method type is not given -- it is inferred by
+   OCaml. *)
 
 type meth =
-  Meth of methode * expression option
+  Meth of private_flag * methode * expression option
 
-let concrete_method m e =
-  Meth (m, Some e)
+let concrete_method p m e =
+  Meth (p, m, Some e)
 
-let virtual_method m =
-  Meth (m, None)
+let virtual_method p m =
+  Meth (p, m, None)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -327,10 +328,10 @@ let oe2cfk (oe : expression option) : class_field_kind =
   | None ->
       Cf.virtual_ (Typ.any())
 
-let meth2cf (Meth (m, oe)) : class_field =
-  Cf.method_ (mknoloc m) Public (oe2cfk oe)
+let meth2cf (Meth (p, m, oe)) : class_field =
+  Cf.method_ (mknoloc m) p (oe2cfk oe)
 
-let meth2vb (Meth (m, oe)) : value_binding =
+let meth2vb (Meth (_, m, oe)) : value_binding =
   match oe with
   | Some e ->
       Vb.mk (pvar m) e
@@ -345,7 +346,7 @@ let meth2vb (Meth (m, oe)) : value_binding =
 
 (* [method_name] extracts a method name out of a method description. *)
 
-let method_name (Meth (m, _)) : string =
+let method_name (Meth (_, m, _)) : string =
   m
 
 (* -------------------------------------------------------------------------- *)
@@ -353,7 +354,7 @@ let method_name (Meth (m, _)) : string =
 (* [is_virtual] tests whether a method description represents a virtual
    method. *)
 
-let is_virtual (Meth (_, oe)) : bool =
+let is_virtual (Meth (_, _, oe)) : bool =
   oe = None
 
 (* -------------------------------------------------------------------------- *)

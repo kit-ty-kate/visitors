@@ -22,15 +22,26 @@ let arity =
 
 (* -------------------------------------------------------------------------- *)
 
+(* If the [public] option is absent, then every method is public. If it is
+   present, then every method is private, unless its name occurs in the list
+   [X.public]. *)
+
+let visibility m =
+  match X.public with
+  | None ->
+      Public
+  | Some ms ->
+      if List.mem m ms then Public else Private
+
 (* The following brings [generate] and [dump] into scope. *)
 
 include ClassFieldStore(struct end)
 
 let generate_concrete_method m e =
-  generate X.name (concrete_method m e)
+  generate X.name (concrete_method (visibility m) m e)
 
 let generate_virtual_method m =
-  generate X.name (virtual_method m)
+  generate X.name (virtual_method (visibility m) m)
 
 (* -------------------------------------------------------------------------- *)
 
