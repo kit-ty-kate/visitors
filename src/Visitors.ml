@@ -20,12 +20,17 @@ module Setup (X : SETTINGS) = struct
 let arity =
   X.arity
 
+(* -------------------------------------------------------------------------- *)
+
 (* The following brings [generate] and [dump] into scope. *)
 
 include ClassFieldStore(struct end)
 
-let generate =
-  generate X.name
+let generate_concrete_method m e =
+  generate X.name (concrete_method m e)
+
+let generate_virtual_method m =
+  generate X.name (virtual_method m)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -273,7 +278,7 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
   (* Generate a method. The formal parameters [xs] don't need a type
      annotation: because this method has a call site, its type can be
      inferred. *)
-  generate (concrete_method m (lambdas xs e));
+  generate_concrete_method m (lambdas xs e);
   (* Construct a method call. *)
   call m (evars xs)
 
@@ -334,7 +339,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           env_in_scope
           { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
       else begin
-        generate (virtual_method (tyvar_visitor_method tv));
+        generate_virtual_method (tyvar_visitor_method tv);
         call
           (tyvar_visitor_method tv)
           []
@@ -526,11 +531,9 @@ let visit_decl (decl : type_declaration) : expression =
    no result. *)
 
 let type_decl (decl : type_declaration) : unit =
-  generate (
-    concrete_method
-      (tycon_visitor_method (Lident decl.ptype_name.txt))
-      (plambda (pvar env) (visit_decl decl))
-  )
+  generate_concrete_method
+    (tycon_visitor_method (Lident decl.ptype_name.txt))
+    (plambda (pvar env) (visit_decl decl))
 
 (* -------------------------------------------------------------------------- *)
 
