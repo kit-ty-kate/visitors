@@ -53,8 +53,8 @@ let lookup env a =
     assert false
 
 class ['self] map = object (_ : 'self)
-  method extend = extend
-  method visit_'fn = lookup
+  method private extend = extend
+  method private visit_'fn = lookup
 end
 
 (* TEMPORARY can we precompute fa(every subterm) ahead of time and

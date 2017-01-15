@@ -44,8 +44,8 @@ end) = struct
       assert false
 
   class ['self] map = object (_ : 'self)
-    method extend = extend
-    method visit_'fn = lookup
+    method private extend = extend
+    method private visit_'fn = lookup
   end
 
 end

@@ -18,10 +18,10 @@ let extend x sigma =
   x, sigma
 
 class ['self] map = object (_ : 'self)
-  method extend = extend
+  method private extend = extend
   (* [visit_'fn] is not implemented, as it is up to the user to identify
      variable nodes and replace them. *)
-  method visit_'fn _sigma _x = assert false
+  method private visit_'fn _sigma _x = assert false
 end
 
 (* TEMPORARY could we abandon the runtime check and use [KitTrivial]

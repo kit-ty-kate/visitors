@@ -5,20 +5,20 @@
 (* The type of the environment is undetermined. *)
 
 class ['self] iter = object (_ : 'self)
-  method extend _x env = env
-  method visit_'fn _env _x = ()
+  method private extend _x env = env
+  method private visit_'fn _env _x = ()
 end
 
 class ['self] map = object (_ : 'self)
-  method extend x env = x, env
-  method visit_'fn _env x = x
+  method private extend x env = x, env
+  method private visit_'fn _env x = x
 end
 
 class virtual ['self] reduce = object (self : 'self)
-  method virtual zero: _
-  method extend _x env = env
-  method restrict _x z = z
-  method visit_'fn _env _x = self#zero
+  method private virtual zero: _
+  method private extend _x env = env
+  method private restrict _x z = z
+  method private visit_'fn _env _x = self#zero
 end
 
 (* TEMPORARY iter2, map2, reduce2 *)

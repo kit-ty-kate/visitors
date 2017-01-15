@@ -19,6 +19,6 @@ let extend x sigma =
   x', sigma
 
 class ['self] map = object (_ : 'self)
-  method extend = extend
-  method visit_'fn = Atom.Subst.apply
+  method private extend = extend
+  method private visit_'fn = Atom.Subst.apply
 end

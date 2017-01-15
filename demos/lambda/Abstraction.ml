@@ -35,9 +35,9 @@ type ('bn, 'term) abstraction =
 
 class virtual ['self] iter = object (self : 'self)
 
-  method virtual extend: 'bn -> 'env -> 'env
+  method private virtual extend: 'bn -> 'env -> 'env
 
-  method visit_abstraction: 'term .
+  method private visit_abstraction: 'term .
     _ ->
     ('env -> 'term -> unit) ->
     'env -> ('bn, 'term) abstraction -> unit
@@ -49,9 +49,9 @@ end
 
 class virtual ['self] map = object (self : 'self)
 
-  method virtual extend: 'bn1 -> 'env -> 'bn2 * 'env
+  method private virtual extend: 'bn1 -> 'env -> 'bn2 * 'env
 
-  method visit_abstraction: 'term1 'term2 .
+  method private visit_abstraction: 'term1 'term2 .
     _ ->
     ('env -> 'term1 -> 'term2) ->
     'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction
@@ -63,11 +63,11 @@ end
 
 class virtual ['self] reduce = object (self : 'self)
 
-  method virtual extend: 'bn -> 'env -> 'env
+  method private virtual extend: 'bn -> 'env -> 'env
 
-  method virtual restrict: 'bn -> 'z -> 'z
+  method private virtual restrict: 'bn -> 'z -> 'z
 
-  method visit_abstraction: 'term .
+  method private visit_abstraction: 'term .
     _ ->
     ('env -> 'term -> 'z) ->
     'env -> ('bn, 'term) abstraction -> 'z
@@ -79,9 +79,9 @@ end
 
 class virtual ['self] iter2 = object (self : 'self)
 
-  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
+  method private virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
 
-  method visit_abstraction: 'term1 'term2 .
+  method private visit_abstraction: 'term1 'term2 .
     _ ->
     ('env -> 'term1 -> 'term2 -> unit) ->
     'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> unit
@@ -93,9 +93,9 @@ end
 
 class virtual ['self] map2 = object (self : 'self)
 
-  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'bn3 * 'env
+  method private virtual extend: 'bn1 -> 'bn2 -> 'env -> 'bn3 * 'env
 
-  method visit_abstraction: 'term1 'term2 'term3 .
+  method private visit_abstraction: 'term1 'term2 'term3 .
     _ ->
     ('env -> 'term1 -> 'term2 -> 'term3) ->
     'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> ('bn3, 'term3) abstraction
@@ -107,11 +107,11 @@ end
 
 class virtual ['self] reduce2 = object (self : 'self)
 
-  method virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
+  method private virtual extend: 'bn1 -> 'bn2 -> 'env -> 'env
 
-  method virtual restrict: 'bn1 -> 'bn2 -> 'z -> 'z
+  method private virtual restrict: 'bn1 -> 'bn2 -> 'z -> 'z
 
-  method visit_abstraction: 'term1 'term2 .
+  method private visit_abstraction: 'term1 'term2 .
     _ ->
     ('env -> 'term1 -> 'term2 -> 'z) ->
     'env -> ('bn1, 'term1) abstraction -> ('bn2, 'term2) abstraction -> 'z

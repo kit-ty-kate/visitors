@@ -26,6 +26,6 @@ let lookup (env : env) (x : string) : Atom.t =
     raise (Unbound x)
 
 class ['self] map = object (_ : 'self)
-  method extend = extend
-  method visit_'fn = lookup
+  method private extend = extend
+  method private visit_'fn = lookup
 end

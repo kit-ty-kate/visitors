@@ -97,7 +97,7 @@ let subst_atom1 u x t =
 class subst = object
   inherit [_] map
   inherit [_] KitSubst.map
-  method! visit_TVar sigma x =
+  method! private visit_TVar sigma x =
     match Atom.Map.find x sigma with
     | u ->
         (* Do not forget to copy the term that is being grafted, so as

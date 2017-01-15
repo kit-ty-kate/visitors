@@ -24,11 +24,11 @@ class ['self] iter = object (_ : 'self)
 
   val mutable accu = Atom.Set.empty
 
-  method accu = accu
+  method accu = accu (* must be public *)
 
-  method extend = Atom.Set.add
+  method private extend = Atom.Set.add
 
-  method visit_'fn env x =
+  method private visit_'fn env x =
     if not (Atom.Set.mem x env) then
       accu <- Atom.Set.add x accu
 
@@ -45,12 +45,12 @@ class ['self] reduce = object (_ : 'self)
   (* The monoid of sets of atoms is used. *)
   inherit [_] Atom.Set.monoid
 
-  method extend _x () = ()
+  method private extend _x () = ()
 
   (* The atom [x] is removed from the set of free atoms when the scope of [x]
      is exited. *)
-  method restrict = Atom.Set.remove
+  method private restrict = Atom.Set.remove
 
-  method visit_'fn () x = Atom.Set.singleton x
+  method private visit_'fn () x = Atom.Set.singleton x
 
 end

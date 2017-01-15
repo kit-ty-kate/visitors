@@ -48,8 +48,8 @@ let lookup (m1, m2, _) x1 x2 =
       VisitorsRuntime.fail()
 
 class ['self] iter2 = object (_ : 'self)
-  method extend = extend
-  method visit_'fn = lookup
+  method private extend = extend
+  method private visit_'fn = lookup
 end
 
 let wrap2 f t1 t2 =
