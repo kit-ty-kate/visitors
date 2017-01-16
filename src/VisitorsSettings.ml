@@ -54,8 +54,8 @@ module type SETTINGS = sig
   val ancestors: Longident.t list
 
   (* [concrete] controls whether the generated class should be concrete or
-     virtual. *)
-  val concrete: bool option
+     virtual. By default, it is virtual. *)
+  val concrete: bool
 
   (* The type variables that should be treated as nonlocal types. Following
      OCaml's convention, the name of a type variable does not include a
@@ -141,7 +141,7 @@ end)
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
   let variety = ref None
   let ancestors = ref []
-  let concrete = ref None
+  let concrete = ref false
   let freeze = ref []
   let irregular = ref false
   let public = ref None
@@ -155,7 +155,7 @@ end)
       | "ancestors" ->
            ancestors := strings e
       | "concrete" ->
-           concrete := Some (bool e)
+           concrete := bool e
       | "freeze" ->
            freeze := strings e
       | "irregular" ->

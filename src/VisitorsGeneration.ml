@@ -251,38 +251,15 @@ let with_warnings (w : string) (items : structure_item list) : structure_item =
    declaration and packages it as a structure item. (This implies that it
    cannot be recursive with other class declarations). *)
 
-(* If [concrete] is present, then it controls whether the class is declared
-   concrete or virtual. If [concrete] is absent, then the class is declared
-   virtual if and only if at least one virtual method explicitly appears as
-   part of the list [fields]. This default behavior is heuristic and is
-   guaranteed to be optimal only if there are no inherited [ancestors]. *)
-
-let is_virtual_method (field : class_field) : bool =
-  match field.pcf_desc with
-  | Pcf_method (_, _, Cfk_virtual _) ->
-      true
-  | _ ->
-      false
-
-let has_virtual_method (fields : class_field list) : bool =
-  List.exists is_virtual_method fields
-
 let class1
-  (concrete : bool option)
+  (concrete : bool)
   (params : (core_type * variance) list)
   (name : classe)
   (self : pattern)
   (fields : class_field list)
   : structure_item =
-  let virt =
-    match concrete with
-    | Some concrete ->
-        if concrete then Concrete else Virtual
-    | None ->
-        if has_virtual_method fields then Virtual else Concrete
-  in
   Str.class_ [{
-    pci_virt = virt;
+    pci_virt = if concrete then Concrete else Virtual;
     pci_params = params;
     pci_name = mknoloc name;
     pci_expr = Cl.structure (Cstr.mk self fields);
@@ -377,7 +354,7 @@ module ClassFieldStore (X : sig end) : sig
   (* [dump concrete ancestors params self c] returns a class definition for the
      class [c]. *)
   val dump:
-    bool option ->
+    bool ->
     Longident.t list ->
     (core_type * variance) list ->
     pattern ->
