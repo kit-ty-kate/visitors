@@ -30,49 +30,6 @@ end
 
 (* Module-based packaging. *)
 
-module TempList = struct
-
-  (* We could reuse the functions provided by OCaml's [List] module,
-     as we did above for arrays. *)
-
-  let rec iter f env xs =
-    match xs with
-    | [] ->
-        ()
-    | x :: xs ->
-        f env x;
-        iter f env xs
-
-  let rec map f env xs =
-    match xs with
-    | [] ->
-        []
-    | x :: xs ->
-        let x = f env x in
-        x :: map f env xs
-
-  let rec iter2 f env xs1 xs2 =
-    match xs1, xs2 with
-    | [], [] ->
-        ()
-    | x1 :: xs1, x2 :: xs2 ->
-        f env x1 x2;
-        iter2 f env xs1 xs2
-    | _, _ ->
-        fail()
-
-  let rec map2 f env xs1 xs2 =
-    match xs1, xs2 with
-    | [], [] ->
-        []
-    | x1 :: xs1, x2 :: xs2 ->
-        let x = f env x1 x2 in
-        x :: map2 f env xs1 xs2
-    | _, _ ->
-        fail()
-
-end
-
 module Option = struct
 
   let iter f env ox =
@@ -156,7 +113,7 @@ end
 
 (* Class-based packaging. *)
 
-class ['self] iter = object
+class ['self] iter = object (self)
 
   method private visit_array: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a array -> unit
@@ -193,7 +150,13 @@ class ['self] iter = object
 
   method private visit_list: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a list -> unit
-  = TempList.iter
+  = fun f env xs ->
+      match xs with
+      | [] ->
+          ()
+      | x :: xs ->
+          f env x;
+          self # visit_list f env xs
 
   method private visit_option: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a option -> unit
@@ -219,7 +182,7 @@ class ['self] iter = object
 
 end
 
-class ['self] map = object
+class ['self] map = object (self)
 
   method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
@@ -252,7 +215,13 @@ class ['self] map = object
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
-  = TempList.map
+  = fun f env xs ->
+      match xs with
+      | [] ->
+          []
+      | x :: xs ->
+          let x = f env x in
+          x :: self # visit_list f env xs
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
@@ -351,7 +320,7 @@ class virtual ['self] reduce = object (self : 'self)
 
 end
 
-class ['self] iter2 = object
+class ['self] iter2 = object (self)
 
   method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a array -> 'b array -> unit
@@ -390,7 +359,15 @@ class ['self] iter2 = object
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
-  = TempList.iter2
+  = fun f env xs1 xs2 ->
+      match xs1, xs2 with
+      | [], [] ->
+          ()
+      | x1 :: xs1, x2 :: xs2 ->
+          f env x1 x2;
+          self # visit_list f env xs1 xs2
+      | _, _ ->
+          fail()
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
@@ -416,7 +393,7 @@ class ['self] iter2 = object
 
 end
 
-class ['self] map2 = object
+class ['self] map2 = object (self)
 
   method private visit_array: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a array -> 'b array -> 'c array
@@ -452,7 +429,15 @@ class ['self] map2 = object
 
   method private visit_list: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
-  = TempList.map2
+  = fun f env xs1 xs2 ->
+      match xs1, xs2 with
+      | [], [] ->
+          []
+      | x1 :: xs1, x2 :: xs2 ->
+          let x = f env x1 x2 in
+          x :: self # visit_list f env xs1 xs2
+      | _, _ ->
+          fail()
 
   method private visit_option: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
