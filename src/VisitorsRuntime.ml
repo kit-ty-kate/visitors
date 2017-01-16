@@ -1,6 +1,3 @@
-module A = Array (* TEMPORARY *)
-module L = List
-
 (* -------------------------------------------------------------------------- *)
 
 (* An exception used at arity 2 and above. *)
@@ -33,31 +30,9 @@ end
 
 (* Module-based packaging. *)
 
-module Array = struct
+module TempList = struct
 
-  let iter f env xs =
-    Array.iter (f env) xs
-
-  let map f env xs =
-    Array.map (f env) xs
-
-  let iter2 f env xs1 xs2 =
-    if Array.length xs1 = Array.length xs2 then
-      Array.iter2 (f env) xs1 xs2
-    else
-      fail()
-
-  let map2 f env xs1 xs2 =
-    if Array.length xs1 = Array.length xs2 then
-      Array.map2 (f env) xs1 xs2
-    else
-      fail()
-
-end
-
-module List = struct
-
-  (* We could reuse the functions provided by OCaml's [List] module,
+  (* We could reuse the functions provided by OCaml's [TempList] module,
      as we did above for arrays. *)
 
   let rec iter f env xs =
@@ -185,7 +160,12 @@ class ['self] iter = object
 
   method private visit_array: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a array -> unit
-  = Array.iter
+  = fun f env xs ->
+      (* For speed, we inline [Array.iter]. Chances are, we save a closure
+         allocation, as using [Array.iter] would require us to build [f env]. *)
+      for i = 0 to Array.length xs - 1 do
+        f env (Array.unsafe_get xs i)
+      done
 
   method private visit_bool: 'env .
     'env -> bool -> unit
@@ -213,7 +193,7 @@ class ['self] iter = object
 
   method private visit_list: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a list -> unit
-  = List.iter
+  = TempList.iter
 
   method private visit_option: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a option -> unit
@@ -243,7 +223,8 @@ class ['self] map = object
 
   method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
-  = Array.map
+  = fun f env xs ->
+      Array.map (f env) xs
 
   method private visit_bool: 'env .
     'env -> bool -> bool
@@ -271,7 +252,7 @@ class ['self] map = object
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
-  = List.map
+  = TempList.map
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
@@ -304,7 +285,7 @@ class virtual ['self] reduce = object (self : 'self)
   method private visit_array: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
   = fun f env xs ->
-      A.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+      Array.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
 
   method private visit_bool: 'env .
     'env -> bool -> 'z
@@ -333,7 +314,7 @@ class virtual ['self] reduce = object (self : 'self)
   method private visit_list: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
   = fun f env xs ->
-      L.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+      List.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
 
   method private visit_option: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
@@ -374,7 +355,11 @@ class ['self] iter2 = object
 
   method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a array -> 'b array -> unit
-  = Array.iter2
+  = fun f env xs1 xs2 ->
+      if Array.length xs1 = Array.length xs2 then
+        Array.iter2 (f env) xs1 xs2
+      else
+        fail()
 
   method private visit_bool: 'env .
     'env -> bool -> bool -> unit
@@ -402,7 +387,7 @@ class ['self] iter2 = object
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
-  = List.iter2
+  = TempList.iter2
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
@@ -432,7 +417,11 @@ class ['self] map2 = object
 
   method private visit_array: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a array -> 'b array -> 'c array
-  = Array.map2
+  = fun f env xs1 xs2 ->
+      if Array.length xs1 = Array.length xs2 then
+        Array.map2 (f env) xs1 xs2
+      else
+        fail()
 
   method private visit_bool: 'env .
     'env -> bool -> bool -> bool
@@ -460,7 +449,7 @@ class ['self] map2 = object
 
   method private visit_list: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
-  = List.map2
+  = TempList.map2
 
   method private visit_option: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
@@ -494,9 +483,9 @@ class virtual ['self] reduce2 = object (self : 'self)
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a array -> 'b array -> 'z
   = fun f env xs1 xs2 ->
       (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2]. *)
-      if A.length xs1 = A.length xs2 then
+      if Array.length xs1 = Array.length xs2 then
         let z = ref self#zero in
-        A.iter2 (fun x1 x2 ->
+        Array.iter2 (fun x1 x2 ->
           z := self#plus !z (f env x1 x2)
         ) xs1 xs2;
         !z
@@ -536,8 +525,8 @@ class virtual ['self] reduce2 = object (self : 'self)
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a list -> 'b list -> 'z
   = fun f env xs1 xs2 ->
-      if L.length xs1 = L.length xs2 then
-        L.fold_left2 (fun z x1 x2 -> self#plus z (f env x1 x2)) self#zero xs1 xs2
+      if List.length xs1 = List.length xs2 then
+        List.fold_left2 (fun z x1 x2 -> self#plus z (f env x1 x2)) self#zero xs1 xs2
       else
         fail()
 
