@@ -3,7 +3,11 @@ type expr =
   | EAdd of expr * expr
   | EList of expr list
   [@@deriving visitors { variety = "iter"; concrete = true },
-              visitors { variety = "map"; concrete = true }]
+              visitors { variety = "map"; concrete = true },
+              visitors { variety = "reduce"; ancestors = ["VisitorsRuntime.addition_monoid"]; concrete = true }]
+
+let iter : expr -> unit =
+  new iter # visit_expr ()
 
 let rec native_iter env e =
   match e with
@@ -13,8 +17,46 @@ let rec native_iter env e =
       native_iter env e1;
       native_iter env e2
   | EList es ->
-      VisitorsRuntime.TempList.iter native_iter env es
-      (* List.iter (native_iter env) es *)
+      List.iter (native_iter env) es
+
+class size = object
+  inherit [_] reduce as super
+  method! visit_expr () e =
+    1 + super # visit_expr () e
+end
+
+let size : expr -> int =
+  new size # visit_expr ()
+
+let rec native_size env e =
+  match e with
+  | EConst _ ->
+      1
+  | EAdd (e1, e2) ->
+      native_size env e1 +
+      native_size env e2
+  | EList es ->
+      List.fold_left (fun accu e -> accu + native_size env e) 0 es
+
+let rec native_size_noenv e =
+  match e with
+  | EConst _ ->
+      1
+  | EAdd (e1, e2) ->
+      native_size_noenv e1 +
+      native_size_noenv e2
+  | EList es ->
+      List.fold_left (fun accu e -> accu + native_size_noenv e) 0 es
+
+let rec native_size_noenv_accu accu e =
+  match e with
+  | EConst _ ->
+      accu + 1
+  | EAdd (e1, e2) ->
+      let accu = native_size_noenv_accu accu e1 in
+      native_size_noenv_accu accu e2
+  | EList es ->
+      List.fold_left native_size_noenv_accu accu es
 
 let split n =
   assert (n >= 0);
@@ -52,15 +94,16 @@ let list_init n f =
 let samples =
   list_init 100 (fun _ -> generate 100)
 
-let iter : expr -> unit =
-  new iter # visit_expr ()
-
 let test f () =
-  List.iter f samples
+  List.iter (fun e -> ignore (f e)) samples
 
 let tests = [
   "iter", test iter;
   "native_iter", test (native_iter ());
+  "size", test size;
+  "native_size", test (native_size ());
+  "native_size_noenv", test native_size_noenv;
+  "native_size_noenv_accu", test (native_size_noenv_accu 0);
 ]
 
 module Bench = Core_bench.Std.Bench
