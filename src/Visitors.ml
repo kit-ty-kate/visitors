@@ -1,6 +1,5 @@
 open VisitorsList
 open Longident
-open Location
 open List
 open Asttypes
 open Parsetree
