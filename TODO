@@ -3,9 +3,10 @@
 TODO (REALLY)
 
 If [name] is omitted then [variety] could be a list.
-
-Might wish to allow ancestors to be not just class names
-  but class expressions (e.g. a class name applied to some values).
+  But then, might need to replace <variety> with variety in [ancestors].
+    in [name], too, if present
+  Also, this is somewhat tricky, as we would produce not one settings
+    record, but several of them?
 
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
@@ -46,6 +47,9 @@ TODO (PERHAPS)
 Implement a way of deferring visitor generation.
   (inserting user code between the type definition and the visitor class)
 
+Might wish to allow ancestors to be not just class names
+  but class expressions (e.g. a class name applied to some values).
+
 Generate a variant of "iter" with an explicit accumulator?
   Would allow getting rid of mutable variables in user code.
 
@@ -62,4 +66,5 @@ Avoid generating beta-redexes.
 Do something about ~path?
   It seems connected to nested modules.
 
-Think about automatically transforming a closed recursive type definition into an open one.
+Think about automatically transforming a closed recursive type definition into
+an open one.
