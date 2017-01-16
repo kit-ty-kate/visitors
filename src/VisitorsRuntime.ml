@@ -33,28 +33,6 @@ end
 
 (* Module-based packaging. *)
 
-module Inert = struct
-
-  let iter _env _x =
-    ()
-
-  let map _env x =
-    x
-
-  let iter2 _env x1 x2 =
-    if x1 = x2 then
-      ()
-    else
-      fail()
-
-  let map2 _env x1 x2 =
-    if x1 = x2 then
-      x1
-    else
-      fail()
-
-end
-
 module Array = struct
 
   let iter f env xs =
@@ -76,18 +54,6 @@ module Array = struct
       fail()
 
 end
-
-module Bool = Inert
-
-module Char = Inert
-
-module Float = Inert
-
-module Int = Inert
-
-module Int32 = Inert
-
-module Int64 = Inert
 
 module List = struct
 
@@ -211,10 +177,6 @@ module Result = struct
 
 end
 
-module String = Inert
-
-module Unit = Inert
-
 (* -------------------------------------------------------------------------- *)
 
 (* Class-based packaging. *)
@@ -227,27 +189,27 @@ class ['self] iter = object
 
   method private visit_bool: 'env .
     'env -> bool -> unit
-  = Bool.iter
+  = fun _ _ -> ()
 
   method private visit_char: 'env .
     'env -> char -> unit
-  = Char.iter
+  = fun _ _ -> ()
 
   method private visit_float: 'env .
     'env -> float -> unit
-  = Float.iter
+  = fun _ _ -> ()
 
   method private visit_int: 'env .
     'env -> int -> unit
-  = Int.iter
+  = fun _ _ -> ()
 
   method private visit_int32: 'env .
     'env -> int32 -> unit
-  = Int32.iter
+  = fun _ _ -> ()
 
   method private visit_int64: 'env .
     'env -> int64 -> unit
-  = Int64.iter
+  = fun _ _ -> ()
 
   method private visit_list: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a list -> unit
@@ -269,11 +231,11 @@ class ['self] iter = object
 
   method private visit_string: 'env .
     'env -> string -> unit
-  = String.iter
+  = fun _ _ -> ()
 
   method private visit_unit: 'env .
     'env -> unit -> unit
-  = Unit.iter
+  = fun _ _ -> ()
 
 end
 
@@ -285,27 +247,27 @@ class ['self] map = object
 
   method private visit_bool: 'env .
     'env -> bool -> bool
-  = Bool.map
+  = fun _ x -> x
 
   method private visit_char: 'env .
     'env -> char -> char
-  = Char.map
+  = fun _ x -> x
 
   method private visit_float: 'env .
     'env -> float -> float
-  = Float.map
+  = fun _ x -> x
 
   method private visit_int: 'env .
     'env -> int -> int
-  = Int.map
+  = fun _ x -> x
 
   method private visit_int32: 'env .
     'env -> int32 -> int32
-  = Int32.map
+  = fun _ x -> x
 
   method private visit_int64: 'env .
     'env -> int64 -> int64
-  = Int64.map
+  = fun _ x -> x
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
@@ -327,11 +289,11 @@ class ['self] map = object
 
   method private visit_string: 'env .
     'env -> string -> string
-  = String.map
+  = fun _ x -> x
 
   method private visit_unit: 'env .
     'env -> unit -> unit
-  = Unit.map
+  = fun _ x -> x
 
 end
 
@@ -416,27 +378,27 @@ class ['self] iter2 = object
 
   method private visit_bool: 'env .
     'env -> bool -> bool -> unit
-  = Bool.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_char: 'env .
     'env -> char -> char -> unit
-  = Char.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_float: 'env .
     'env -> float -> float -> unit
-  = Float.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_int: 'env .
     'env -> int -> int -> unit
-  = Int.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_int32: 'env .
     'env -> int32 -> int32 -> unit
-  = Int32.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_int64: 'env .
     'env -> int64 -> int64 -> unit
-  = Int64.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
@@ -458,11 +420,11 @@ class ['self] iter2 = object
 
   method private visit_string: 'env .
     'env -> string -> string -> unit
-  = String.iter2
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
   method private visit_unit: 'env .
     'env -> unit -> unit -> unit
-  = Unit.iter2
+  = fun _ _x1 _x2 -> ()
 
 end
 
@@ -474,27 +436,27 @@ class ['self] map2 = object
 
   method private visit_bool: 'env .
     'env -> bool -> bool -> bool
-  = Bool.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_char: 'env .
     'env -> char -> char -> char
-  = Char.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_float: 'env .
     'env -> float -> float -> float
-  = Float.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_int: 'env .
     'env -> int -> int -> int
-  = Int.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_int32: 'env .
     'env -> int32 -> int32 -> int32
-  = Int32.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_int64: 'env .
     'env -> int64 -> int64 -> int64
-  = Int64.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_list: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
@@ -516,11 +478,11 @@ class ['self] map2 = object
 
   method private visit_string: 'env .
     'env -> string -> string -> string
-  = String.map2
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_unit: 'env .
     'env -> unit -> unit -> unit
-  = Unit.map2
+  = fun _ _x1 _x2 -> ()
 
 end
 
