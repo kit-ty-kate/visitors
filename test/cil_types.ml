@@ -1723,8 +1723,8 @@ and custom_tree = CustomDummy
   | CustomLexpr of lexpr
   | CustomOther of string * (custom_tree list)
 *)
-[@@deriving visitors { name = "iter"; variety = "iter"; ancestors = ["Support.iter"]; irregular = true },
-            visitors { name = "map"; variety = "map"; ancestors = ["Support.map"]; irregular = true }
+[@@deriving visitors { variety = "iter"; ancestors = ["Support.iter"]; irregular = true },
+            visitors { variety = "map"; ancestors = ["Support.map"]; irregular = true }
 ]
 
 type kinstr =

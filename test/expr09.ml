@@ -4,4 +4,4 @@ type 'info expr_node =
 
 and 'info expr =
   { info: 'info; node: 'info expr_node }
-  [@@deriving visitors { name = "map"; variety = "map" }]
+  [@@deriving visitors { variety = "map" }]
