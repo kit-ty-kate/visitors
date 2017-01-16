@@ -1,6 +1,7 @@
 type expr =
   | EConst of int
   | EAdd of expr * expr
+  | EList of expr list
   [@@deriving visitors { variety = "iter"; concrete = true },
               visitors { variety = "map"; concrete = true }]
 
@@ -11,6 +12,9 @@ let rec native_iter env e =
   | EAdd (e1, e2) ->
       native_iter env e1;
       native_iter env e2
+  | EList es ->
+      VisitorsRuntime.TempList.iter native_iter env es
+      (* List.iter (native_iter env) es *)
 
 let split n =
   assert (n >= 0);
@@ -25,8 +29,15 @@ let rec generate n =
   if n = 0 then
     EConst (Random.int 100)
   else
-    let n1, n2 = split (n - 1) in
-    EAdd (generate n1, generate n2)
+    match Random.int 2 with
+    | 0 ->
+        let n1, n2 = split (n - 1) in
+        EAdd (generate n1, generate n2)
+    | 1 ->
+        let n1, n2 = split (n - 1) in
+        EList [ generate n1; generate n2 ]
+    | _ ->
+        assert false
 
 let rec list_init i n f =
   if i = n then
