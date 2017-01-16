@@ -340,21 +340,11 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
             (map (visit_type false) tys)
       end
 
-  (* A type variable [tv] is normally handled by a virtual visitor method.
-     However, if this type variable has been marked as frozen by the user,
-     then it is treated as if it were a nonlocal type by the same name. *)
+  (* A type variable [tv] is handled by a virtual visitor method. *)
   | false,
     { ptyp_desc = Ptyp_var tv; _ } ->
-      if mem tv X.freeze then
-        visit_type
-          env_in_scope
-          { ty with ptyp_desc = Ptyp_constr (mknoloc (Lident tv), []) }
-      else begin
-        generate_virtual_method (tyvar_visitor_method tv);
-        call
-          (tyvar_visitor_method tv)
-          []
-      end
+      generate_virtual_method (tyvar_visitor_method tv);
+      call (tyvar_visitor_method tv) []
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)

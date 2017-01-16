@@ -57,11 +57,6 @@ module type SETTINGS = sig
      virtual. By default, it is virtual. *)
   val concrete: bool
 
-  (* The type variables that should be treated as nonlocal types. Following
-     OCaml's convention, the name of a type variable does not include a
-     leading quote. *)
-  val freeze: string list
-
   (* If [irregular] is [true], the regularity check is suppressed; this allows
      a local parameterized type to be instantiated. The definition of ['a t]
      can then refer to [int t]. However, in most situations, this will lead to
@@ -142,7 +137,6 @@ end)
   let variety = ref None
   let ancestors = ref []
   let concrete = ref false
-  let freeze = ref []
   let irregular = ref false
   let public = ref None
 
@@ -156,8 +150,6 @@ end)
            ancestors := strings e
       | "concrete" ->
            concrete := bool e
-      | "freeze" ->
-           freeze := strings e
       | "irregular" ->
           irregular := bool e
       | "name" ->
@@ -186,7 +178,6 @@ end)
   let scheme = !scheme
   let ancestors = !ancestors
   let concrete = !concrete
-  let freeze = !freeze
   let irregular = !irregular
   let public = !public
 

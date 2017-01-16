@@ -4,8 +4,6 @@ TODO (REALLY)
 
 If [name] is omitted then [variety] could be a list.
 
-Maybe remove [freeze]?
-
 Might wish to allow ancestors to be not just class names
   but class expressions (e.g. a class name applied to some values).
 
