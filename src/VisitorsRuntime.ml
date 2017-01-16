@@ -28,90 +28,11 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* Module-based packaging. *)
-
-module Option = struct
-
-  let iter f env ox =
-    match ox with
-    | None ->
-        ()
-    | Some x ->
-        f env x
-
-  let map f env ox =
-    match ox with
-    | None ->
-        None
-    | Some x ->
-        Some (f env x)
-
-  let iter2 f env ox1 ox2 =
-    match ox1, ox2 with
-    | None, None ->
-        ()
-    | Some x1, Some x2 ->
-        f env x1 x2
-    | _, _ ->
-        fail()
-
-  let map2 f env ox1 ox2 =
-    match ox1, ox2 with
-    | None, None ->
-        None
-    | Some x1, Some x2 ->
-        let x = f env x1 x2 in
-        Some x
-    | _, _ ->
-        fail()
-
-end
-
-module Ref = struct
-
-  let iter f env rx =
-    f env !rx
-
-  let map f env rx =
-    ref (f env !rx)
-
-  let iter2 f env rx1 rx2 =
-    f env !rx1 !rx2
-
-  let map2 f env rx1 rx2 =
-    ref (f env !rx1 !rx2)
-
-end
-
-module Result = struct
-
-  let iter f g env r =
-    match r with
-    | Ok a -> f env a
-    | Error b -> g env b
-
-  let map f g env r =
-    match r with
-    | Ok a -> Ok (f env a)
-    | Error b -> Error (g env b)
-
-  let iter2 f g env r1 r2 =
-    match r1, r2 with
-    | Ok a1, Ok a2 -> f env a1 a2
-    | Error b1, Error b2 -> g env b1 b2
-    | _, _ -> fail()
-
-  let map2 f g env r1 r2 =
-    match r1, r2 with
-    | Ok a1, Ok a2 -> Ok (f env a1 a2)
-    | Error b1, Error b2 -> Error (g env b1 b2)
-    | _, _ -> fail()
-
-end
+(* Visitor methods for the primitive types. *)
 
 (* -------------------------------------------------------------------------- *)
 
-(* Class-based packaging. *)
+(* [iter] *)
 
 class ['self] iter = object (self)
 
@@ -160,17 +81,26 @@ class ['self] iter = object (self)
 
   method private visit_option: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a option -> unit
-  = Option.iter
+  = fun f env ox ->
+      match ox with
+      | None ->
+          ()
+      | Some x ->
+          f env x
 
   method private visit_ref: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a ref -> unit
-  = Ref.iter
+  = fun f env rx ->
+      f env !rx
 
   method private visit_result: 'env 'a 'e.
     ('env -> 'a -> unit) ->
     ('env -> 'e -> unit) ->
      'env -> ('a, 'e) result -> unit
-  = Result.iter
+  = fun f g env r ->
+      match r with
+      | Ok a -> f env a
+      | Error b -> g env b
 
   method private visit_string: 'env .
     'env -> string -> unit
@@ -181,6 +111,10 @@ class ['self] iter = object (self)
   = fun _ _ -> ()
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [map] *)
 
 class ['self] map = object (self)
 
@@ -225,17 +159,26 @@ class ['self] map = object (self)
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
-  = Option.map
+  = fun f env ox ->
+      match ox with
+      | None ->
+          None
+      | Some x ->
+          Some (f env x)
 
   method private visit_ref: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
-  = Ref.map
+  = fun f env rx ->
+      ref (f env !rx)
 
   method private visit_result: 'env 'a 'b 'e 'f .
     ('env -> 'a -> 'b) ->
     ('env -> 'e -> 'f) ->
      'env -> ('a, 'e) result -> ('b, 'f) result
-  = Result.map
+  = fun f g env r ->
+      match r with
+      | Ok a -> Ok (f env a)
+      | Error b -> Error (g env b)
 
   method private visit_string: 'env .
     'env -> string -> string
@@ -246,6 +189,10 @@ class ['self] map = object (self)
   = fun _ x -> x
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [reduce] *)
 
 class virtual ['self] reduce = object (self : 'self)
 
@@ -320,6 +267,10 @@ class virtual ['self] reduce = object (self : 'self)
 
 end
 
+(* -------------------------------------------------------------------------- *)
+
+(* [iter2] *)
+
 class ['self] iter2 = object (self)
 
   method private visit_array: 'env 'a 'b .
@@ -371,17 +322,29 @@ class ['self] iter2 = object (self)
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
-  = Option.iter2
+  = fun f env ox1 ox2 ->
+      match ox1, ox2 with
+      | None, None ->
+          ()
+      | Some x1, Some x2 ->
+          f env x1 x2
+      | _, _ ->
+          fail()
 
   method private visit_ref: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a ref -> 'b ref -> unit
-  = Ref.iter2
+  = fun f env rx1 rx2 ->
+      f env !rx1 !rx2
 
   method private visit_result: 'env 'a 'b 'e 'f .
     ('env -> 'a -> 'b -> unit) ->
     ('env -> 'e -> 'f -> unit) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> unit
-  = Result.iter2
+  = fun f g env r1 r2 ->
+      match r1, r2 with
+      | Ok a1, Ok a2 -> f env a1 a2
+      | Error b1, Error b2 -> g env b1 b2
+      | _, _ -> fail()
 
   method private visit_string: 'env .
     'env -> string -> string -> unit
@@ -392,6 +355,10 @@ class ['self] iter2 = object (self)
   = fun _ _x1 _x2 -> ()
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [map2] *)
 
 class ['self] map2 = object (self)
 
@@ -441,17 +408,30 @@ class ['self] map2 = object (self)
 
   method private visit_option: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
-  = Option.map2
+  = fun f env ox1 ox2 ->
+      match ox1, ox2 with
+      | None, None ->
+          None
+      | Some x1, Some x2 ->
+          let x = f env x1 x2 in
+          Some x
+      | _, _ ->
+          fail()
 
   method private visit_ref: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a ref -> 'b ref -> 'c ref
-  = Ref.map2
+  = fun f env rx1 rx2 ->
+      ref (f env !rx1 !rx2)
 
   method private visit_result: 'env 'a 'b 'c 'e 'f 'g .
     ('env -> 'a -> 'b -> 'c) ->
     ('env -> 'e -> 'f -> 'g) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> ('c, 'g) result
-  = Result.map2
+  = fun f g env r1 r2 ->
+      match r1, r2 with
+      | Ok a1, Ok a2 -> Ok (f env a1 a2)
+      | Error b1, Error b2 -> Error (g env b1 b2)
+      | _, _ -> fail()
 
   method private visit_string: 'env .
     'env -> string -> string -> string
@@ -462,6 +442,10 @@ class ['self] map2 = object (self)
   = fun _ _x1 _x2 -> ()
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [reduce2] *)
 
 class virtual ['self] reduce2 = object (self : 'self)
 
