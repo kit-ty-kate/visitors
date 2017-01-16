@@ -356,8 +356,11 @@ class ['self] iter2 = object
   method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a array -> 'b array -> unit
   = fun f env xs1 xs2 ->
+      (* We inline [Array.iter2]. *)
       if Array.length xs1 = Array.length xs2 then
-        Array.iter2 (f env) xs1 xs2
+        for i = 0 to Array.length xs1 - 1 do
+          f env (Array.unsafe_get xs1 i) (Array.unsafe_get xs2 i)
+        done
       else
         fail()
 
@@ -482,12 +485,15 @@ class virtual ['self] reduce2 = object (self : 'self)
   method private visit_array: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a array -> 'b array -> 'z
   = fun f env xs1 xs2 ->
-      (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2]. *)
+      (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2],
+         which we inline. *)
       if Array.length xs1 = Array.length xs2 then
         let z = ref self#zero in
-        Array.iter2 (fun x1 x2 ->
+        for i = 0 to Array.length xs1 - 1 do
+          let x1 = Array.unsafe_get xs1 i
+          and x2 = Array.unsafe_get xs2 i in
           z := self#plus !z (f env x1 x2)
-        ) xs1 xs2;
+        done;
         !z
       else
         fail()
