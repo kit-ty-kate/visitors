@@ -283,6 +283,8 @@ As a result, a visitor \emph{object} is monomorphic: its method
 \tyconvisitor{'info} must have type \oc|info1 ->| \oc|info2| for certain specific
 types \oc|info1| and \oc|info2|. Fortunately, the visitor \emph{class} is
 polymorphic: therefore, two distinct visitor objects can have distinct types.
+% TEMPORARY pointer le fait qu'on peut très bien hériter d'une classe qui
+%           contient des méthodes polymorphes.
 
 The class \map is \emph{not} parameterized over the type variable~\oc|'info|,
 or over two type variables~\oc|'info1| and~\oc|'info2|, as one might perhaps
@@ -290,6 +292,10 @@ expect. This is not necessary.%
 \footnote{The class is parameterized over \oc|'self|, and that is sufficient.
   Indeed, the type \oc|'self| determines the type of all methods, including
   \tyconvisitor{'info}. Therefore, \oc|'self| determines \oc|'info|.}
+% TEMPORARY documenter plus clairement le fait que toutes nos classes
+%           sont paramétrées vis-à-vis du type de 'self,
+%           et les classes héritées via [ancestors] doivent suivre cette
+%           même convention.
 
 \fref{fig:expr10} presents two example uses of the class \map. In the first
 example, we define a function \oc|strip|, of type \oc|'info expr -> unit expr|,
@@ -334,36 +340,27 @@ The treatment of local types has been illustrated in the previous sections.
 In short, for every local type, a visitor method is generated: for instance,
 for the local type \oc|expr|, we generate the method \tyconvisitor{expr}.
 
-The treatment of nonlocal types is different. We do not wish to adopt a scheme
-where there is one visitor method per nonlocal type.%
-%
-\footnote{That would be too restrictive. For instance, imagine that a type
-  definition contains references to both \oc|int list| and \oc|expr list|. If
-  we relied on just one method \tyconvisitor{list}, then this method would be
-  used at two different types. Because our methods are monomorphic, that would
-  cause a type error. One might consider instead declaring a polymorphic
-  method, or declaring multiple monomorphic methods, but neither of these
-  approaches seems workable.}
-%
-Instead, we expect one (possibly polymorphic) visitor \emph{function} to exist
-for each nonlocal type. By convention, when generating an \iter visitor, the
-visitor function for the type \oc|int| must be named \oc|Int.iter|; the
-visitor function for the type (parameterized) type \oc|list| must be named
-\oc|List.iter|; and so on. If the type definition contains a reference to a
-nonlocal user-defined type \oc|foo|, then the visitor function for this type
-must be named \oc|Foo.iter|.
+The treatment of nonlocal types is the same, except instead of generating a
+concrete method definition, we generate a virtual method declaration.
+
+% TEMPORARY section à revoir
+%    noter que le type de la méthode virtuelle n'est pas connu de nous,
+%    mais est inféré par OCaml
+
+% TEMPORARY illustrer le traitement des listes
+% For instance, imagine that a type definition contains references to both
+% \oc|int list| and \oc|expr list|. If we relied on just one method
+% \tyconvisitor{list}, then this method would be used at two different types.
 
 For every OCaml primitive type, the library module \oc|VisitorsRuntime|, which
 is automatically opened in the generated code, supplies suitable visitor
-functions. The module \oc|VisitorsRuntime| contains several submodules named
-\oc|Int|, \oc|List|, and so on; each of them supplies four functions named
-\iter, \map, \itertwo, \maptwo. (Please consult \srcFile{VisitorsRuntime.mli}
-for details.)
-
-For a user-defined type \oc|foo|, it is up to the user to ensure that a module
-named \oc|Foo| can be found and offers these four functions. The \opath
-option (\sref{sec:path}) lets the user control where the module \oc|Foo|
-is found.
+classes. The module \oc|VisitorsRuntime| contains several classes named
+\oc|iter|, \oc|map|, and so on; each of them supplies methods named
+\tyconvisitor{int}, \tyconvisitor{list}, and so on. (Please consult
+  \srcFile{VisitorsRuntime.mli} for details.) The generated visitor
+automatically inherits from one of these classes, so it gets default
+implementations of the methods \tyconvisitor{int}, \tyconvisitor{list},
+and so on.
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -603,3 +600,8 @@ related work:
     https://github.com/bobzhang/fan
     http://zhanghongbo.me/fan/
     http://zhanghongbo.me/fan/_downloads/metaprogramming_for_ocaml.pdf
+
+  alphaCaml
+  Steven Keuchel
+  Bound (Edward Kmett)
+  Unbound (Weirich)
