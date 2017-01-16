@@ -6,3 +6,7 @@ true: \
 
 <expr07*> or <expr08*> or <expr14*>: \
   package(hashcons)
+
+<bench.*>: \
+  thread, \
+  package(core_bench)

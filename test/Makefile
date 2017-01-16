@@ -14,17 +14,20 @@ OCAMLBUILD := \
   -classic-display \
   -cflags "-g" -lflags "-g" \
 
-.PHONY: test mli processed clean
+.PHONY: test bench mli processed clean
 
 test:
-	@ make -C ../src uninstall || true
-	@ make -C ../src install
+	@ make -C ../src reinstall
 	@ $(OCAMLBUILD) $(TARGETS)
 #	@ for i in $(TARGET) ; do echo "Running $$i..." && ./$$i ; done
 
+bench:
+	@ make -C ../src reinstall
+	@ $(OCAMLBUILD) bench.native
+	@ ./bench.native
+
 mli:
-	@ make -C ../src uninstall || true
-	@ make -C ../src install
+	@ make -C ../src reinstall
 	@ $(OCAMLBUILD) $(MLI)
 	@ more $(patsubst %,_build/%,$(MLI))
 

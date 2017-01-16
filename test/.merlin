@@ -1,4 +1,5 @@
 PKG visitors.ppx
 PKG visitors.runtime
 PKG hashcons
+PKG core_bench
 B _build
