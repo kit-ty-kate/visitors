@@ -27,6 +27,7 @@ Try dealing with suspended substitutions.
   (As a distinct construct. Not necessarily at abstractions.)
 
 Use explicit loops in VisitorsRuntime.Array.
+Re-implement the list functions, too.
 Remove the old module structure in VisitorsRuntime?
 
 Document everything.
@@ -59,6 +60,10 @@ Generate a generic (bottom-up) "fold" class?
   Do something about tuples. (Reconstruct them identically?)
   Analogous to ppx_tools/genlifter.
   Would allow the user to define subclasses, possibly in several steps. Could be useful.
+
+Hoist the application of self#visit_list to self#visit_expr,
+  so as to avoid allocating a closure when traversing a list.
+  (Difficult. Would probably require the lazy-initializer trick.)
 
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
