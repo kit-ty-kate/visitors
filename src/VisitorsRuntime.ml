@@ -32,7 +32,7 @@ end
 
 module TempList = struct
 
-  (* We could reuse the functions provided by OCaml's [TempList] module,
+  (* We could reuse the functions provided by OCaml's [List] module,
      as we did above for arrays. *)
 
   let rec iter f env xs =
