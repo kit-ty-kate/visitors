@@ -1,13 +1,7 @@
-class ['self] int_monoid = object
-  method zero = 0
-  method plus = (+)
-end
-
 type expr =
   | EConst of int
   | EAdd of expr * expr
-  [@@deriving visitors { name = "size"; variety = "reduce"; ancestors = ["int_monoid"] }]
-
+  [@@deriving visitors { name = "size"; variety = "reduce"; ancestors = ["VisitorsRuntime.addition_monoid"] }]
 
 let size : expr -> int =
   let o = object
