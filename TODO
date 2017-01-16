@@ -2,8 +2,6 @@
 
 TODO (REALLY)
 
-The [name] option should be optional, with [variety] as default.
-
 If [name] is omitted then [variety] could be a list.
 
 Maybe remove [freeze]?

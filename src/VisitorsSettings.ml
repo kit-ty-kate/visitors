@@ -136,7 +136,7 @@ end)
 
   (* Default values. *)
 
-  let names = ref [] (* dummy: [name] is mandatory; see below *)
+  let name = ref None
   let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
   let variety = ref None
@@ -161,7 +161,7 @@ end)
       | "irregular" ->
           irregular := bool e
       | "name" ->
-          names := string e :: !names
+          name := Some (string e)
       | "public" ->
           public := Some (strings e)
       | "variety" ->
@@ -192,29 +192,6 @@ end)
 
   (* Perform sanity checking. *)
 
-  (* The parameter [name] is not optional. Also, it should be given multiple
-     times. So, we first accumulate a list of names, then check that this list
-     has length 1. *)
-  let name =
-    if length !names = 0 then
-      raise_errorf ~loc
-        "%s: please specify the name of the generated class.\n\
-         e.g. [@@deriving visitors { name = \"traverse\" }]" plugin;
-    if length !names > 1 then
-      raise_errorf ~loc
-        "%s: please specify only ONE name for the generated class." plugin;
-    match !names with
-    | [ name ] ->
-       (* We expect [name] to be a valid class name. *)
-       if classify name <> LIDENT then
-          raise_errorf ~loc
-            "%s: %s is not a valid class name."
-            plugin name;
-        name
-    | []
-    | _ :: _ :: _ ->
-        assert false (* already checked length *)
-
   (* The parameter [variety] is not optional. *)
   let variety =
     match !variety with
@@ -223,6 +200,20 @@ end)
           "%s: please specify the variety of the generated class.\n\
            e.g. [@@deriving visitors { variety = \"iter\" }]" plugin
     | Some variety ->
+        variety
+
+  (* The parameter [name] is optional. If it is absent, then [variety]
+     is used as its default value. *)
+  let name =
+    match !name with
+    | Some name ->
+        (* We expect [name] to be a valid class name. *)
+        if classify name <> LIDENT then
+          raise_errorf ~loc
+            "%s: %s is not a valid class name."
+            plugin name;
+        name
+    | None ->
         variety
 
   (* Every string in the list [ancestors] must be a valid (long) class
