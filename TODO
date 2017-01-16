@@ -6,8 +6,6 @@ The [name] option should be optional, with [variety] as default.
 
 If [name] is omitted then [variety] could be a list.
 
-Maybe a generated visitor should always be virtual by default.
-
 Maybe remove [freeze]?
 
 Might wish to allow ancestors to be not just class names

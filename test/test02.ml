@@ -12,8 +12,8 @@ and term_list =
   | TLCons of (term * term_list)
 
 [@@deriving
-     visitors { name = "iter"; variety = "iter" },
-     visitors { name = "map"; variety = "map" },
+     visitors { name = "iter"; variety = "iter"; concrete = true },
+     visitors { name = "map"; variety = "map"; concrete = true },
      visitors { name = "iter2"; variety = "iter2" },
      visitors { name = "map2"; variety = "map2" }
 ]
