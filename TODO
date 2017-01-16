@@ -2,13 +2,13 @@
 
 TODO (REALLY)
 
-Maybe a generated visitor should always be virtual.
+The [name] option should be optional, with [variety] as default.
+
+If [name] is omitted then [variety] could be a list.
+
+Maybe a generated visitor should always be virtual by default.
 
 Maybe remove [freeze]?
-
-Use private methods in some (hand-written) classes,
-  including VisitorsRuntime and certain kits?
-Perhaps certain auxiliary generated methods could be private, too.
 
 Might wish to allow ancestors to be not just class names
   but class expressions (e.g. a class name applied to some values).
