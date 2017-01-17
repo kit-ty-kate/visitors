@@ -29,7 +29,6 @@ bench:
 mli:
 	@ make -C ../src reinstall
 	@ $(OCAMLBUILD) $(MLI)
-	@ more $(patsubst %,_build/%,$(MLI))
 
 include ../src/Makefile.preprocess
 
