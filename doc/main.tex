@@ -417,10 +417,10 @@ ancestor class.
 
 % TEMPORARY section à revoir
 
-% TEMPORARY illustrer le traitement des listes
-% For instance, imagine that a type definition contains references to both
-% \oc|int list| and \oc|expr list|. If we relied on just one method
-% \tyconvisitor{list}, then this method would be used at two different types.
+% TEMPORARY illustrer le traitement des listes; expliquer qu'on peut écrire *à
+% la main* un visiteur dont les méthodes sont polymorphes; expliquer via un
+% exemple pourquoi c'est utile; noter qu'on ne peut pas engendrer ce visiteur
+% car on ne peut engendrer que des méthodes monomorphes
 
 For every OCaml primitive type, the library module \oc|VisitorsRuntime|, which
 is automatically opened in the generated code, supplies suitable visitor
