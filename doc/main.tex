@@ -36,6 +36,13 @@
 
 % ------------------------------------------------------------------------------
 
+\begin{flushright}
+  Les visites font toujours plaisir, si ce n'est en arrivant, du moins en
+  partant. \\ --- Jean de La Bruyère
+\end{flushright}
+
+\vspace{1cm}
+
 \section{Introduction}
 \label{sec:intro}
 
@@ -48,17 +55,41 @@ following commands:
   opam update
   opam install visitors
 \end{verbatim}
-In order to use the \visitors package, an \ocamlbuild user should add the
+To use the package, an \ocamlbuild user should add the
 following line in her project's \texttt{\_tags} file:
 \begin{lstlisting}
   true: package(visitors.ppx), package(visitors.runtime)
 \end{lstlisting}
-Furthermore, a \merlin user should add the following lines in her project's
+Finally, a user of \merlin should add the following lines in her project's
 \texttt{.merlin} file:
 \begin{lstlisting}
   PKG visitors.ppx
   PKG visitors.runtime
 \end{lstlisting}
+
+% ------------------------------------------------------------------------------
+
+\subsection{What is a visitor?}
+
+A visitor for a data structure is a class whose methods implement a traversal
+of this data structure. By default, the visitor methods do not have
+interesting behavior: they just cause control to go down into the data
+structure and come back up, without performing any actual computation.
+Nevertheless, by defining subclasses where one method or a few methods are
+overridden, nontrivial behavior can be obtained. Therefore, visitors allow
+many operations on this data structure to be defined with little effort.
+
+Visitors come in several varieties. An \iter visitor traverses a data
+structure and returns no result. It can nevertheless have side effects,
+including updating a piece of mutable state, raising an exception, and
+performing input/output. A \map visitor traverses a data structure and returns
+another data structure: typically, a copy of its argument that has been
+transformed in some way. A \reduce visitor traverses a data structure and
+returns a value that somehow summarizes it: computing the size of a data
+structure is a typical example. Finally, as it is sometimes necessary to
+simultaneously traverse two data structures of identical shape, there are
+visitors of arity two: we refer to them as \itertwo, \maptwo, and \reducetwo
+visitors.
 
 % ------------------------------------------------------------------------------
 
@@ -79,15 +110,17 @@ Furthermore, a \merlin user should add the following lines in her project's
 Suppose we wish to work with arithmetic expressions built out of integer
 literals and binary additions. An algebraic data type \oc|expr| is shown in
 the first part of \fref{fig:expr00}. By annotating this type definition with
-\oc|[@@deriving visitors { ... }]|, we request the automated generation of
-a visitor for expressions. The code for this visitor, which in normal use
-remains invisible, is shown in the second part of \fref{fig:expr00}.
+\oc|[@@deriving visitors { ... }]|, we request the automated generation of a
+visitor for expressions.
 
 The annotation \oc|[@@deriving visitors { ... }]| must carry at least one
 parameter, \variety, which must be one of \iter, \map, \itertwo, \maptwo. It
 indicates which variety of visitor must be generated. By default, the name of
 the generated class is the value of \variety; this can be changed by supplying
 a \name parameter.
+
+The code for this visitor, which in normal use remains invisible, is shown in
+the second part of \fref{fig:expr00}.
 
 A visitor takes the form of an OCaml class, whose methods are named after the
 types and data constructors that appear in the type definition. In
@@ -168,6 +201,11 @@ How to request the generation of a \map visitor is shown in the first part of
 the code is identical, except that, instead of returning \oc|()|, the method
 \dataconvisitor{EConst} reconstructs an \oc|EConst| expression, and the method
 \dataconvisitor{EAdd} reconstructs an \oc|EAdd| expression.
+
+% TEMPORARY the default map visitor on an immutable data structure
+% is the identity, so it is uninteresting;
+% but the default visitor on a mutable data structure is a deep copy,
+% which can be useful.
 
 % ------------------------------------------------------------------------------
 
@@ -623,6 +661,7 @@ référence:
   document the option concrete
   document public
   avoid shadowing the following names: VisitorsRuntime, Lazy
+  document which OCaml types can/cannot be traversed
 
 indiquer comment voir le code engendré
       et comment voir son type
@@ -644,3 +683,6 @@ related work, for proof assistants:
   Steven Keuchel
   Autosubst (voir Kaiser et al., CPP 2017)
   voir Guillaume Allais (CPP 2017, Agda et Haskell) et Goguen & McKinna
+
+crazy title ideas:
+  Dr Boilerplate, or: how I learned to stop worrying and love bound names
