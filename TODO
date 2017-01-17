@@ -52,14 +52,14 @@ Generate a variant of "iter" with an explicit accumulator?
 
 Generate a generic (bottom-up) "fold" class?
   Create virtual build_ methods for local types.
-  Use external functions for nonlocal types.
-  Do something about tuples. (Reconstruct them identically?)
+  Do something about tuples. (Reconstruct them identically.)
+  In VisitorsRuntime.fold, either provide no methods at all
+    or methods whose body is "assert false".
   Analogous to ppx_tools/genlifter.
-  Would allow the user to define subclasses, possibly in several steps. Could be useful.
 
 Hoist the application of self#visit_list to self#visit_expr,
   so as to avoid allocating a closure when traversing a list.
-  (Difficult. Would probably require the lazy-initializer trick.)
+  (Would probably require the lazy-initializer trick.)
 
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
