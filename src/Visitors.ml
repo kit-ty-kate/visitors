@@ -337,6 +337,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           app
             (call (tycon_visitor_method tycon) [])
             (map (visit_type false) tys)
+            (* TEMPORARY decide whether it is worthwhile to [hoist] the arguments *)
       end
 
   (* A type variable [tv] is handled by a virtual visitor method. *)
