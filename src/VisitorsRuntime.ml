@@ -123,7 +123,8 @@ class ['self] map = object (self)
   = fun f env xs ->
       Array.map (f env) xs
       (* We could in principle inline [Array.map] so as to avoid allocating
-         the closure [f env]. That would be a bit painful, though. *)
+         the closure [f env]. That would be a bit painful, though. Anyway,
+         in [flambda] mode, the compiler might be able to do that for us. *)
 
   method private visit_bool: 'env .
     'env -> bool -> bool
