@@ -2,6 +2,13 @@
 
 TODO (REALLY)
 
+Do something about function types.
+  And other unsupported forms.
+  Maybe generate a dummy "unsupported" method (raising assert false; what type? force void?),
+  and provide a type "'a opaque" as a synonym for "'a"
+  in VisitorsRuntime.
+  Implement visit_opaque by doing nothing.
+
 Decide if we should keep hoisting.
   Benchmark it on a real application?
   If we do keep it, try to share identical definitions.
