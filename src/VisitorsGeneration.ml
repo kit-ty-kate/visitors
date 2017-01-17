@@ -181,6 +181,13 @@ let ptuples (pss : pattern list list) : pattern list =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [eassertfalse] is the expression [assert false]. *)
+
+let eassertfalse : expression =
+  Exp.assert_ (Exp.construct (mknoloc (Lident "false")) None)
+
+(* -------------------------------------------------------------------------- *)
+
 (* [efail s] generates a call to [VisitorsRuntime.fail]. The parameter [s] is
    a string, which could represent the place where a failure occurred, or the
    reason why a failure occurred. As of now, it is unused. *)
