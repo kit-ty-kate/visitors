@@ -2,12 +2,6 @@
 
 TODO (REALLY)
 
-If [name] is omitted then [variety] could be a list.
-  But then, might need to replace <variety> with variety in [ancestors].
-    in [name], too, if present
-  Also, this is somewhat tricky, as we would produce not one settings
-    record, but several of them?
-
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
 
@@ -40,6 +34,12 @@ Announce.
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+[variety] could be a list.
+  But then, one would need to replace <variety> with variety in
+    [ancestors] and in [name] (if present).
+  Somewhat tricky, as we would need to produce not one settings
+    record, but several of them.
 
 Implement a way of deferring visitor generation.
   (inserting user code between the type definition and the visitor class)
