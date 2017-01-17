@@ -122,6 +122,8 @@ class ['self] map = object (self)
     ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
   = fun f env xs ->
       Array.map (f env) xs
+      (* We could in principle inline [Array.map] so as to avoid allocating
+         the closure [f env]. That would be a bit painful, though. *)
 
   method private visit_bool: 'env .
     'env -> bool -> bool
@@ -202,6 +204,9 @@ class virtual ['self] reduce = object (self : 'self)
     ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
   = fun f env xs ->
       Array.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+      (* We might wish to inline [Array.fold_left] and save a closure
+         allocation. That said, in flambda mode, the compiler might be
+         able to do that automatically. *)
 
   method private visit_bool: 'env .
     'env -> bool -> 'z
@@ -230,7 +235,23 @@ class virtual ['self] reduce = object (self : 'self)
   method private visit_list: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
   = fun f env xs ->
-      List.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+      self # list_fold_left f env self#zero xs
+      (* The above line is equivalent to the following: *)
+      (* List.fold_left (fun z x -> self#plus z (f env x)) self#zero xs *)
+      (* By using the auxiliary method [list_fold_left] instead of calling
+         the library function [List.fold_left], we save a closure allocation,
+         at least in non-flambda mode. A micro-benchmark shows no performance
+         impact, either way. *)
+
+  method private list_fold_left: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'z -> 'a list -> 'z
+  = fun f env z xs ->
+    match xs with
+    | [] ->
+        z
+    | x :: xs ->
+        let z = self#plus z (f env x) in
+        self # list_fold_left f env z xs
 
   method private visit_option: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
