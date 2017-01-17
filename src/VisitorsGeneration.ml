@@ -300,10 +300,7 @@ let virtual_method p m =
 
 (* -------------------------------------------------------------------------- *)
 
-(* Converting a method description to OCaml abstract syntax. We normally
-   produce OCaml classes, but also have an option to produce mutually
-   recursive functions. The latter option assumes that there are no virtual
-   methods and that any self-calls have been encoded as function calls. *)
+(* Converting a method description to OCaml abstract syntax. *)
 
 let oe2cfk (oe : expression option) : class_field_kind =
   match oe with
@@ -314,17 +311,6 @@ let oe2cfk (oe : expression option) : class_field_kind =
 
 let meth2cf (Meth (p, m, oe)) : class_field =
   Cf.method_ (mknoloc m) p (oe2cfk oe)
-
-let meth2vb (Meth (_, m, oe)) : value_binding =
-  match oe with
-  | Some e ->
-      Vb.mk (pvar m) e
-  | None ->
-      (* We check ahead of time that there are no virtual methods. *)
-      (* If this assertion fails, then perhaps a call to [generate]
-         was passed a virtual method without checking that [final]
-         is [false]. *)
-      assert false
 
 (* -------------------------------------------------------------------------- *)
 
@@ -368,13 +354,6 @@ module ClassFieldStore (X : sig end) : sig
     classe ->
     structure_item
 
-  (* [nest c] returns a nest of mutually recursive functions, corresponding
-     to the methods of the class [c]. This requires that there be no virtual
-     methods and that any self calls be encoded as function calls. The
-     function definitions are wrapped in a structure whose name is [c],
-     capitalized. *)
-  val nest: classe -> structure_item
-
 end = struct
 
   module StringMap =
@@ -409,18 +388,6 @@ end = struct
       List.map (fun c -> inherit_ c [ Typ.any() ]) ancestors @
       (* Methods. *)
       dump c
-    )
-
-  let nest c : value_binding list =
-    let methods = List.rev (get c) in
-    List.map meth2vb methods
-
-  let nest c : structure_item =
-    Str.module_ (Mb.mk
-      (mknoloc (String.capitalize_ascii c))
-      (Mod.structure [
-        Str.value Recursive (nest c)
-      ])
     )
 
 end
