@@ -3,9 +3,11 @@
 TODO (REALLY)
 
 Decide if we should keep hoisting.
-  If we do, try to share identical definitions.
+  Benchmark it on a real application?
+  If we do keep it, try to share identical definitions.
 
 Benchmark with flambda.
+  Check if the compiler is able to avoid the closure allocations.
   Decide if the inlining tricks in VisitorsRuntime are worth the trouble.
 
 Develop a real test suite, with expected output.
