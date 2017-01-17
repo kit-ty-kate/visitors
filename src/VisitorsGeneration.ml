@@ -336,16 +336,15 @@ let send (o : variable) (m : methode) (es : expression list) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* A facility for generating one or more classes at the same time. *)
+(* A facility for generating a class. *)
 
 module ClassFieldStore (X : sig end) : sig
 
-  (* We maintain, for each generated class, a list of methods.
-     [generate c meth] adds [meth] to the list associated with [c]. *)
-  val generate: classe -> meth -> unit
+  (* We maintain a list of methods. [generate meth] adds [meth] to this
+     list. *)
+  val generate: meth -> unit
 
-  (* [dump concrete ancestors params self c] returns a class definition for the
-     class [c]. *)
+  (* [dump concrete ancestors params self c] returns a class definition. *)
   val dump:
     bool ->
     Longident.t list ->
@@ -356,20 +355,14 @@ module ClassFieldStore (X : sig end) : sig
 
 end = struct
 
-  module StringMap =
-    Map.Make(String)
+  let store : meth list ref =
+    ref []
 
-  let store : meth list StringMap.t ref =
-    ref StringMap.empty
+  let generate meth =
+    store := meth :: !store
 
-  let get c =
-    try StringMap.find c !store with Not_found -> []
-
-  let generate c cf =
-    store := StringMap.add c (cf :: get c) !store
-
-  let dump c : class_field list =
-    let methods = List.rev (get c) in
+  let dump () : class_field list =
+    let methods = List.rev !store in
     (* Move all of the virtual methods up front. If two virtual methods have
        the same name, keep only one of them. This is useful because we allow
        a virtual method declaration to be generated several times. In fact,
@@ -387,7 +380,7 @@ end = struct
          with ONE type parameter. *)
       List.map (fun c -> inherit_ c [ Typ.any() ]) ancestors @
       (* Methods. *)
-      dump c
+      dump()
     )
 
 end
