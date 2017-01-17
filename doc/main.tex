@@ -36,6 +36,8 @@
 
 % ------------------------------------------------------------------------------
 
+% TEMPORARY can we print object(self) on the same line as class?
+
 \section{Introduction}
 \label{sec:intro}
 
@@ -83,11 +85,11 @@ the first part of \fref{fig:expr00}. By annotating this type definition with
 a visitor for expressions. The code for this visitor, which in normal use
 remains invisible, is shown in the second part of \fref{fig:expr00}.
 
-The annotation \oc|[@@deriving visitors { ... }]| must carry at least two
-parameters. The parameter \name can be an arbitrary string; it is used as the
-name of the generated class. The parameter \variety must be one of \iter,
-\map, \itertwo, \maptwo. It indicates which variety of visitor must be
-generated.
+The annotation \oc|[@@deriving visitors { ... }]| must carry at least one
+parameter, \variety, which must be one of \iter, \map, \itertwo, \maptwo. It
+indicates which variety of visitor must be generated. By default, the name of
+the generated class is the value of \variety; this can be changed by supplying
+a \name parameter.
 
 A visitor takes the form of an OCaml class, whose methods are named after the
 types and data constructors that appear in the type definition. In
@@ -583,6 +585,9 @@ document how to see its inferred type
   explain why we do not work in .mli files
   we cannot predict the types of the generated methods,
     because it depends on the types of the ancestor classes
+  show inferred types in the manual?
+    tricky: many private methods
+            a redundant constraint
 
 documenter reduce
   iter est en fait un cas particulier de reduce,
