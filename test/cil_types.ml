@@ -1727,6 +1727,18 @@ and custom_tree = CustomDummy
             visitors { variety = "map"; ancestors = ["Support.map"]; irregular = true }
 ]
 
+(* Provide the missing methods so as to obtain concrete classes. *)
+class ['self] iter_ = object (self : 'self)
+  inherit [_] iter
+  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
+  method visit_'term env (t : term) = self#visit_term env t
+end
+class ['self] map_ = object (self : 'self)
+  inherit [_] map
+  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
+  method visit_'term env (t : term) = self#visit_term env t
+end
+
 type kinstr =
   | Kstmt of stmt
   | Kglobal
