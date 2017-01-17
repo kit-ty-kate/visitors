@@ -114,3 +114,16 @@ let tests =
 
 let () =
   Command.run (Bench.make_command tests)
+
+(* with hoisting, applied to self#visit_expr:
+   iter allocates no memory, and is 46% slower than native_iter (which allocates).
+   without hoisting:
+   iter allocates memory and is 65% slower than native_iter
+   So, in this case, hoisting helps a little.
+
+   with hoisting, applied to self#visit_expr:
+   size allocates no memory, and is 105% slower than native_size (which allocates).
+   without hoisting:
+   size allocates memory (same amount as native_size) and is 86% slower than native_size
+   So, in this case, hoisting seems counter-productive.
+ *)
