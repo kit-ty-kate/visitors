@@ -347,13 +347,55 @@ let send (o : variable) (m : methode) (es : expression list) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* An algebraic data type of the ``hoisted expressions'' that we generate. *)
+
+(* A ``hoisted expression'' is evaluated at most once after the object is
+   allocated. Its value is stored in an instance field. We allow such an
+   expression to reference [self], as long as it does not actually invoke any
+   methods. *)
+
+type hoisted =
+  Hoisted of string     (* the name of the instance field *)
+           * expression (* the hoisted expression *)
+
+(* -------------------------------------------------------------------------- *)
+
+(* Converting a hoisted field description to OCaml abstract syntax. *)
+
+(* We generate a mutable field declaration, followed with an initialization:
+
+     val mutable x =  lazy (assert false)
+     initializer x <- lazy e
+
+   We must do this in two steps because the expression [e] might contain
+   references to [self], which are invalid in a field declaration, whereas
+   they are allowed in an initializer.
+
+   The potential danger in this idiom lies in forcing [x] before the
+   initializer has finished running, leading to an assertion failure.
+   This should not happen if [e] does not perform any method calls
+   or read any fields. *)
+
+let hoisted2cf (Hoisted (x, e)) : class_field list =
+  [
+    Cf.val_ (mknoloc x) (Mutable) (Cf.concrete Fresh (Exp.lazy_ eassertfalse));
+    Cf.initializer_ (Exp.setinstvar (mknoloc x) (Exp.lazy_ e))
+  ]
+
+(* -------------------------------------------------------------------------- *)
+
 (* A facility for generating a class. *)
 
 module ClassFieldStore (X : sig end) : sig
 
-  (* We maintain a list of methods. [generate meth] adds [meth] to this
-     list. *)
+  (* [generate meth] adds [meth] to the list of methods. *)
   val generate: meth -> unit
+
+  (* [hoist e] causes the expression [e] to be hoisted, that is, computed
+     once after the object is allocated. The result of evaluating [e] is
+     stored in a field. The call [hoist e] returns an expression which
+     reads this field. *)
+  val hoist: expression -> expression
 
   (* [dump concrete ancestors params self c] returns a class definition. *)
   val dump:
@@ -366,14 +408,14 @@ module ClassFieldStore (X : sig end) : sig
 
 end = struct
 
-  let store : meth list ref =
+  let meths : meth list ref =
     ref []
 
   let generate meth =
-    store := meth :: !store
+    meths := meth :: !meths
 
   let dump () : class_field list =
-    let methods = List.rev !store in
+    let methods = List.rev !meths in
     (* Move all of the virtual methods up front. If two virtual methods have
        the same name, keep only one of them. This is useful because we allow
        a virtual method declaration to be generated several times. In fact,
@@ -384,12 +426,29 @@ end = struct
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods
 
+  let hoisted : hoisted list ref =
+    ref []
+
+  let fresh : unit -> int =
+    let c = ref 0 in
+    fun () ->
+      let x = !c in
+      c := x + 1;
+      x
+
+  let hoist (e : expression) : expression =
+    let x = Printf.sprintf "h%d" (fresh()) in
+    hoisted := Hoisted (x, e) :: !hoisted;
+    eforce (evar x)
+
   let dump concrete ancestors params self c : structure_item =
     class1 concrete params c self (
       (* [inherit] clauses. *)
       (* We ARBITRARILY assume that every ancestor class is parameterized
          with ONE type parameter. *)
       List.map (fun c -> inherit_ c [ Typ.any() ]) ancestors @
+      (* Hoisted expressions. *)
+      List.flatten (List.map hoisted2cf (List.rev !hoisted)) @
       (* Methods. *)
       dump()
     )
