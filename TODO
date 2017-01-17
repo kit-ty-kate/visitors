@@ -5,12 +5,6 @@ TODO (REALLY)
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
 
-Benchmark.
-  Compare the speed of visitor-based code w.r.t. a recursive function.
-
-Test on the Frama-C AST.
-  Instantiate visit_'term and visit_'locs and make sure we have working code.
-
 Develop support for names and binders (demos/lambda).
   Can we make it a functor, i.e., independent of the structure of terms?
   Check that every module has an .mli file, except where that would be too heavy.
@@ -25,6 +19,7 @@ Document everything.
 
 Show to François Bobot and Virgile Prevosto.
 Show to Andrei and Jean-Christophe.
+Show to Andrew Kennedy.
 Add a LICENSE.
 Create an opam package. Dependency on 4.03. Note @@unboxed requires 4.04.
   Dependencies on other packages for tests: hashcons, core_bench...
@@ -51,11 +46,21 @@ Generate a variant of "iter" with an explicit accumulator?
   Would allow getting rid of mutable variables in user code.
 
 Generate a generic (bottom-up) "fold" class?
+  Analogous to ppx_tools/genlifter.
   Create virtual build_ methods for local types.
   Do something about tuples. (Reconstruct them identically.)
-  In VisitorsRuntime.fold, either provide no methods at all
-    or methods whose body is "assert false".
-  Analogous to ppx_tools/genlifter.
+  In VisitorsRuntime.fold, provide no methods at all,
+    so we do not fix the types of these methods.
+    Let the user provide their own methods via [ancestors].
+    Same idea for user-defined nonlocal types.
+
+Can we handle GADTs?
+  The problem is, possibly every method now must be polymorphic (hence needs a type annotation).
+
+Include an option [except] to omit the definition of certain methods.
+  That would allow the user to provide their own implementation,
+  (possibly inherited / polymorphic),
+  without having to satisfy the type constraints imposed by our implementation.
 
 Hoist the application of self#visit_list to self#visit_expr,
   so as to avoid allocating a closure when traversing a list.
