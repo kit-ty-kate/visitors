@@ -43,29 +43,11 @@
 
 \vspace{1cm}
 
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
 \section{Introduction}
 \label{sec:intro}
-
-\subsection{Setup}
-\label{sec:intro:setup}
-
-In order to install the \visitors package, an \opam user should issue the
-following commands:
-\begin{verbatim}
-  opam update
-  opam install visitors
-\end{verbatim}
-To use the package, an \ocamlbuild user should add the
-following line in her project's \texttt{\_tags} file:
-\begin{lstlisting}
-  true: package(visitors.ppx), package(visitors.runtime)
-\end{lstlisting}
-Finally, a user of \merlin should add the following lines in her project's
-\texttt{.merlin} file:
-\begin{lstlisting}
-  PKG visitors.ppx
-  PKG visitors.runtime
-\end{lstlisting}
 
 % ------------------------------------------------------------------------------
 
@@ -90,6 +72,50 @@ structure is a typical example. Finally, as it is sometimes necessary to
 simultaneously traverse two data structures of identical shape, there are
 visitors of arity two: we refer to them as \itertwo, \maptwo, and \reducetwo
 visitors.
+
+% ------------------------------------------------------------------------------
+
+\subsection{What does this package offer?}
+
+Visitors have extremely regular structure. As a result, whereas implementing
+them by hand is boring and error-prone, generating them automatically is often
+possible. The \visitors package extends the syntax of OCaml%
+%
+\footnote{Technically, \visitors is a plugin for \ppxderiving, which itself is
+  a preprocessor extension for the OCaml compiler.}
+%
+so as to make it easy for the programmer to request the automatic generation
+of visitor classes. Visitor classes for many forms of user-defined data types
+can be generated and, if necessary, combined (via multiple inheritance) with
+hand-written visitor classes, making the framework quite powerful.
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+\section{Walkthrough}
+
+% ------------------------------------------------------------------------------
+
+\subsection{Setup}
+\label{sec:intro:setup}
+
+In order to install the \visitors package, an \opam user should issue the
+following commands:
+\begin{verbatim}
+  opam update
+  opam install visitors
+\end{verbatim}
+To use the package, an \ocamlbuild user should add the
+following line in her project's \texttt{\_tags} file:
+\begin{lstlisting}
+  true: package(visitors.ppx), package(visitors.runtime)
+\end{lstlisting}
+Finally, a user of \merlin should add the following lines in her project's
+\texttt{.merlin} file:
+\begin{lstlisting}
+  PKG visitors.ppx
+  PKG visitors.runtime
+\end{lstlisting}
 
 % ------------------------------------------------------------------------------
 
@@ -310,7 +336,13 @@ expressions where every tree node is decorated with a value of type
 \oc|'info|. We request the generation of a \map visitor, whose code is shown
 in the second part of \fref{fig:expr09}. The generated code has exactly the
 same structure as in the previous sections. The only new feature is that the
-class \map is now virtual, as it has a virtual method, \tyconvisitor{'info}.
+class \map now has a virtual method, \tyconvisitor{'info}.
+
+% TEMPORARY clarifier qu'on engendre une déclaration de méthode virtuelle
+% pour chaque variable de types
+
+% TEMPORARY noter que le type de la méthode virtuelle n'est pas connu de nous,
+%    mais est inféré par OCaml
 
 The visitor methods are \emph{not} declared polymorphic in the type
 variable~\oc|'info|, or in two type variables~\oc|'info1| and~\oc|'info2|, as
@@ -374,16 +406,16 @@ definition of \oc|EConst| contains a reference to a nonlocal type, namely
 parameterized nonlocal type, namely \oc|list|, which happens to be defined in
 OCaml's standard library.
 
-The treatment of local types has been illustrated in the previous sections.
-In short, for every local type, a visitor method is generated: for instance,
-for the local type \oc|expr|, we generate the method \tyconvisitor{expr}.
+The treatment of local types has been illustrated in the previous sections. In
+short, for every local type, a visitor method is called, and is defined:
+for instance, for the local type \oc|expr|, we define the (concrete) method
+\tyconvisitor{expr}.
 
-The treatment of nonlocal types is the same, except instead of generating a
-concrete method definition, we generate a virtual method declaration.
+The treatment of nonlocal types is the same, except the visitor method is not
+defined. It is called, but not defined. Its definition must be provided by an
+ancestor class.
 
 % TEMPORARY section à revoir
-%    noter que le type de la méthode virtuelle n'est pas connu de nous,
-%    mais est inféré par OCaml
 
 % TEMPORARY illustrer le traitement des listes
 % For instance, imagine that a type definition contains references to both
@@ -634,6 +666,12 @@ document how to see its inferred type
 document that non-regular ADTs are not supported
   existential types, GADTs not supported either
   that would require polymorphic methods
+
+document how to deal with unsupported types
+  wrap them in opaque (which is predefined)
+  note the user can define their own opaque-like parameterized types
+    and actually perform nontrivial treatment of the data of unsupported type
+  could do HOAS as an example!
 
 documenter reduce
   iter est en fait un cas particulier de reduce,
