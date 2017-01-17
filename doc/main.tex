@@ -578,14 +578,24 @@ one kind of expression and reconstruct the other kind.
 
 % TEMPORARY
 
+document the speed overhead compared to a native recursive function
+
 document how to see the preprocessed code
+
 document how to see its inferred type
   explain why we do not work in .mli files
   we cannot predict the types of the generated methods,
     because it depends on the types of the ancestor classes
+  the generator is type-agnostic
+    and although that may deemed disappointing,
+    it is also the key reason why it is so simple and versatile
   show inferred types in the manual?
     tricky: many private methods
             a redundant constraint
+
+document that non-regular ADTs are not supported
+  existential types, GADTs not supported either
+  that would require polymorphic methods
 
 documenter reduce
   iter est en fait un cas particulier de reduce,
@@ -595,6 +605,19 @@ documenter reduce
   sera probablement plus efficace, et un peu plus simple
   show expr15 as an example application; also illustrates [name] and [ancestors]
 
+document the OCaml object tricks that are used
+  1. normally, unbound variables in method types are disallowed;
+     one must make them parameters of the class (see OCaml manual)
+     here, every class is parameterized over ['self]
+     which allows all method types to be inferred (including virtual methods)
+  2. methods are monomorphic, but class can be polymorphic
+  3. can inherit classes that provide polymorphic methods
+     i.e., user can supply code both a priori (by providing ancestor classes)
+           and a posteriori (by defining child classes after the fact)
+  4. can hide private methods in the signature
+  -- anything else?
+  -- the lazy-initializer trick, if used
+
 référence:
   document the regularity restriction \label{sec:regularity} and the option irregular
   document the option concrete
@@ -603,15 +626,20 @@ référence:
 indiquer comment voir le code engendré
       et comment voir son type
 
-related work:
+related work, for OCaml:
   ppx_deriving (generates monolithic code) (fixed number of templates)
   ppx_deriving_morphism
   Hongbo Zhang has `deriving at a distance' in Fan
     https://github.com/bobzhang/fan
     http://zhanghongbo.me/fan/
     http://zhanghongbo.me/fan/_downloads/metaprogramming_for_ocaml.pdf
-
   alphaCaml
-  Steven Keuchel
+
+related work, for other programming languages:
   Bound (Edward Kmett)
   Unbound (Weirich)
+
+related work, for proof assistants:
+  Steven Keuchel
+  Autosubst (voir Kaiser et al., CPP 2017)
+  voir Guillaume Allais (CPP 2017, Agda et Haskell) et Goguen & McKinna
