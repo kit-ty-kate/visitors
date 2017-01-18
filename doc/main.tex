@@ -670,8 +670,13 @@ document that non-regular ADTs are not supported
   existential types, GADTs not supported either
   that would require polymorphic methods
 
+document @opaque
+  careful with map2: an arbitrary choice takes place
+
+list which types are unsupported
 document how to deal with unsupported types
-  wrap them in opaque (which is predefined)
+  wrap them in @opaque
+  or replace them with type variables
   note the user can define their own opaque-like parameterized types
     and actually perform nontrivial treatment of the data of unsupported type
   could do HOAS as an example!
