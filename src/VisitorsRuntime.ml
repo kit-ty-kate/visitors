@@ -1,5 +1,22 @@
 (* -------------------------------------------------------------------------- *)
 
+(* [array_equal eq xs1 xs2] tests whether the arrays [xs1] and [xs2] have the
+   same components. The arrays must have the same length. The components are
+   compared using [eq]. *)
+
+let rec array_equal eq i n xs1 xs2 =
+  i = n ||
+  let x1 = Array.unsafe_get xs1 i
+  and x2 = Array.unsafe_get xs2 i in
+  eq x1 x2 && array_equal eq (i + 1) n xs1 xs2
+
+let array_equal eq xs1 xs2 =
+  let n = Array.length xs1 in
+  assert (Array.length xs2 = n);
+  array_equal eq 0 n xs1 xs2
+
+(* -------------------------------------------------------------------------- *)
+
 (* An exception used at arity 2 and above. *)
 
 exception StructuralMismatch
@@ -182,6 +199,116 @@ class ['self] map = object (self)
       match r with
       | Ok a -> Ok (f env a)
       | Error b -> Error (g env b)
+
+  method private visit_string: 'env .
+    'env -> string -> string
+  = fun _ x -> x
+
+  method private visit_unit: 'env .
+    'env -> unit -> unit
+  = fun _ x -> x
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [endo] *)
+
+class ['self] endo = object (self)
+
+  (* We might wish to inherit from [map] and override only those methods where
+     a physical equality check is needed. Yet, we cannot do that, because some
+     methods, like [visit_list], have more restrictive types in this class than
+     in the class [map]. *)
+
+  (* It may seem fishy to use an [endo] visitor at type [array], but one never
+     knows -- maybe the user wants this. Maybe she is using an array as an
+     immutable data structure. *)
+
+  method private visit_array: 'env 'a .
+    ('env -> 'a -> 'a) -> 'env -> 'a array -> 'a array
+  = fun f env xs ->
+      let xs' = Array.map (f env) xs in
+      if array_equal (==) xs xs' then xs else xs'
+
+  method private visit_bool: 'env .
+    'env -> bool -> bool
+  = fun _ x -> x
+
+  method private visit_char: 'env .
+    'env -> char -> char
+  = fun _ x -> x
+
+  method private visit_float: 'env .
+    'env -> float -> float
+  = fun _ x -> x
+
+  method private visit_int: 'env .
+    'env -> int -> int
+  = fun _ x -> x
+
+  method private visit_int32: 'env .
+    'env -> int32 -> int32
+  = fun _ x -> x
+
+  method private visit_int64: 'env .
+    'env -> int64 -> int64
+  = fun _ x -> x
+
+  method private visit_list: 'env 'a .
+    ('env -> 'a -> 'a) -> 'env -> 'a list -> 'a list
+  = fun f env this ->
+      match this with
+      | [] ->
+          []
+      | x :: xs ->
+          let x' = f env x in
+          let xs' = self # visit_list f env xs in
+          if x == x' && xs == xs' then
+            this
+          else
+            x' :: xs'
+
+  method private visit_option: 'env 'a .
+    ('env -> 'a -> 'a) -> 'env -> 'a option -> 'a option
+  = fun f env ox ->
+      match ox with
+      | None ->
+          None
+      | Some x ->
+          let x' = f env x in
+          if x == x' then
+            ox
+          else
+            Some x'
+
+  (* It probably does not make sense to use an [endo] visitor at type
+     [ref], but one never knows -- maybe the user wants this. Anyway,
+     it is consistent with the behavior of [endo] visitors at mutable
+     record types. *)
+
+  method private visit_ref: 'env 'a .
+    ('env -> 'a -> 'a) -> 'env -> 'a ref -> 'a ref
+  = fun f env rx ->
+      let x = !rx in
+      let x' = f env x in
+      if x == x' then
+        rx
+      else
+        ref x'
+
+  method private visit_result: 'env 'a 'e .
+    ('env -> 'a -> 'a) ->
+    ('env -> 'e -> 'e) ->
+     'env -> ('a, 'e) result -> ('a, 'e) result
+  = fun f g env r ->
+      match r with
+      | Ok a ->
+          let a' = f env a in
+          if a == a' then r else Ok a'
+      | Error b ->
+          let b' = g env b in
+          if b == b' then r else Error b'
 
   method private visit_string: 'env .
     'env -> string -> string
