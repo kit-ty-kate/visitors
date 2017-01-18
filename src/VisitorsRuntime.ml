@@ -100,6 +100,10 @@ class ['self] iter = object (self)
           f env x;
           self # visit_list f env xs
 
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> unit
+  = fun _ _ -> ()
+
   method private visit_option: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a option -> unit
   = fun f env ox ->
@@ -184,6 +188,10 @@ class ['self] map = object (self)
       | x :: xs ->
           let x = f env x in
           x :: self # visit_list f env xs
+
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint
+  = fun _ x -> x
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
@@ -280,6 +288,10 @@ class ['self] endo = object (self)
             this
           else
             x' :: xs'
+
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint
+  = fun _ x -> x
 
   method private visit_option: 'env 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a option -> 'a option
@@ -397,6 +409,10 @@ class virtual ['self] reduce = object (self : 'self)
         let z = self#plus z (f env x) in
         self # list_fold_left f env z xs
 
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> 'z
+  = fun _env _ -> self#zero
+
   method private visit_option: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
   = fun f env ox ->
@@ -489,6 +505,10 @@ class ['self] iter2 = object (self)
       | _, _ ->
           fail()
 
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint -> unit
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
+
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
   = fun f env ox1 ox2 ->
@@ -578,6 +598,10 @@ class ['self] map2 = object (self)
           x :: self # visit_list f env xs1 xs2
       | _, _ ->
           fail()
+
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint -> nativeint
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_option: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
@@ -682,6 +706,11 @@ class virtual ['self] reduce2 = object (self : 'self)
         List.fold_left2 (fun z x1 x2 -> self#plus z (f env x1 x2)) self#zero xs1 xs2
       else
         fail()
+
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
 
   method private visit_option: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a option -> 'b option -> 'z
