@@ -90,6 +90,11 @@ class ['self] iter = object (self)
     'env -> int64 -> unit
   = fun _ _ -> ()
 
+  method private visit_lazy_t: 'env 'a .
+    ('env -> 'a -> unit) -> 'env -> 'a Lazy.t -> unit
+  = fun f env (lazy x) ->
+      f env x
+
   method private visit_list: 'env 'a .
     ('env -> 'a -> unit) -> 'env -> 'a list -> unit
   = fun f env xs ->
@@ -178,6 +183,16 @@ class ['self] map = object (self)
   method private visit_int64: 'env .
     'env -> int64 -> int64
   = fun _ x -> x
+
+  method private visit_lazy_t: 'env 'a 'b .
+    ('env -> 'a -> 'b) -> 'env -> 'a Lazy.t -> 'b Lazy.t
+  = fun f env thx ->
+      (* We seem to have two options: either force the suspension now
+         and rebuild a trivial suspension, or build now a suspension
+         that will perform the traversal when forced. We choose the
+         latter, which seems more interesting. If this is not the
+         desired behavior, it can of course be overridden. *)
+      lazy (f env (Lazy.force thx))
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
@@ -274,6 +289,18 @@ class ['self] endo = object (self)
   method private visit_int64: 'env .
     'env -> int64 -> int64
   = fun _ x -> x
+
+  method private visit_lazy_t : 'env 'a .
+    ('env -> 'a -> 'a) -> 'env -> 'a Lazy.t -> 'a Lazy.t
+  = fun f env thx ->
+      (* We could use the same code as in [map], which does not preserve sharing.
+         Or, we can force the suspension now, compute [x'], and if [x] and
+         [x'] coincide, then we can return the original suspension (now
+         forced), so as to preserve sharing. We choose the latter behavior. If
+         this is not the desired behavior, it can of course be overridden. *)
+      let x = Lazy.force thx in
+      let x' = f env x in
+      if x == x' then thx else lazy x'
 
   method private visit_list: 'env 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a list -> 'a list
@@ -388,6 +415,11 @@ class virtual ['self] reduce = object (self : 'self)
     'env -> int64 -> 'z
   = fun _env _ -> self#zero
 
+  method private visit_lazy_t: 'env 'a .
+    ('env -> 'a -> 'z) -> 'env -> 'a Lazy.t -> 'z
+  = fun f env (lazy x) ->
+      f env x
+
   method private visit_list: 'env 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
   = fun f env xs ->
@@ -493,6 +525,11 @@ class ['self] iter2 = object (self)
     'env -> int64 -> int64 -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
+  method private visit_lazy_t: 'env 'a 'b .
+    ('env -> 'a -> 'b -> unit) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> unit
+  = fun f env (lazy x1) (lazy x2) ->
+      f env x1 x2
+
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
   = fun f env xs1 xs2 ->
@@ -586,6 +623,12 @@ class ['self] map2 = object (self)
   method private visit_int64: 'env .
     'env -> int64 -> int64 -> int64
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
+
+  method private visit_lazy_t: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 'c Lazy.t
+  = fun f env thx1 thx2 ->
+      (* As in [map]. *)
+      lazy (f env (Lazy.force thx1) (Lazy.force thx2))
 
   method private visit_list: 'env 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
@@ -698,6 +741,11 @@ class virtual ['self] reduce2 = object (self : 'self)
     'env -> int64 -> int64 -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
+
+  method private visit_lazy_t: 'env 'a 'b .
+    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 'z
+  = fun f env (lazy x1) (lazy x2) ->
+      f env x1 x2
 
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a list -> 'b list -> 'z

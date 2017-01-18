@@ -7,6 +7,7 @@ type t =
   | Int of int
   | Int32 of int32
   | Int64 of int64
+  | Lazy of t Lazy.t
   | List of t list
   | Nativeint of nativeint
   | Option of t option
