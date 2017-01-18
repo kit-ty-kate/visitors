@@ -18,12 +18,14 @@ let plugin =
 (* We can generate several classes: as of now, [iter], [map], [reduce]. They
    are mostly identical, and differ only in the code that is executed after
    the recursive calls. In [iter], this code does nothing. In [map], it
-   reconstructs a data structure. In [reduce], it combines the results of
-   the recursive calls using a monoid operation. *)
+   reconstructs a data structure. In [endo], it also reconstructs a data
+   structure, but attempts to preserve sharing. In [reduce], it combines the
+   results of the recursive calls using a monoid operation. *)
 
 type scheme =
   | Iter
   | Map
+  | Endo
   | Reduce
 
 (* -------------------------------------------------------------------------- *)
@@ -76,10 +78,20 @@ end
 (* The supported varieties. *)
 
 let supported = [
-    "map", Map;
     "iter", Iter;
+    "map", Map;
+    "endo", Endo;
     "reduce", Reduce;
   ]
+
+let valid_varieties =
+  "iter, map, endo, reduce, iter2, map2, reduce2"
+
+let invalid_variety loc =
+  raise_errorf ~loc
+    "%s: invalid variety. The valid varieties are\n\
+     %s."
+    plugin valid_varieties
 
 (* [parse_variety] takes a variety, which could be "iter", "map2", etc. and
    returns a pair of a scheme and an arity. *)
@@ -102,11 +114,8 @@ let parse_variety loc (s : string) : scheme * int =
   (* Start the loop and handle errors. *)
   try
     loop supported s
-  with
-  | Failure _ ->
-      raise_errorf ~loc
-      "%s: invalid variety.\n\
-       A valid variety is iter, map, reduce, iter2, map2, reduce2, etc." plugin
+  with Failure _ ->
+    invalid_variety loc
 
 (* -------------------------------------------------------------------------- *)
 
@@ -171,7 +180,10 @@ end)
           variety := Some v;
           let s, a = parse_variety loc v in
           scheme := s;
-          arity := a
+          arity := a;
+          (* [endo] is supported only at arity 1. *)
+          if s = Endo && a > 1 then
+            invalid_variety loc
       | _ ->
           (* We could emit a warning, instead of an error, if we find an
              unsupported option. That might be preferable for forward

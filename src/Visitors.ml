@@ -210,6 +210,12 @@ let thing (tycon : tycon) (j : int) : variable =
 let things (tycon : tycon) : variable list =
   map (thing tycon) (interval 0 arity)
 
+(* The variable [this] denotes an input value. It is used only in the
+   generation of [endo] visitors. *)
+
+let this =
+  "this"
+
 (* The variables [field label j] denote record fields. *)
 
 let field (label : label) (j : int) : variable =
@@ -228,6 +234,23 @@ let result (i : int) : variable =
 
 let results (xs : _ list) : variable list =
   mapi (fun i _ -> result i) xs
+
+(* -------------------------------------------------------------------------- *)
+
+(* Assuming [ess] is a matrix of width [arity] and assuming [arity] is [1],
+   [column ess] returns the first column of [ess], represented as a list. *)
+
+let column (ess : 'a list list) : 'a list =
+  assert (for_all (fun es -> length es = arity) ess);
+  assert (arity = 1);
+  map hd ess
+
+(* Under the above assumptions about [ess], [ifeqphys ess rs e1 e2] constructs
+   an [if/then/else] construct whose condition is the pointwise conjunction of
+   physical equalities between [column ess] and [evars rs]. *)
+
+let ifeqphys (ess : expression list list) (rs : variable list) e1 e2 =
+  Exp.ifthenelse (eqphys (column ess) (evars rs)) e1 (Some e2)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -260,6 +283,35 @@ let reduce es =
   let unit = monoid_unit()
   and law = monoid_law() in
   fold_left1 (fun e1 e2 -> app law [e1; e2]) unit es
+
+(* -------------------------------------------------------------------------- *)
+
+(* [alias x ps] requires the pattern list [ps] to have length [arity]. If
+   [scheme] is [Endo], then it further requires [arity] to be 1. It adds a
+   binding of the variable [x], using an [as] pattern, at the top level of the
+   pattern. The result is again packaged as a pattern list of length [arity].
+   If scheme is not [Endo], then [alias x ps] is just [ps]. *)
+
+let alias (x : variable) (ps : pattern list) : pattern list =
+  assert (length ps = arity);
+  match X.scheme with
+  | Endo ->
+      assert (arity = 1);
+      map (fun p ->
+        Pat.alias p (Location.mknoloc x)
+      ) ps
+  | _ ->
+      ps
+
+(* If [scheme] is [Endo], then [transmit x xs] is [x :: xs]. Otherwise, it is
+   just [xs]. *)
+
+let transmit x xs =
+  match X.scheme with
+  | Endo ->
+      x :: xs
+  | _ ->
+      xs
 
 (* -------------------------------------------------------------------------- *)
 
@@ -337,17 +389,21 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
      is easier. *)
   | true,
     { ptyp_desc = Ptyp_tuple tys; _ } ->
-      (* Construct a function that takes [arity] tuples as arugments. *)
+      (* Construct a function that takes [arity] tuples as arguments. *)
       (* See [constructor_declaration] for comments. *)
       let xss = componentss tys in
+      let subjects = evarss xss in
       let rs = results xss in
       plambdas
-        (ptuples (transpose arity (pvarss xss)))
-        (letn rs (visit_types tys (evarss xss))
-          (match X.scheme with
-           | Iter   -> unit()
-           | Map    -> tuple (evars rs)
-           | Reduce -> reduce (evars rs)
+        (alias this (ptuples (transpose arity (pvarss xss))))
+        (letn rs (visit_types tys subjects)
+          (let rec body scheme =
+             match scheme with
+             | Iter   -> unit()
+             | Map    -> tuple (evars rs)
+             | Endo   -> ifeqphys subjects rs (evar this) (body Map)
+             | Reduce -> reduce (evars rs)
+           in body X.scheme
           )
         )
 
@@ -419,6 +475,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
   in
   assert (is_matrix (length tys) arity xss);
   assert (length pss = arity);
+  let subjects = evarss xss in
 
   (* Get the name of this data constructor. *)
   let datacon = cd.pcd_name.txt in
@@ -431,17 +488,27 @@ let constructor_declaration (cd : constructor_declaration) : case =
      [arity]. After binding the components [xss], we call the descending
      method associated with this data constructor, with arguments [env] and
      [xss]. This method binds the variables [rs] to the results of the
-     recursive calls to visitor methods, then (in the class [iter]) returns a
-     unit value or (in the class [map]) reconstructs a tree node. *)
+     recursive calls to visitor methods, then (if the variety is [iter])
+     returns a unit value or (if the variety is [map]) reconstructs a tree
+     node. *)
+  (* If the scheme is [endo], then we additionally bind the variable [this] to
+     the whole memory block. This variable is transmitted to the descending
+     method. When the time comes to allocate a new memory block, if the
+     components of the new block are physically equal to the components of the
+     existing block, then the address of the existing block is returned;
+     otherwise a new block is allocated, as in [map]. *)
   Exp.case
-    (ptuple (map (pconstr datacon) pss))
-    (hook (datacon_descending_method datacon) (env :: flatten xss)
+    (ptuple (alias this (map (pconstr datacon) pss)))
+    (hook (datacon_descending_method datacon) (env :: transmit this (flatten xss))
        (letn
-          rs (visit_types tys (evarss xss))
-          (match X.scheme with
-           | Iter   -> unit()
-           | Map    -> constr datacon (build rs)
-           | Reduce -> reduce (evars rs)
+          rs (visit_types tys subjects)
+          (let rec body scheme =
+             match scheme with
+             | Iter   -> unit()
+             | Map    -> constr datacon (build rs)
+             | Endo   -> ifeqphys subjects rs (evar this) (body Map)
+             | Reduce -> reduce (evars rs)
+           in body X.scheme
           )
        )
     )
@@ -469,13 +536,17 @@ let visit_decl (decl : type_declaration) : expression =
   | Ptype_record (lds : label_declaration list), _ ->
       let labels, tys = ld_labels lds, ld_tys lds in
       (* See [constructor_declaration] for comments. *)
+      let subjects = accesses xs labels in
       lambdas xs (
         let rs = results labels in
-        letn rs (visit_types tys (accesses xs labels))
-          (match X.scheme with
-           | Iter   -> unit()
-           | Map    -> record (combine labels (evars rs))
-           | Reduce -> reduce (evars rs)
+        letn rs (visit_types tys subjects)
+          (let rec body scheme =
+             match scheme with
+             | Iter   -> unit()
+             | Map    -> record (combine labels (evars rs))
+             | Endo   -> ifeqphys subjects rs (evar (hd xs)) (body Map)
+             | Reduce -> reduce (evars rs)
+           in body X.scheme
           )
       )
 
