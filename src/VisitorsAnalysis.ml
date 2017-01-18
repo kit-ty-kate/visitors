@@ -11,6 +11,41 @@ type tyvar = string
 
 (* -------------------------------------------------------------------------- *)
 
+(* Testing for the presence of attributes. *)
+
+(* [opacity attrs] tests whether the attribute list [attrs] contains an
+   [@opaque] attribute. *)
+
+type opacity =
+  | Opaque
+  | NonOpaque
+
+let is_opaque (attr : attribute) : bool =
+  let { txt = name; _ }, _payload = attr in
+  name = "opaque"
+
+let opacity (attrs : attributes) : opacity =
+  if List.exists is_opaque attrs then Opaque else NonOpaque
+
+(* -------------------------------------------------------------------------- *)
+
+(* When parsing a record declaration, the OCaml parser attaches attributes
+   with field labels, whereas the user might naturally expect them to be
+   attached with the type. We rectify this situation by copying all attributes
+   from the label to the type. This might seem dangerous, but we use it only
+   to test for the presence of an [@opaque] attribute. *)
+
+let paste (ty : core_type) (attrs : attributes) : core_type =
+  { ty with ptyp_attributes = attrs @ ty.ptyp_attributes }
+
+let fix (ld : label_declaration) : label_declaration =
+  { ld with pld_type = paste ld.pld_type ld.pld_attributes }
+
+let fix =
+  List.map fix
+
+(* -------------------------------------------------------------------------- *)
+
 (* [ld_label] and [ld_ty] extract a label and type out of an OCaml record label
    declaration. *)
 
