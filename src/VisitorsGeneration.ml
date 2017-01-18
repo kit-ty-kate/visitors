@@ -199,12 +199,24 @@ let eforce (e : expression) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [eqphy e1 e2] is the expression [e1 == e2]. *)
+
+let eqphy : expression =
+  eident (Longident.parse "Pervasives.==")
+    (* danger: the module name [Pervasives] must not be shadowed. *)
+
+let eqphy (e1 : expression) (e2 : expression) : expression =
+  app eqphy [e1; e2]
+
+(* -------------------------------------------------------------------------- *)
+
 (* [efail s] generates a call to [VisitorsRuntime.fail]. The parameter [s] is
    a string, which could represent the place where a failure occurred, or the
    reason why a failure occurred. As of now, it is unused. *)
 
 let efail : expression =
   eident (Ldot (Lident "VisitorsRuntime", "fail"))
+    (* danger: the module name [VisitorsRuntime] must not be shadowed. *)
 
 let efail (_ : string) : expression =
   app efail [ unit() ]
