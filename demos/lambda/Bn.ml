@@ -10,6 +10,11 @@ class ['self] map = object
   = fun _ _ -> assert false
 end
 
+class ['self] endo = object
+  method private visit_'bn: void -> void -> void
+  = fun _ _ -> assert false
+end
+
 class ['self] reduce = object
   method private visit_'bn: void -> void -> void
   = fun _ _ -> assert false
