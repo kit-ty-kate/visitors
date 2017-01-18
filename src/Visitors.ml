@@ -50,19 +50,6 @@ include WarningStore(struct end)
 
 (* -------------------------------------------------------------------------- *)
 
-(* [choose] is used to generate different code depending on [scheme]. *)
-
-(* Each branch is described by a function [e] and an argument [x]. We
-   apply [e] to [x] for the desired branch, and only for that branch. *)
-
-let choose e1 x1 e2 x2 e3 x3 =
-  match X.scheme with
-  | Iter -> e1 x1
-  | Map  -> e2 x2
-  | Reduce -> e3 x3
-
-(* -------------------------------------------------------------------------- *)
-
 (* We support parameterized type declarations. We require them to be regular.
    That is, for instance, if a type ['a term] is being defined, then every
    use of [_ term] in the definition should be ['a term]; it cannot be, say,
@@ -357,10 +344,10 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
       plambdas
         (ptuples (transpose arity (pvarss xss)))
         (letn rs (visit_types tys (evarss xss))
-          (choose
-            unit()
-            tuple (evars rs)
-            reduce (evars rs)
+          (match X.scheme with
+           | Iter   -> unit()
+           | Map    -> tuple (evars rs)
+           | Reduce -> reduce (evars rs)
           )
         )
 
@@ -451,10 +438,10 @@ let constructor_declaration (cd : constructor_declaration) : case =
     (hook (datacon_descending_method datacon) (env :: flatten xss)
        (letn
           rs (visit_types tys (evarss xss))
-          (choose
-            unit()
-            (constr datacon) (build rs)
-            reduce (evars rs)
+          (match X.scheme with
+           | Iter   -> unit()
+           | Map    -> constr datacon (build rs)
+           | Reduce -> reduce (evars rs)
           )
        )
     )
@@ -485,10 +472,10 @@ let visit_decl (decl : type_declaration) : expression =
       lambdas xs (
         let rs = results labels in
         letn rs (visit_types tys (accesses xs labels))
-          (choose
-            unit()
-            record (combine labels (evars rs))
-            reduce (evars rs)
+          (match X.scheme with
+           | Iter   -> unit()
+           | Map    -> record (combine labels (evars rs))
+           | Reduce -> reduce (evars rs)
           )
       )
 
