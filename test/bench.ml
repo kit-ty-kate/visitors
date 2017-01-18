@@ -1,3 +1,12 @@
+module Bench = Core_bench.Std.Bench
+module Command = Core.Std.Command
+
+let run tests =
+  let tests =
+    List.map (fun (name, test) -> Bench.Test.create ~name test) tests
+  in
+  Command.run (Bench.make_command tests)
+
 type expr =
   | EConst of int
   | EAdd of expr * expr
@@ -97,23 +106,21 @@ let samples =
 let test f () =
   List.iter (fun e -> ignore (f e)) samples
 
-let tests = [
-  "iter", test iter;
-  "native_iter", test (native_iter ());
-  "size", test size;
-  "native_size", test (native_size ());
-  "native_size_noenv", test native_size_noenv;
-  "native_size_noenv_accu", test (native_size_noenv_accu 0);
-]
-
-module Bench = Core_bench.Std.Bench
-module Command = Core.Std.Command
-
-let tests =
-  List.map (fun (name, test) -> Bench.Test.create ~name test) tests
+let () =
+  run [
+    "iter", test iter;
+    "native_iter", test (native_iter ());
+    ]
 
 let () =
-  Command.run (Bench.make_command tests)
+  run [
+    "size", test size;
+    "native_size", test (native_size ());
+(*
+    "native_size_noenv", test native_size_noenv;
+    "native_size_noenv_accu", test (native_size_noenv_accu 0);
+ *)
+  ]
 
 (* with hoisting, applied to self#visit_expr:
    iter allocates no memory, and is 46% slower than native_iter (which allocates).
