@@ -41,9 +41,13 @@ Try dealing with suspended substitutions.
 
 Document everything.
 
-Show to François Bobot and Virgile Prevosto.
-Show to Andrei and Jean-Christophe.
-Show to Andrew Kennedy.
+Show to:
+  François Bobot, Virgile Prevosto.
+  Andrei Paskevich, Jean-Christophe Filliâtre.
+  Andrew Kennedy.
+  Benjamin Farinier.
+  Thomas Braibant.
+
 Add a LICENSE.
 Create an opam package. Dependency on 4.03. Note @@unboxed requires 4.04.
   Dependencies on other packages for tests: hashcons, core_bench...
