@@ -202,19 +202,18 @@ let components (i : int) : variable list =
 let componentss (xs : _ list) : variable list list =
   mapi (fun i _ -> components i) xs
 
-(* The variable [thing tycon j] denotes a value of type [tycon]. *)
+(* The variable [thing j] denotes an input value. *)
 
-let thing (tycon : tycon) (j : int) : variable =
-  copy j (sprintf "this_%s" tycon)
+let thing (j : int) : variable =
+  copy j "this"
 
-let things (tycon : tycon) : variable list =
-  map (thing tycon) (interval 0 arity)
+let things : variable list =
+  map thing (interval 0 arity)
 
-(* The variable [this] denotes an input value. It is used only in the
-   generation of [endo] visitors. *)
+(* The variable [this] is used only in the generation of [endo] visitors. *)
 
 let this =
-  "this"
+  thing 0
 
 (* The variables [field label j] denote record fields. *)
 
@@ -345,14 +344,18 @@ let hook (m : string) (xs : string list) (e : expression) : expression =
    function of [env]. The use of [env_in_scope] complicates things slightly,
    but allows us to avoid the production of certain eta-redexes. *)
 
+(* If [ty] carries the attribute [@opaque], then we act as if there is nothing
+   to visit. The nature of the type [ty], in that case, plays no role. *)
+
 let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
-  match env_in_scope, ty with
+  match env_in_scope, opacity ty.ptyp_attributes, ty.ptyp_desc with
 
   (* A type constructor [tycon] applied to type parameters [tys]. We handle
      the case where [env_in_scope] is false, so we construct a function of
      [env]. *)
   | false,
-    { ptyp_desc = Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys); _ } ->
+    NonOpaque,
+    Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys) ->
       begin match is_local X.decls tycon with
       | Some formals ->
           (* [tycon] is a local type constructor, whose formal type parameters
@@ -381,14 +384,16 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
 
   (* A type variable [tv] is handled by a virtual visitor method. *)
   | false,
-    { ptyp_desc = Ptyp_var tv; _ } ->
+    NonOpaque,
+    Ptyp_var tv ->
       generate_virtual_method (tyvar_visitor_method tv);
       call (tyvar_visitor_method tv) []
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)
   | true,
-    { ptyp_desc = Ptyp_tuple tys; _ } ->
+    NonOpaque,
+    Ptyp_tuple tys ->
       (* Construct a function that takes [arity] tuples as arguments. *)
       (* See [constructor_declaration] for comments. *)
       let xss = componentss tys in
@@ -410,15 +415,39 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
   (* If [env_in_scope] does not have the desired value, wrap a recursive call
      within an application or abstraction. At most one recursive call takes
      place, so we never produce an eta-redex. *)
-  | true, { ptyp_desc = (Ptyp_constr _ | Ptyp_var _); _ } ->
+  | true, NonOpaque, (Ptyp_constr _ | Ptyp_var _) ->
      app (visit_type false ty) [evar env]
-  | false, { ptyp_desc = (Ptyp_tuple _); _ } ->
+  | false, _, _ ->
      lambda env (visit_type true ty)
 
+  (* If [ty] is marked opaque, then we ignore the structure of [ty] and carry
+     out appropriate action, based on the current scheme. *)
+  | true, Opaque, _ ->
+      (* Construct a function that takes [arity] arguments. *)
+      let xs = things in
+      lambdas xs
+        (match X.scheme with
+         | Iter -> unit()           (* Do nothing. At arity > 1, no equality test takes place. *)
+         | Map  -> evar (hd xs)     (* At arity > 1, this is an ARBITRARY choice. *)
+         | Endo -> evar (hd xs)     (* Arity is 1, so this is fine. *)
+         | Reduce -> monoid_unit()  (* This is fine. *)
+        )
+
   (* An unsupported construct. *)
-  | _, _ ->
+  | _, _, Ptyp_any
+  | _, _, Ptyp_arrow _
+  | _, _, Ptyp_object _
+  | _, _, Ptyp_class _
+  | _, _, Ptyp_alias _
+  | _, _, Ptyp_variant _
+  | _, _, Ptyp_poly _
+  | _, _, Ptyp_package _
+  | _, _, Ptyp_extension _ ->
       let loc = ty.ptyp_loc in
-      raise_errorf ~loc "%s: cannot deal with the type %s." plugin
+      raise_errorf ~loc
+        "%s: cannot deal with the type %s.\n\
+         Consider annotating it with [@opaque]."
+        plugin
         (string_of_core_type ty)
 
 and visit_types tys (ess : expression list list) : expression list =
@@ -427,7 +456,7 @@ and visit_types tys (ess : expression list list) : expression list =
      whose length is [arity]. *)
   assert (is_matrix (length tys) arity ess);
   map2 (fun ty es ->
-    app (visit_type true ty) es
+    app (visit_type true ty) es (* TEMPORARY eliminate administrative beta-redexes *)
   ) tys ess
 
 (* -------------------------------------------------------------------------- *)
@@ -439,6 +468,19 @@ and visit_types tys (ess : expression list list) : expression list =
    and definitions. *)
 
 let constructor_declaration (cd : constructor_declaration) : case =
+
+  (* A technical warning. One should not write "A of int[@opaque]".
+     Instead, one should write "A of (int[@opaque])".
+     In the case of records fields, we fix this silently, but in
+     the case of data constructors with multiple fields, it is
+     preferable to be strict. *)
+
+  if opacity cd.pcd_attributes = Opaque then
+    warning cd.pcd_loc
+      (sprintf
+         "%s: @opaque, attached to a data constructor, is ignored.\n\
+          It should be attached to a type. Please use parentheses."
+         plugin);
 
   (* This is either a traditional data constructor, whose components are
      anonymous, or a data constructor whose components form an ``inline
@@ -523,7 +565,7 @@ let visit_decl (decl : type_declaration) : expression =
 
   (* Bind the values to a vector of variables [xs]. *)
   let tycon = decl.ptype_name.txt in
-  let xs = things tycon in
+  let xs = things in
   assert (length xs = arity);
 
   match decl.ptype_kind, decl.ptype_manifest with
@@ -534,7 +576,7 @@ let visit_decl (decl : type_declaration) : expression =
 
   (* A record type. *)
   | Ptype_record (lds : label_declaration list), _ ->
-      let labels, tys = ld_labels lds, ld_tys lds in
+      let labels, tys = ld_labels lds, ld_tys (fix lds) in
       (* See [constructor_declaration] for comments. *)
       let subjects = accesses xs labels in
       lambdas xs (
