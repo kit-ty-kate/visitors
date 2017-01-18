@@ -1230,7 +1230,7 @@ and extended_asm =
   }
 
 (** Describes a location in a source file *)
-and location = (Lexing.position[@opaque]) * (Lexing.position[@opaque])
+and location = Lexing.position * Lexing.position [@opaque]
 
 (** {1 Abstract syntax trees for annotations} *)
 
@@ -1283,7 +1283,7 @@ and logic_label =
 (** Logic terms. *)
 and term = {
   term_node : term_node; (** kind of term. *)
-  term_loc : (Lexing.position[@opaque]) * (Lexing.position[@opaque]);
+  term_loc : Lexing.position * Lexing.position [@opaque];
   (** position in the source file. *)
   term_type : logic_type; (** type of the term. *)
   term_name: string list;
