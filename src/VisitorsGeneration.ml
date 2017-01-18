@@ -121,7 +121,7 @@ let app (e : expression) (es2 : expression list) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [sequence es] constructs a sequence of the expressions in the list [es]. *)
+(* [sequence es] constructs a sequence of the expressions [es]. *)
 
 let sequence (es : expression list) : expression =
   (* Using [fold_right1] instead of [List.fold_right] allows us to get
@@ -181,10 +181,34 @@ let ptuples (pss : pattern list list) : pattern list =
 
 (* -------------------------------------------------------------------------- *)
 
+(* The Boolean expressions [false] and [true]. *)
+
+let efalse : expression =
+  Exp.construct (mknoloc (Lident "false")) None
+
+let etrue : expression =
+  Exp.construct (mknoloc (Lident "true")) None
+
+(* -------------------------------------------------------------------------- *)
+
+(* [conjunction es] constructs a Boolean conjunction of the expressions [es]. *)
+
+let conjunction : expression =
+  eident (Longident.parse "Pervasives.&&")
+    (* danger: the module name [Pervasives] must not be shadowed. *)
+
+let conjunction e1 e2 =
+  app conjunction [e1; e2]
+
+let conjunction (es : expression list) : expression =
+  fold_right1 conjunction es etrue
+
+(* -------------------------------------------------------------------------- *)
+
 (* [eassertfalse] is the expression [assert false]. *)
 
 let eassertfalse : expression =
-  Exp.assert_ (Exp.construct (mknoloc (Lident "false")) None)
+  Exp.assert_ efalse
 
 (* -------------------------------------------------------------------------- *)
 
