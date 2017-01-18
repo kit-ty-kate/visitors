@@ -1,24 +1,4 @@
-(* Support for the type [Integer.t]. *)
-(* Support for the type [Lexing.position]. *)
-module Integer = struct
-  type t = int
-end
-
-module Support = struct
-  class ['self] iter = object
-    method visit_integer_t: 'env . 'env -> Integer.t -> unit
-    = fun _env _i -> ()
-    method visit_lexing_position: 'env . 'env -> Lexing.position -> unit
-    = fun _env _p -> ()
-  end
-  class ['self] map = object
-    method visit_integer_t: 'env . 'env -> Integer.t -> Integer.t
-    = fun _env i -> i
-    method visit_lexing_position: 'env . 'env -> Lexing.position -> Lexing.position
-    = fun _env p -> p
-  end
-end
-
+module Integer = struct type t = int end (* fpottier/visitors *)
 (****************************************************************************)
 (*                                                                          *)
 (*  Copyright (C) 2001-2003                                                 *)
@@ -315,7 +295,7 @@ and attributes = attribute list
 
 (** The type of parameters of attributes *)
 and attrparam =
-  | AInt of Integer.t                  (** An integer constant *)
+  | AInt of (Integer.t[@opaque])                  (** An integer constant *)
   | AStr of string                       (** A string constant *)
   | ACons of string * attrparam list
   (** Constructed attributes. These are printed [foo(a1,a2,...,an)]. The list
@@ -724,7 +704,7 @@ and exp_info = {
 
 (** Literal constants *)
 and constant =
-  | CInt64 of Integer.t * ikind * string option
+  | CInt64 of (Integer.t[@opaque]) * ikind * string option
   (** Integer constant. Give the ikind (see ISO9899 6.1.3.2) and the
       textual representation. Textual representation is always set to Some s
       when it comes from user code. This allows us to print a
@@ -1250,12 +1230,12 @@ and extended_asm =
   }
 
 (** Describes a location in a source file *)
-and location = Lexing.position * Lexing.position
+and location = (Lexing.position[@opaque]) * (Lexing.position[@opaque])
 
 (** {1 Abstract syntax trees for annotations} *)
 
 and logic_constant =
-  | Integer of Integer.t * string option
+  | Integer of (Integer.t[@opaque]) * string option
   (** Integer constant with a textual representation.  *)
   | LStr of string (** String constant. *)
   | LWStr of int64 list (** Wide character string constant. *)
@@ -1303,7 +1283,7 @@ and logic_label =
 (** Logic terms. *)
 and term = {
   term_node : term_node; (** kind of term. *)
-  term_loc : Lexing.position * Lexing.position;
+  term_loc : (Lexing.position[@opaque]) * (Lexing.position[@opaque]);
   (** position in the source file. *)
   term_type : logic_type; (** type of the term. *)
   term_name: string list;
@@ -1723,8 +1703,8 @@ and custom_tree = CustomDummy
   | CustomLexpr of lexpr
   | CustomOther of string * (custom_tree list)
 *)
-[@@deriving visitors { variety = "iter"; ancestors = ["Support.iter"]; irregular = true },
-            visitors { variety = "map"; ancestors = ["Support.map"]; irregular = true },
+[@@deriving visitors { variety = "iter"; irregular = true },
+            visitors { variety = "map"; irregular = true },
             visitors { variety = "endo"; irregular = true },
             visitors { variety = "reduce"; irregular = true },
             visitors { variety = "iter2"; irregular = true },
