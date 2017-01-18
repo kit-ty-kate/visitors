@@ -84,7 +84,7 @@ let nominal2debruijn : nominal_term -> db_term =
   new nominal2debruijn # visit_term KitToDeBruijn.Atom.empty
 
 class subst_atom = object
-  inherit [_] map
+  inherit [_] endo (* we could also use [map] *)
   inherit [_] KitSubstAtom.map
 end
 
@@ -95,16 +95,17 @@ let subst_atom1 u x t =
   subst_atom (Atom.Subst.singleton x u) t
 
 class subst = object
-  inherit [_] map
+  inherit [_] endo
   inherit [_] KitSubst.map
-  method! private visit_TVar sigma x =
+  method! private visit_TVar sigma this x =
     match Atom.Map.find x sigma with
     | u ->
         (* Do not forget to copy the term that is being grafted, so as
            to maintain the GUH. *)
         copy u
     | exception Not_found ->
-        TVar x
+        assert (this = TVar x);
+        this
 end
 
 type substitution =

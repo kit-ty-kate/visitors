@@ -98,16 +98,19 @@ let () =
   evaluate print_fa'
 
 let print_subst1 u x t =
-  printf "substituting %a for %a in %a = ...\n  %a\n%!"
+  let t' = subst1 u x t in
+  printf "substituting %a for %a in %a = ...\n  %a\n%s\n%!"
     nhprint u
     Atom.print x
     nhprint t
-    nhprint (subst1 u x t)
+    nhprint t'
+    (if t == t' then "(physically equal)" else "(physically distinct)")
 
 let () =
   print_subst1 (TVar y) x (TVar x);
   print_subst1 (TVar y) x (TVar y);
   print_subst1 delta x delta_body;
+  print_subst1 (copy delta) x (copy delta);
   ()
 
 let print_equiv t1 t2 =
