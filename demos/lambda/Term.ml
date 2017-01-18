@@ -13,6 +13,9 @@ type ('fn, 'bn) term =
     visitors { variety = "map"; public = ["visit_term"];
                ancestors = ["Bn.map"; "Abstraction.map"] }
     ,
+    visitors { variety = "endo"; public = ["visit_term"];
+               ancestors = ["Bn.endo"; "Abstraction.endo"] }
+    ,
     visitors { variety = "reduce"; public = ["visit_term"];
                ancestors = ["Bn.reduce"; "Abstraction.reduce"] }
     ,

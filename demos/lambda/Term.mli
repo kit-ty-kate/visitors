@@ -16,6 +16,13 @@ class virtual ['self] map : object ('self)
   method private visit_TVar : 'env -> 'fn1 -> ('fn2, 'bn2) term
 end
 
+class virtual ['self] endo : object ('self)
+  method private virtual extend : 'bn -> 'env -> 'bn * 'env
+  method private virtual visit_'fn : 'env -> 'fn -> 'fn
+  method visit_term : 'env -> ('fn, 'bn) term -> ('fn, 'bn) term
+  method private visit_TVar : 'env -> ('fn, 'bn) term -> 'fn -> ('fn, 'bn) term
+end
+
 class virtual ['self] reduce : object ('self)
   method private virtual extend : 'bn -> 'env -> 'env
   method private virtual plus : 'z -> 'z -> 'z
