@@ -8,7 +8,7 @@ let run tests =
   Command.run (Bench.make_command tests)
 
 type expr =
-  | EConst of int
+  | EConst of (int[@opaque])
   | EAdd of expr * expr
   | EList of expr list
   [@@deriving visitors { variety = "iter"; concrete = true },
