@@ -2,12 +2,22 @@
 
 TODO (REALLY)
 
+Support the following in VisitorsRuntime:
+  Lazy.t
+  bytes
+  nativeint
+  Lexing.position
+  Uchar.t
+
+The type (_, _) abstraction could be transparent, private, or opaque.
+
 Do something about function types.
   And other unsupported forms.
   Maybe generate a dummy "unsupported" method (raising assert false; what type? force void?),
   and provide a type "'a opaque" as a synonym for "'a"
   in VisitorsRuntime.
   Implement visit_opaque by doing nothing.
+  Optional warning about unsupported types.
 
 Decide if we should keep hoisting.
   Benchmark it on a real application?
