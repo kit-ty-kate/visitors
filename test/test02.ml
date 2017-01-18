@@ -14,8 +14,11 @@ and term_list =
 [@@deriving
      visitors { variety = "iter"; concrete = true },
      visitors { variety = "map"; concrete = true },
-     visitors { name = "iter2"; variety = "iter2" },
-     visitors { name = "map2"; variety = "map2" }
+     visitors { variety = "reduce"; concrete = true; ancestors = ["VisitorsRuntime.addition_monoid"] },
+     visitors { variety = "endo"; concrete = true },
+     visitors { variety = "iter2"; concrete = true },
+     visitors { variety = "map2"; concrete = true },
+     visitors { variety = "reduce2"; concrete = true; ancestors = ["VisitorsRuntime.addition_monoid"] }
 ]
 
 let identity : term =
