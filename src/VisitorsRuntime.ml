@@ -66,6 +66,10 @@ class ['self] iter = object (self)
     'env -> bool -> unit
   = fun _ _ -> ()
 
+  method private visit_bytes: 'env .
+    'env -> bytes -> unit
+  = fun _ _ -> ()
+
   method private visit_char: 'env .
     'env -> char -> unit
   = fun _ _ -> ()
@@ -145,6 +149,10 @@ class ['self] map = object (self)
 
   method private visit_bool: 'env .
     'env -> bool -> bool
+  = fun _ x -> x
+
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes
   = fun _ x -> x
 
   method private visit_char: 'env .
@@ -233,6 +241,10 @@ class ['self] endo = object (self)
 
   method private visit_bool: 'env .
     'env -> bool -> bool
+  = fun _ x -> x
+
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes
   = fun _ x -> x
 
   method private visit_char: 'env .
@@ -340,6 +352,10 @@ class virtual ['self] reduce = object (self : 'self)
     'env -> bool -> 'z
   = fun _env _ -> self#zero
 
+  method private visit_bytes: 'env .
+    'env -> bytes -> 'z
+  = fun _env _ -> self#zero
+
   method private visit_char: 'env .
     'env -> char -> 'z
   = fun _env _ -> self#zero
@@ -437,6 +453,10 @@ class ['self] iter2 = object (self)
     'env -> bool -> bool -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes -> unit
+  = fun _ x1 x2 -> if x1 = x2 then () else fail()
+
   method private visit_char: 'env .
     'env -> char -> char -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
@@ -521,6 +541,10 @@ class ['self] map2 = object (self)
 
   method private visit_bool: 'env .
     'env -> bool -> bool -> bool
+  = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
+
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes -> bytes
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
   method private visit_char: 'env .
@@ -618,6 +642,11 @@ class virtual ['self] reduce2 = object (self : 'self)
 
   method private visit_bool: 'env .
     'env -> bool -> bool -> 'z
+  = fun _env x1 x2 ->
+      if x1 = x2 then self#zero else fail()
+
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
