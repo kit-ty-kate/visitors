@@ -432,6 +432,9 @@ automatically inherits from one of these classes, so it gets default
 implementations of the methods \tyconvisitor{int}, \tyconvisitor{list},
 and so on.
 
+% TEMPORARY document the behavior of [map] at mutable types like ref and array:
+% a copy is performed
+
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
@@ -681,6 +684,12 @@ documenter reduce
   sera probablement plus efficace, et un peu plus simple
   show expr15 as an example application; also illustrates [name] and [ancestors]
 
+documenter endo
+  like map, but avoids re-allocating if possible
+  makes sense for immutable data structures only
+    but the package does not enforce that, e.g. it will let you
+    create an endo visitor for a mutable record
+
 document the OCaml object tricks that are used
   1. normally, unbound variables in method types are disallowed;
      one must make them parameters of the class (see OCaml manual)
@@ -698,7 +707,8 @@ référence:
   document the regularity restriction \label{sec:regularity} and the option irregular
   document the option concrete
   document public
-  avoid shadowing the following names: VisitorsRuntime, Lazy
+  avoid shadowing the following names: VisitorsRuntime, Lazy, Pervasives
+  document which builtin types are supported by VisitorsRuntime
   document which OCaml types can/cannot be traversed
 
 indiquer comment voir le code engendré
