@@ -232,11 +232,11 @@ let eqphy : expression =
 let eqphy (e1 : expression) (e2 : expression) : expression =
   app eqphy [e1; e2]
 
-(* [eqphys xs ys] is the conjunction of the expressions [x == y]. *)
+(* [eqphys es1 es2] is the conjunction of the expressions [e1 == e2]. *)
 
-let eqphys (xs : variable list) (ys : variable list) : expression =
-  assert (List.length xs = List.length ys);
-  conjunction (List.map2 (fun x y -> eqphy (evar x) (evar y)) xs ys)
+let eqphys (es1 : expression list) (es2 : expression list) : expression =
+  assert (List.length es1 = List.length es2);
+  conjunction (List.map2 eqphy es1 es2)
 
 (* -------------------------------------------------------------------------- *)
 
