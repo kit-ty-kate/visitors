@@ -73,25 +73,35 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* The supported varieties. *)
+
+let supported = [
+    "map", Map;
+    "iter", Iter;
+    "reduce", Reduce;
+  ]
+
 (* [parse_variety] takes a variety, which could be "iter", "map2", etc. and
    returns a pair of a scheme and an arity. *)
 
-let rec parse_variety ps (s : string) : scheme * int =
-  match (ps : (string * scheme) list) with
-  | (p, scheme) :: ps ->
-      if prefix p s then
-        let s = remainder p s in
-        let i = if s = "" then 1 else int_of_string s in
-        if i <= 0 then failwith "negative integer"
-        else scheme, i
-      else
-        parse_variety ps s
-  | [] ->
-      failwith "unexpected prefix"
-
 let parse_variety loc (s : string) : scheme * int =
+  (* A loop over [supported] tries each supported variety in turn. *)
+  let rec loop supported s =
+    match supported with
+    | (p, scheme) :: supported ->
+        if prefix p s then
+          let s = remainder p s in
+          let i = if s = "" then 1 else int_of_string s in
+          if i <= 0 then failwith "negative integer"
+          else scheme, i
+        else
+          loop supported s
+    | [] ->
+        failwith "unexpected prefix"
+  in
+  (* Start the loop and handle errors. *)
   try
-    parse_variety ["map", Map; "iter", Iter; "reduce", Reduce] s
+    loop supported s
   with
   | Failure _ ->
       raise_errorf ~loc
