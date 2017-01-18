@@ -50,6 +50,24 @@ class virtual ['self] map = object (self : 'self)
 
 end
 
+class virtual ['self] endo = object (self : 'self)
+
+  method private virtual extend: 'bn -> 'env -> 'bn * 'env
+
+  method private visit_abstraction: 'term .
+    _ ->
+    ('env -> 'term -> 'term) ->
+    'env -> ('bn, 'term) abstraction -> ('bn, 'term) abstraction
+  = fun _ f env ((x, body) as this) ->
+      let x', env' = self#extend x env in
+      let body' = f env' body in
+      if x == x' && body == body' then
+        this
+      else
+        x', body'
+
+end
+
 class virtual ['self] reduce = object (self : 'self)
 
   method private virtual extend: 'bn -> 'env -> 'env
