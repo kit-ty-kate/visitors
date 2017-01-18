@@ -232,6 +232,12 @@ let eqphy : expression =
 let eqphy (e1 : expression) (e2 : expression) : expression =
   app eqphy [e1; e2]
 
+(* [eqphys xs ys] is the conjunction of the expressions [x == y]. *)
+
+let eqphys (xs : variable list) (ys : variable list) : expression =
+  assert (List.length xs = List.length ys);
+  conjunction (List.map2 (fun x y -> eqphy (evar x) (evar y)) xs ys)
+
 (* -------------------------------------------------------------------------- *)
 
 (* [efail s] generates a call to [VisitorsRuntime.fail]. The parameter [s] is
