@@ -38,7 +38,7 @@
 
 \begin{flushright}
   Les visites font toujours plaisir, si ce n'est en arrivant, du moins en
-  partant. \\ --- Jean de La Bruyère
+  partant. \\ --- \textit{Jean de La Bruyère}
 \end{flushright}
 
 \vspace{1cm}
@@ -130,23 +130,23 @@ Finally, a user of \merlin should add the following lines in her project's
 \label{fig:expr00}
 \end{figure}
 
-\subsection{\iter visitors: definition}
+\subsection{Defining an \iter visitor}
 \label{sec:intro:iter:def}
 
-Suppose we wish to work with arithmetic expressions built out of integer
-literals and binary additions. An algebraic data type \oc|expr| is shown in
-the first part of \fref{fig:expr00}. By annotating this type definition with
-\oc|[@@deriving visitors { ... }]|, we request the automated generation of a
-visitor for expressions.
+Suppose we need to manipulate arithmetic expressions built out of integer
+literals and binary additions. The abstract syntax of these expressions can be
+described by an algebraic data type \oc|expr|, shown in the first part of
+\fref{fig:expr00}.
+%
+By annotating this type definition with \oc|[@@deriving visitors { ... }]|, we
+request the automated generation of a visitor for expressions. The annotation
+\oc|[@@deriving visitors| \oc|{ ... }]| must carry at least one parameter,
+\variety, which indicates what variety of visitor is desired.
 
-The annotation \oc|[@@deriving visitors { ... }]| must carry at least one
-parameter, \variety, which must be one of \iter, \map, \itertwo, \maptwo. It
-indicates which variety of visitor must be generated. By default, the name of
-the generated class is the value of \variety; this can be changed by supplying
-a \name parameter.
-
-The code for this visitor, which in normal use remains invisible, is shown in
-the second part of \fref{fig:expr00}.
+The code of the visitor class, which is automatically generated and in normal
+use remains invisible, is shown in the second part of \fref{fig:expr00}. The
+name of this class is by default the value of the \variety parameter. It can
+be changed, if desired, by explicitly supplying a \name parameter.
 
 A visitor takes the form of an OCaml class, whose methods are named after the
 types and data constructors that appear in the type definition. In
@@ -155,22 +155,32 @@ the type \oc|expr|, while the methods \dataconvisitor{EConst} and
 \dataconvisitor{EAdd} are named after the data constructors \oc|EConst| and
 \oc|EAdd|.
 
-A visitor of the \iter variety traverses a data structure. It returns no
-result: its methods have return type \unit. The default implementations of
-these methods do nothing. In \fref{fig:expr00}, for instance, the method
-\tyconvisitor{expr} inspects its argument \oc|this_expr| and recursively
-invokes either \dataconvisitor{EConst} or \dataconvisitor{EAdd}, as
-appropriate. The method \dataconvisitor{EConst} does nothing. (More precisely,
-it calls the method \tyconvisitor{int}, which is inherited from
-\oc|VisitorsRuntime.iter| and does
+Different varieties of visitors differ in the computation that is performed
+``on the way up'', after the recursive calls have finished, therefore differ
+in the return types of the visitor methods. \iter is the simplest variety. An
+\iter visitor performs no computation on the way up, so its methods have
+return type \oc|unit|.
+
+In an \iter visitor, the generated visitor methods do nothing. In
+\fref{fig:expr00}, for instance, the method \tyconvisitor{expr} inspects its
+argument \oc|this| and recursively invokes either \dataconvisitor{EConst} or
+\dataconvisitor{EAdd}, as appropriate. The method \dataconvisitor{EConst} does
+nothing.\footnote{More precisely, it calls the method \tyconvisitor{int},
+  which is inherited from \oc|VisitorsRuntime.iter| and does nothing.}
+% TEMPORARY supprimer cette note si la méthode visit_int disparaît
 % TEMPORARY noter qu'on peut marquer (int[@opaque]) pour éviter cet appel
-nothing.) The method \dataconvisitor{EAdd} performs two recursive calls to
+The method \dataconvisitor{EAdd} performs two recursive calls to
 \tyconvisitor{expr}, which does nothing, so \dataconvisitor{EAdd} itself does
 nothing.
 
 Every method is parameterized with an environment \oc|env|, which is carried
-down into every recursive call and is otherwise unused.
-% The type of this environment is therefore a priori undetermined.
+down into every recursive call and is otherwise unused. The type of this
+environment is undetermined: it is up to the (user-defined) subclasses of the
+visitor class to decide what the type of \oc|env| should be and (possibly)
+where and how this environment should be enriched.
+
+% One could note that the visitor class is parameterized over 'self,
+% but it is perhaps a bit early for such a remark.
 
 % ------------------------------------------------------------------------------
 
@@ -181,16 +191,16 @@ down into every recursive call and is otherwise unused.
 \label{fig:expr04}
 \end{figure}
 
-\subsection{\iter visitors: usage}
+\subsection{Using an \iter visitor}
 \label{sec:intro:iter:usage}
 
 Naturally, traversing a data structure without actually computing anything is
 not a very sensible thing to do. Things become interesting when at least one
-visitor method is overridden so as to obtain a nontrivial behavior. Suppose,
-for instance, that we wish to count the number of addition nodes in an
-expression. This can be done as shown in \fref{fig:expr04}. We create an
-object~\oc|v| which is both a counter (that is, it has a mutable
-field~\oc|count|) and a visitor, and we override its method
+visitor method is overridden so as to give rise to nontrivial behavior.
+Suppose, for instance, that we wish to count the number of addition nodes in
+an expression. This can be done as shown in \fref{fig:expr04}. We create an
+object~\oc|v| that is both a counter (that is, an object equipped with a
+mutable field~\oc|count|) and a visitor, and we override its method
 \dataconvisitor{EAdd} so that the counter is incremented every time this
 method is invoked. There remains to run the visitor, by invoking its
 \tyconvisitor{expr} method, and to return the final value of the counter. The
@@ -216,19 +226,18 @@ type of expressions is extended with new cases.
 \subsection{\map visitors}
 \label{sec:intro:map}
 
-A visitor of the \iter variety (\sref{sec:intro:iter:def}) returns no result.
-Although, as illustrated previously (\sref{sec:intro:iter:usage}), it can use
-private mutable state to accumulate information, there are applications for
-which such a visitor is not suitable. One class of such applications is tree
-transformations. For this purpose, one must use a visitor of another variety,
+An \iter visitor returns no result. Although, as illustrated previously
+(\sref{sec:intro:iter:usage}), it can use private mutable state to accumulate
+information, there are applications for which such a visitor is not suitable.
+One class of such applications is tree transformations. To transform an
+expression into an expression, one should use a visitor of another variety,
 namely \map.
 
-How to request the generation of a \map visitor is shown in the first part of
-\fref{fig:expr01}. The generated code appears in the second part of
-\fref{fig:expr01}. In comparison with the \iter visitor of \fref{fig:expr00},
-the code is identical, except that, instead of returning \oc|()|, the method
-\dataconvisitor{EConst} reconstructs an \oc|EConst| expression, and the method
-\dataconvisitor{EAdd} reconstructs an \oc|EAdd| expression.
+A \map visitor is shown in \fref{fig:expr01}. In comparison with the \iter
+visitor of \fref{fig:expr00}, the generated code is identical, except that,
+instead of returning the unit value \oc|()|, the method
+\dataconvisitor{EConst} reconstructs an \oc|EConst| expression, while the
+method \dataconvisitor{EAdd} reconstructs an \oc|EAdd| expression.
 
 % TEMPORARY the default map visitor on an immutable data structure
 % is the identity, so it is uninteresting;
@@ -260,6 +269,8 @@ the code is identical, except that, instead of returning \oc|()|, the method
 \caption{Converting towards unrelated types using a \fold visitor}
 \label{fig:fold}
 \end{figure}
+
+% TEMPORARY could convert to other types, too, e.g. string list
 
 % ------------------------------------------------------------------------------
 
@@ -701,13 +712,14 @@ document that non-regular ADTs are not supported
 document @opaque
   careful with map2: an arbitrary choice takes place
 
-list which types are unsupported
+list which types forms are unsupported
 document how to deal with unsupported types
   wrap them in @opaque
   or replace them with type variables
   note the user can define their own opaque-like parameterized types
     and actually perform nontrivial treatment of the data of unsupported type
   could do HOAS as an example!
+also unsupported: existential types, GADTs
 
 documenter reduce
   iter est en fait un cas particulier de reduce,
@@ -722,6 +734,11 @@ documenter endo
   makes sense for immutable data structures only
     but the package does not enforce that, e.g. it will let you
     create an endo visitor for a mutable record
+
+document fold
+  everything else is a special case of fold
+  Analogous to ppx_tools/genlifter.
+  distinct methods can have distinct return types
 
 document the OCaml object tricks that are used
   1. normally, unbound variables in method types are disallowed;
@@ -738,6 +755,7 @@ document the OCaml object tricks that are used
 
 référence:
   document the regularity restriction \label{sec:regularity} and the option irregular
+  document all options
   document the option concrete
   document public
   avoid shadowing the following names: VisitorsRuntime, Lazy, Pervasives
@@ -759,6 +777,7 @@ related work, for OCaml:
 related work, for other programming languages:
   Bound (Edward Kmett)
   Unbound (Weirich)
+  RedPerl
 
 related work, for proof assistants:
   Steven Keuchel
