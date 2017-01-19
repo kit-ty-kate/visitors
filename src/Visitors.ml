@@ -116,32 +116,6 @@ let datacon_descending_method (datacon : datacon) : methode =
 let failure_method (tycon : tycon) : methode =
   "fail_" ^ tycon
 
-(* For every nonlocal type constructor [tycon], we need a visitor function.
-   E.g., if we are generating a class [map], then for the type constructor
-   [list], we need [List.map]. Note that this is not an absolute name: its
-   interpretation depends on which modules have been opened. This can be
-   influenced by the user via the option [nonlocal]. *)
-
-(* TEMPORARY
-let nonlocal_tycon_module (tycon : Longident.t) : Longident.t =
-  match tycon with
-  | Lident tycon ->
-      (* Turn [list] into [List]. *)
-      Lident (String.capitalize_ascii tycon)
-  | Ldot (path, "t") ->
-      (* Turn [Foo.t] into [Foo]. *)
-      path
-  | Ldot (path, tycon) ->
-      (* Turn [Foo.list] into [Foo.List]. *)
-      Ldot (path, String.capitalize_ascii tycon)
-  | Lapply _ ->
-      assert false
-
-let nonlocal_tycon_function (tycon : Longident.t) : Longident.t =
-  (* For [list], we need [List.map]. *)
-  Ldot (nonlocal_tycon_module tycon, X.variety)
- *)
-
 (* When [scheme] is [Reduce], we need a monoid, that is, a unit [zero] and a
    binary operation [plus]. The names [zero] and [plus] are fixed. We assume
    that there exist virtual methods by these names. It is up to the user to
