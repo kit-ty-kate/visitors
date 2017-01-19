@@ -1,3 +1,7 @@
+export VISITORS_BUILDING_DOCUMENTATION=true
+  # For consistency with doc/Makefile, which relies on the same
+  # set of %.processed.ml files.
+
 TESTS := \
   $(shell ls *.ml | grep -v processed)
 

@@ -1,3 +1,5 @@
+export VISITORS_BUILDING_DOCUMENTATION=true
+
 include ../src/Makefile.preprocess
 
 export TEXINPUTS=.:../test:

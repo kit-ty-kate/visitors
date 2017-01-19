@@ -19,6 +19,22 @@ type tyvar = string
 
 (* -------------------------------------------------------------------------- *)
 
+(* When producing code for inclusion in the documentation, we remove the
+   [Pervasives] prefix in front of some operators, just so that things look
+   pretty. We rely on an undocumented environment variable to toggle this
+   behavior. *)
+
+let pervasive (x : string) : Longident.t =
+  try
+    let _ = Sys.getenv "VISITORS_BUILDING_DOCUMENTATION" in
+    Lident x
+      (* danger: the name [x] must not be shadowed. *)
+  with Not_found ->
+    Ldot (Lident "Pervasives", x)
+      (* danger: the name [Pervasives] must not be shadowed. *)
+
+(* -------------------------------------------------------------------------- *)
+
 (* [unit] produces a unit constant. [tuple] produces a tuple. [record]
    produces a record. These functions already exist; we redefine them without
    any optional arguments so as avoid OCaml's warning 48 (implicit elimination
@@ -194,8 +210,7 @@ let etrue : expression =
 (* [conjunction es] constructs a Boolean conjunction of the expressions [es]. *)
 
 let conjunction : expression =
-  eident (Longident.parse "Pervasives.&&")
-    (* danger: the module name [Pervasives] must not be shadowed. *)
+  eident (pervasive "&&")
 
 let conjunction e1 e2 =
   app conjunction [e1; e2]
@@ -226,8 +241,7 @@ let eforce (e : expression) : expression =
 (* [eqphy e1 e2] is the expression [e1 == e2]. *)
 
 let eqphy : expression =
-  eident (Longident.parse "Pervasives.==")
-    (* danger: the module name [Pervasives] must not be shadowed. *)
+  eident (pervasive "==")
 
 let eqphy (e1 : expression) (e2 : expression) : expression =
   app eqphy [e1; e2]
