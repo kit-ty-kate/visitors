@@ -9,7 +9,10 @@ Treat all primitive atomic types as implicitly opaque?
   (in which case they should not be shadowed)
   (in which case we might wish to add @transparent)
 Or, better, add [opaque] as an option, carrying a list of types.
+
 Remove support for primitive atomic types in VisitorsRuntime?
+
+Decide what to put in the class VisitorsRuntime.fold.
 
 Write Abstraction.ml?
 The type (_, _) abstraction could be transparent, private, or opaque.
