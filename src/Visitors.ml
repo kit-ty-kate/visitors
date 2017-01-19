@@ -96,6 +96,14 @@ let tycon_visitor_method (tycon : Longident.t) : methode =
     (* TEMPORARY there could be clashes *)
   )
 
+(* For every local record type constructor [tycon], there is an ascending
+   method, which is invoked on the way up, in order to re-build some data
+   structure. This method is virtual and exists only when the scheme is
+   [fold]. *)
+
+let tycon_ascending_method (tycon : string) : methode =
+  "build_" ^ tycon
+
 (* Type variables are treated as nonlocal type constructors, so they also have
    a descending method. We include a quote in the method name so as to ensure
    the absence of collisions. *)
@@ -108,6 +116,13 @@ let tyvar_visitor_method (tv : tyvar) : methode =
 
 let datacon_descending_method (datacon : datacon) : methode =
   "visit_" ^ datacon
+
+(* For every data constructor [datacon], there is a ascending visitor method,
+   which is invoked on the way up, in order to re-build some data structure.
+   This method is virtual and exists only when the scheme is [fold]. *)
+
+let datacon_ascending_method (datacon : datacon) : methode =
+  "build_" ^ datacon
 
 (* At arity 2, for every sum type constructor [tycon] which has at least two
    data constructors, there is a failure method, which is invoked when the
@@ -296,12 +311,21 @@ let transmit x xs =
    as the expression [e]. But a hook, named [m], allows this default to be
    overridden. *)
 
-let hook (m : string) (xs : string list) (e : expression) : expression =
+let hook (m : methode) (xs : variable list) (e : expression) : expression =
   (* Generate a method. The formal parameters [xs] don't need a type
      annotation: because this method has a call site, its type can be
      inferred. *)
   generate_concrete_method m (lambdas xs e);
   (* Construct a method call. *)
+  call m (evars xs)
+
+(* -------------------------------------------------------------------------- *)
+
+(* [vhook m xs] constructs a call of the form [self#m xs], and (as a side
+   effect) generates a virtual method [method m: _]. *)
+
+let vhook (m : methode) (xs : variable list) : expression =
+  generate_virtual_method m;
   call m (evars xs)
 
 (* -------------------------------------------------------------------------- *)
@@ -360,8 +384,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
   | false,
     NonOpaque,
     Ptyp_var tv ->
-      generate_virtual_method (tyvar_visitor_method tv);
-      call (tyvar_visitor_method tv) []
+      vhook (tyvar_visitor_method tv) []
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)
@@ -382,6 +405,8 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
              | Map    -> tuple (evars rs)
              | Endo   -> ifeqphys subjects rs (evar this) (body Map)
              | Reduce -> reduce (evars rs)
+             | Fold   -> (* Without loss of generality, re-build a tuple. *)
+                         body Map
            in body X.scheme
           )
         )
@@ -405,6 +430,15 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
          | Map  -> evar (hd xs)     (* At arity > 1, this is an ARBITRARY choice. *)
          | Endo -> evar (hd xs)     (* Arity is 1, so this is fine. *)
          | Reduce -> monoid_unit()  (* This is fine. *)
+         | Fold -> (* At arity 1, the best thing to do, without loss of
+                      generality, is to behave as the identity, that is,
+                      behave as in [map]. At arity > 1, it is debatable
+                      whether we should make an arbitrary choice (like
+                      [map] does) or invoke a virtual method whose
+                      parameters are [env :: xs]. The issue with the
+                      latter approach would be, how many distinct such
+                      methods do we need?, how do we name them?, etc. *)
+                   evar (hd xs)
         )
 
   (* An unsupported construct. *)
@@ -524,6 +558,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
              | Map    -> constr datacon (build rs)
              | Endo   -> ifeqphys subjects rs (evar this) (body Map)
              | Reduce -> reduce (evars rs)
+             | Fold   -> vhook (datacon_ascending_method datacon) (env :: rs)
            in body X.scheme
           )
        )
@@ -562,6 +597,7 @@ let visit_decl (decl : type_declaration) : expression =
              | Map    -> record (combine labels (evars rs))
              | Endo   -> ifeqphys subjects rs (evar (hd xs)) (body Map)
              | Reduce -> reduce (evars rs)
+             | Fold   -> vhook (tycon_ascending_method tycon) (env :: rs)
            in body X.scheme
           )
       )

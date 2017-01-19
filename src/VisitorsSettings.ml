@@ -15,18 +15,20 @@ let plugin =
 
 (* -------------------------------------------------------------------------- *)
 
-(* We can generate several classes: as of now, [iter], [map], [reduce]. They
-   are mostly identical, and differ only in the code that is executed after
-   the recursive calls. In [iter], this code does nothing. In [map], it
+(* We can generate classes that adhere to several distinct schemes, listed
+   below. These schemes differ only in the re-building code that is executed
+   after the recursive calls. In [iter], this code does nothing. In [map], it
    reconstructs a data structure. In [endo], it also reconstructs a data
    structure, but attempts to preserve sharing. In [reduce], it combines the
-   results of the recursive calls using a monoid operation. *)
+   results of the recursive calls using a monoid operation. In [fold], this
+   code is missing; it is represented by a virtual method. *)
 
 type scheme =
   | Iter
   | Map
   | Endo
   | Reduce
+  | Fold
 
 (* -------------------------------------------------------------------------- *)
 
@@ -82,10 +84,11 @@ let supported = [
     "map", Map;
     "endo", Endo;
     "reduce", Reduce;
+    "fold", Fold;
   ]
 
 let valid_varieties =
-  "iter, map, endo, reduce, iter2, map2, reduce2"
+  "iter, map, endo, reduce, fold, iter2, map2, reduce2, fold2"
 
 let invalid_variety loc =
   raise_errorf ~loc
