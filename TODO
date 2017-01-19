@@ -8,6 +8,7 @@ Can we treat 'bn specially so that we do not need to implement visit_'bn?
 Treat all primitive atomic types as implicitly opaque?
   (in which case they should not be shadowed)
   (in which case we might wish to add @transparent)
+Or, better, add [opaque] as an option, carrying a list of types.
 Remove support for primitive atomic types in VisitorsRuntime?
 
 Write Abstraction.ml?
