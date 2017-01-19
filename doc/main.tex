@@ -161,7 +161,9 @@ these methods do nothing. In \fref{fig:expr00}, for instance, the method
 \tyconvisitor{expr} inspects its argument \oc|this_expr| and recursively
 invokes either \dataconvisitor{EConst} or \dataconvisitor{EAdd}, as
 appropriate. The method \dataconvisitor{EConst} does nothing. (More precisely,
-it calls the function \oc|VisitorsRuntime.Int.iter|, which itself does
+it calls the method \tyconvisitor{int}, which is inherited from
+\oc|VisitorsRuntime.iter| and does
+% TEMPORARY noter qu'on peut marquer (int[@opaque]) pour éviter cet appel
 nothing.) The method \dataconvisitor{EAdd} performs two recursive calls to
 \tyconvisitor{expr}, which does nothing, so \dataconvisitor{EAdd} itself does
 nothing.
