@@ -2,9 +2,6 @@
 
 TODO (REALLY)
 
-Can we treat 'bn specially so that we do not need to implement visit_'bn?
-  Or should we just mark 'bn as [@opaque] so as to get visit_'bn for free? Ugly.
-
 Treat all primitive atomic types as implicitly opaque?
   (in which case they should not be shadowed)
   (in which case we might wish to add @transparent)
@@ -13,11 +10,15 @@ Or, better, add [opaque] as an option, carrying a list of types.
 Remove support for primitive atomic types in VisitorsRuntime?
 
 Decide what to put in the class VisitorsRuntime.fold.
+  Provide no methods at all, so we do not fix the types of these methods?
+    Let the user provide their own methods via [ancestors].
 
-Write Abstraction.ml?
-The type (_, _) abstraction could be transparent, private, or opaque.
+Include an option [except] to omit the definition of certain methods.
+  That would allow the user to provide their own implementation,
+  (possibly inherited / polymorphic),
+  without having to satisfy the type constraints imposed by our implementation.
 
-Decide if we should keep hoisting.
+Decide if hoisting is a good idea.
   Benchmark it on a real application?
   If we do keep it, try to share identical definitions.
 
@@ -28,14 +29,7 @@ Benchmark with flambda.
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
 
-Develop support for names and binders (demos/lambda).
-  Can we make it a functor, i.e., independent of the structure of terms?
-  Check that every module has an .mli file, except where that would be too heavy.
-
-Try dealing with binding and hash-consing at the same time.
-
-Try dealing with suspended substitutions.
-  (As a distinct construct. Not necessarily at abstractions.)
+Hunt TEMPORARY.
 
 Document everything.
 
@@ -56,6 +50,9 @@ Announce.
 
 TODO (PERHAPS)
 
+Avoid generating beta-redexes.
+  (fun (x, y) -> ...) z should be let (x, y) = z in ...
+
 [variety] could be a list.
   But then, one would need to replace <variety> with variety in
     [ancestors] and in [name] (if present).
@@ -69,35 +66,5 @@ Implement a way of deferring visitor generation.
 Might wish to allow ancestors to be not just class names
   but class expressions (e.g. a class name applied to some values).
 
-Generate a variant of "iter" with an explicit accumulator?
-  Would allow getting rid of mutable variables in user code.
-
-Generate a generic (bottom-up) "fold" class?
-  Analogous to ppx_tools/genlifter.
-  Create virtual build_ methods for local types.
-  Do something about tuples. (Reconstruct them identically.)
-  In VisitorsRuntime.fold, provide no methods at all,
-    so we do not fix the types of these methods.
-    Let the user provide their own methods via [ancestors].
-    Same idea for user-defined nonlocal types.
-
-Can we handle GADTs?
-  The problem is, possibly every method now must be polymorphic (hence needs a type annotation).
-
-Include an option [except] to omit the definition of certain methods.
-  That would allow the user to provide their own implementation,
-  (possibly inherited / polymorphic),
-  without having to satisfy the type constraints imposed by our implementation.
-
-Hoist the application of self#visit_list to self#visit_expr,
-  so as to avoid allocating a closure when traversing a list.
-  (Would probably require the lazy-initializer trick.)
-
-Avoid generating beta-redexes.
-  (fun (x, y) -> ...) z should be let (x, y) = z in ...
-
 Do something about ~path?
   It seems connected to nested modules.
-
-Think about automatically transforming a closed recursive type definition into
-an open one.

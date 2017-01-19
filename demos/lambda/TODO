@@ -1,3 +1,8 @@
+Make Toolbox a functor, i.e., independent of the structure of terms.
+
+Check that every module has an .mli file, except where that would be too heavy.
+The type (_, _) abstraction could be transparent, private, or opaque.
+
 Operations on terms:
   test x \in fv(t) (nominal)
   test closed(t)
@@ -18,9 +23,17 @@ Document the precondition and postcondition of every function
 
 Deal with more complex forms of binding.
 
+Try dealing with binding and hash-consing at the same time.
+
+Try dealing with suspended substitutions.
+  (As a distinct construct. Not necessarily at abstractions.)
+
 ------------------------------------------------------------------------------
 
 TODO (POSSIBLY):
+
+Can we treat 'bn specially so that we do not need to implement visit_'bn?
+  Or should we just mark 'bn as [@opaque] so as to get visit_'bn for free? Ugly.
 
 Operations in nominal style, without the GUH.
   Capture-avoiding substitution with freshening of bound names.
