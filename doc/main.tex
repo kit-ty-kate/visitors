@@ -182,6 +182,11 @@ where and how this environment should be enriched.
 % One could note that the visitor class is parameterized over 'self,
 % but it is perhaps a bit early for such a remark.
 
+The fields of a data constructor or record are traversed left to right, in the
+order they are declared. In a list-like data structure, the field that holds a
+pointer to the list tail should be declared last, so as to ensure that the
+traversal requires constant stack space.
+
 % ------------------------------------------------------------------------------
 
 \begin{figure}[t]
@@ -281,9 +286,42 @@ whence the name ``\mapendo''.%
 \map visitors are not subject to this restriction: for an illustration, see
 \sref{sec:advanced:hashconsed} and \fref{fig:expr14}.
 
+In principle, \mapendo visitors should be created only for immutable data
+structures. Although the tool can produce a \mapendo visitor for a mutable
+data structure, this is discouraged, as it may lead to unexpected behavior.
+
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
+\orig{expr15}
+\vspace{-\baselineskip}
+\processed{expr15}
+\caption{A visitor of the \reduce variety}
+\label{fig:expr15}
+\end{figure}
+
+\begin{figure}[p]
+\origfirstline{expr15b}{3}
+\caption{Computing the size of an expression using a \reduce visitor}
+\label{fig:reduce}
+\end{figure}
+
+\subsection{\reduce visitors}
+\label{sec:intro:reduce}
+
+% documenter reduce
+%   iter est en fait un cas particulier de reduce,
+%   avec monoïde unit, et opération restrict triviale
+%   On pourrait donc se contenter de donner reduce,
+%   mais engendrer iter directement (si on n'a besoin que de lui)
+%   sera probablement plus efficace, et un peu plus simple
+%   show expr15 as an example application
+%   note: size can also be computed using an \iter visitor, in the style of \fref{fig:expr04}
+
+
+% ------------------------------------------------------------------------------
+
+\begin{figure}[p]
 \orig{expr00fold}
 \vspace{-\baselineskip}
 \processed{expr00fold}
@@ -291,11 +329,16 @@ whence the name ``\mapendo''.%
 \label{fig:expr00fold}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{fold}
 \caption{Converting towards unrelated types using a \fold visitor}
 \label{fig:fold}
 \end{figure}
+
+\subsection{\fold visitors}
+\label{sec:intro:fold}
+
+
 
 % TEMPORARY could convert to other types, too, e.g. string list
 
@@ -747,20 +790,6 @@ document how to deal with unsupported types
     and actually perform nontrivial treatment of the data of unsupported type
   could do HOAS as an example!
 also unsupported: existential types, GADTs
-
-documenter reduce
-  iter est en fait un cas particulier de reduce,
-  avec monoïde unit, et opération restrict triviale
-  On pourrait donc se contenter de donner reduce,
-  mais engendrer iter directement (si on n'a besoin que de lui)
-  sera probablement plus efficace, et un peu plus simple
-  show expr15 as an example application; also illustrates [name] and [ancestors]
-
-documenter endo
-  like map, but avoids re-allocating if possible
-  makes sense for immutable data structures only
-    but the package does not enforce that, e.g. it will let you
-    create an endo visitor for a mutable record
 
 document fold
   everything else is a special case of fold
