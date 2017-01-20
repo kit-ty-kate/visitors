@@ -119,6 +119,9 @@ Finally, a user of \merlin should add the following lines in her project's
 
 % ------------------------------------------------------------------------------
 
+% TEMPORARY marquer int[@opaque] dans tous les exemples, pour éviter
+% l'appel à visit_int; expliquer
+
 \begin{figure}[t]
 % In an OCaml source file, a type definition can be annotated with
 % \oc|[@@deriving visitors { ... }]|:
@@ -309,15 +312,47 @@ data structure, this is discouraged, as it may lead to unexpected behavior.
 \subsection{\reduce visitors}
 \label{sec:intro:reduce}
 
-% documenter reduce
-%   iter est en fait un cas particulier de reduce,
-%   avec monoïde unit, et opération restrict triviale
-%   On pourrait donc se contenter de donner reduce,
-%   mais engendrer iter directement (si on n'a besoin que de lui)
-%   sera probablement plus efficace, et un peu plus simple
-%   show expr15 as an example application
-%   note: size can also be computed using an \iter visitor, in the style of \fref{fig:expr04}
+Whereas an \iter visitor returns no result and a \map visitor returns a data
+structure, a \reduce visitor returns a ``summary'' of a data structure, so to
+speak. The summary of a term is computed by combining the summaries of its
+subterms. This requires summaries to inhabit a monoid, that is, a type
+equipped with a binary operation \oc|plus| and its neutral element \oc|zero|.
 
+\fref{fig:expr15} shows a \reduce visitor for arithmetic expressions. In
+\dataconvisitor{EAdd}, the summaries produced by the two recursive calls are
+combined using a call to \oc|self#plus|. In \dataconvisitor{EConst}, there are
+no recursive calls, so there is nothing to combine: the result is
+\oc|self#zero|.
+
+The virtual methods \oc|zero| and \oc|plus| are declared in the class
+\oc|VisitorsRuntime.reduce|, which is automatically inherited. The type of the
+monoid elements, at this point, is undetermined: it is up to the
+(user-defined) subclasses of the class \reduce to decide what this type should
+be and what the monoid operations should be.
+
+As an example application, \fref{fig:reduce} shows how to compute the size of
+an expression using a \reduce visitor. We inherit the class \reduce. We also
+inherit the class \oc|VisitorsRuntime.addition_monoid|, which defines the
+methods \oc|zero| and \oc|plus| as the integer \oc|0| and integer addition,
+respectively. There remains to override the method \tyconvisitor{expr} so as
+to indicate that every node contributes 1 to the size of an expression.
+
+The size of an expression can also be computed using an \iter visitor equipped
+with mutable state, in the style of \fref{fig:expr04}. It is mostly a matter
+of style whether such a computation should be performed using \iter or
+\reduce.
+% TEMPORARY comparer les perfs, pour voir
+
+An \iter visitor is in fact a special case of a \reduce visitor, instantiated
+with the \oc|unit| monoid. Thus, in principle, one could forget \iter and
+always work with \reduce. Nevertheless, it is preferable to work with \iter
+when it is applicable, for reasons of clarity and efficiency.
+% e.g. an \iter visitor can traverse a list-like data structure in constant
+% stack space; a \reduce visitor cannot, because it does not have an accu.
+
+% One might wonder whether a reduce visitor should have an accumulator...
+% ...but then it would be left-to-right-from-the-start, instead of bottom-up.
+% I am not sure what we want. Maybe we do not need reduce visitors at all!
 
 % ------------------------------------------------------------------------------
 
@@ -834,6 +869,7 @@ related work, for other programming languages:
   Bound (Edward Kmett)
   Unbound (Weirich)
   RedPerl
+  Francisco Ferreira et Brigitte Pientka, ESOP 2017 (Babybel)
 
 related work, for proof assistants:
   Steven Keuchel
