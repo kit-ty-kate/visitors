@@ -256,6 +256,31 @@ its argument.
 \label{fig:expr00endo}
 \end{figure}
 
+\subsection{\mapendo visitors}
+\label{sec:intro:endo}
+
+\mapendo visitors are a slight variation of \map visitors. Whereas a \map
+visitor systematically allocates a copy of the memory block that it receives
+as an argument, an \mapendo visitor (\fref{fig:expr00endo}) first tests if the
+newly allocated block would have exactly the same contents as the original
+block, and if so, re-uses the original block instead.
+% TEMPORARY I have heard this idea attributed to Gérard Huet.
+
+This trick allows saving memory: for instance, when a performing a
+substitution operation on a term, the subterms that are unaffected
+by the substitution are not copied.
+
+One potential disadvantage of \mapendo visitors, in comparison with \map
+visitors, is that these runtime tests have a runtime cost. Another
+disadvantage is that \mapendo visitors have less general types: in an \mapendo
+visitor, the argument type and return type of every method must coincide,
+whence the name ``\mapendo''.%
+%
+\footnote{An endomorphism is a function of a set into itself.}
+%
+\map visitors are not subject to this restriction: for an illustration, see
+\sref{sec:advanced:hashconsed} and \fref{fig:expr14}.
+
 % ------------------------------------------------------------------------------
 
 \begin{figure}[t]
