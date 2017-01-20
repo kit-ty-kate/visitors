@@ -39,6 +39,8 @@ Show to:
   Andrew Kennedy.
   Benjamin Farinier.
   Thomas Braibant.
+  Thibaut Balabonski.
+  Yann Régis-Gianas.
 
 Add a LICENSE.
 Create an opam package. Dependency on 4.03. Note @@unboxed requires 4.04.
@@ -49,6 +51,10 @@ Announce.
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+Could define a fold visitor where the methods receive the names of the types,
+data constructors, and record fields that are being visited. (As in
+ppx_tools/genlifter.)
 
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
