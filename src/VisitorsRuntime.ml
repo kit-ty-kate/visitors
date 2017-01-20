@@ -810,3 +810,11 @@ class virtual ['self] reduce2 = object (self : 'self)
       self#zero
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [fold2] *)
+
+class ['self] fold2 = object (_self)
+
+end
