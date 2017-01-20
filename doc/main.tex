@@ -373,9 +373,64 @@ when it is applicable, for reasons of clarity and efficiency.
 \subsection{\fold visitors}
 \label{sec:intro:fold}
 
+The varities of visitors presented up to this point differ in the computation
+that they perform on the way up, after the recursive calls. As we have seen,
+\iter visitors perform no computation at all; \map and \mapendo visitors
+reconstruct a term; \reduce visitors perform a series of monoid operations.
+Each variety follows a baked-in pattern, which has been programmed ahead of
+time, and cannot be changed. What if a different form of computation, which
+has not been envisioned by the author of the \visitors syntax extension, is
+needed?
 
+This is where \fold visitors come in. A \fold visitor declares virtual methods
+that are called on the way up and can be overridden by the user (in a
+subclass) so as to implement the desired computation. \fref{fig:expr00fold}
+shows a \fold visitor. Two virtual methods, \dataconascendingmethod{EConst}
+and \dataconascendingmethod{EAdd}, are declared. They are invoked by
+\tyconvisitor{EConst} and \tyconvisitor{EAdd}, respectively.
 
-% TEMPORARY could convert to other types, too, e.g. string list
+In a \fold visitor, the return type of the visitor methods is not fixed ahead
+of time. It is up to the (user-defined) subclasses of the visitor class to
+decide what this type should be.
+
+As an example application, \fref{fig:fold} shows how a \fold visitor can be
+used to convert the visited data structure to an entirely different format. In
+this example, the type \oc|person| is a record type, whose fields are
+\oc|firstname| and \oc|surname|. The type \oc|crowd| is isomorphic to a list
+of persons, but, for some reason, it is declared as an algebraic data type
+equipped with its own data constructors, \oc|Nobody| and \oc|Someone|. Suppose
+we wish to convert a \oc|crowd| to a list of pairs of strings. We can do so by
+creating a visitor object that inherits the class \fold and provides concrete
+implementations of the methods \tyconascendingmethod{person},
+\dataconascendingmethod{Nobody}, and \dataconascendingmethod{Someone}.
+Our implementation of \tyconascendingmethod{person} simply allocates
+a pair, while our implementations of
+\dataconascendingmethod{Nobody} and \dataconascendingmethod{Someone}
+respectively build an empty list and a nonempty list.
+Thus, the return type of the methods \tyconascendingmethod{person}
+and \tyconvisitor{person} is \oc|string * string|,
+while the return type of the methods \dataconascendingmethod{Nobody},
+\dataconascendingmethod{Someone}, and \dataconvisitor{crowd} is
+\oc|(string * string) list|. In a \fold visitor, not all methods
+need have the same return type!
+
+If we had chosen to return \oc|f ^ s| instead of \oc|(f, s)| in
+\tyconascendingmethod{person}, then a crowd would be converted to
+a \oc|string list|. A \fold visitor offers great flexibility.
+
+All previous varieties of visitors are special cases of \fold visitors. The
+specialized varieties of visitors are more convenient to use, when they can be
+used, because they do not require the user to provide \tyconascendingmethod{}
+methods. Yet, \fold visitors are more versatile.
+
+% ppx_tools/genlifter is analogous, with a few differences:
+% - it is a command line tool, not as ppx extension;
+% - it has only one return type 'res for all methods;
+% - the visitor methods receive (as extra arguments)
+%   the names of the types, data constructors, and record fields
+%   that are being visited.
+% - and there are fewer visitor methods, basically one per type,
+%   plus one primitive type, plus this#record, this#constr.
 
 % ------------------------------------------------------------------------------
 
@@ -826,11 +881,6 @@ document how to deal with unsupported types
   could do HOAS as an example!
 also unsupported: existential types, GADTs
 
-document fold
-  everything else is a special case of fold
-  Analogous to ppx_tools/genlifter.
-  distinct methods can have distinct return types
-
 document the OCaml object tricks that are used
   1. normally, unbound variables in method types are disallowed;
      one must make them parameters of the class (see OCaml manual)
@@ -852,9 +902,6 @@ référence:
   avoid shadowing the following names: VisitorsRuntime, Lazy, Pervasives
   document which builtin types are supported by VisitorsRuntime
   document which OCaml types can/cannot be traversed
-
-indiquer comment voir le code engendré
-      et comment voir son type
 
 related work, for OCaml:
   ppx_deriving (generates monolithic code) (fixed number of templates)
