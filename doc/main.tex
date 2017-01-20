@@ -215,7 +215,7 @@ type of expressions is extended with new cases.
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr01}
 \vspace{-\baselineskip}
 \processed{expr01}
@@ -239,14 +239,16 @@ instead of returning the unit value \oc|()|, the method
 \dataconvisitor{EConst} reconstructs an \oc|EConst| expression, while the
 method \dataconvisitor{EAdd} reconstructs an \oc|EAdd| expression.
 
-% TEMPORARY the default map visitor on an immutable data structure
-% is the identity, so it is uninteresting;
-% but the default visitor on a mutable data structure is a deep copy,
-% which can be useful.
+A \map visitor behaves (by default) as an identity function: it constructs a
+copy of the data structure that it visits. If the data structure is immutable,
+this is rather pointless: in order to obtain nontrivial behavior, at least one
+method should be overridden. In the data structure is mutable, though, even
+the default behavior is potentially of interest: it constructs a deep copy of
+its argument.
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr00endo}
 \vspace{-\baselineskip}
 \processed{expr00endo}
