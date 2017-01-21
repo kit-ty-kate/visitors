@@ -11,6 +11,7 @@
 \usepackage{listings}
 \input{listings-ocaml}
 \lstset{language=ocaml}
+\usepackage{moreverb}
 \usepackage{xcolor}
 \usepackage{mdframed}
 \usepackage{xspace}
@@ -18,6 +19,8 @@
 % Style.
 \renewcommand{\emph}[1]{\textbf{#1}}
 \input{version}
+
+% TEMPORARY vérifier placement et enchaînement des figures
 
 % ------------------------------------------------------------------------------
 % Headings.
@@ -441,9 +444,8 @@ methods. Yet, \fold visitors are more versatile.
 \caption{A visitor of the \itertwo variety}
 \label{fig:expr02}
 \end{figure}
-% TEMPORARY note we have declared it concrete because we wish to
-% instantiate this class in expr05
 
+\begin{comment}
 \begin{figure}[p]
 \orig{expr03}
 \vspace{-\baselineskip}
@@ -451,44 +453,67 @@ methods. Yet, \fold visitors are more versatile.
 \caption{A visitor of the \maptwo variety}
 \label{fig:expr03}
 \end{figure}
+\end{comment}
 
 \subsection{Visitors of arity two}
 \label{sec:intro:aritytwo}
 
-The \iter and \map visitors shown so far traverse one tree at a time. There
-are situations where one wishes to simultaneously traverse two trees, which
-one expects have the same structure. For this purpose, one should use a
-visitor of arity 2. These come in two varities, namely \itertwo
-(\fref{fig:expr02}) and \maptwo (\fref{fig:expr03}).
+The visitors introduced so far traverse one tree at a time. There are
+situations where one wishes to simultaneously traverse two trees, which one
+expects have the same structure. For this purpose, one can use a visitor of
+arity 2. Every variety except \mapendo is available at arity 2.
 
-In these visitors, the method \tyconvisitor{expr} expects an environment and
-two expressions. These expressions must have identical structure: indeed, if
-\tyconvisitor{expr} finds that they exhibit different tags at the root, say
-\oc|EConst| versus \oc|EAdd|, then it invokes the method \tyconfail{expr},
-which by default calls \oc|VisitorsRuntime.fail()|, which throws the exception
-\oc|VisitorsRuntime.StructuralMismatch|.
+As an illustration, \fref{fig:expr02} shows an \itertwo visitor. There, the
+method \tyconvisitor{expr} expects an environment and two expressions. These
+expressions must have identical structure: indeed, if \tyconvisitor{expr}
+finds that they exhibit different tags at the root, say \oc|EConst| versus
+\oc|EAdd|, then it invokes the method \tyconfail{expr}, whose default
+implementation calls the function \oc|VisitorsRuntime.fail|. This function
+throws the exception \oc|VisitorsRuntime.StructuralMismatch|.
 
-\begin{figure}[t]
+In \fref{fig:expr02}, we have added the optional parameter
+%
+\oc|concrete = true|
+%
+to indicate that the generated class should not be virtual. (By default,
+every generated class is declared \oc|virtual|.) We do this because, in
+the illustration that follows, we wish to instantiate this class.
+
+% TEMPORARY if visit_int is no longer provided by default,
+% we will need to define it
+
+\begin{figure}[p]
 \codefollowup{expr02}
 \origfirstline{expr05}{3}
 \caption{Determining whether two expressions are syntactically equal}
 \label{fig:expr05}
 \end{figure}
 
-An \itertwo visitor can be used, for instance, to easily determine whether two
-expressions are syntactically equal (\fref{fig:expr05}). Naturally, for this
-particular purpose, one could use OCaml's primitive equality operator \oc|=|.
-Alternatively, one could exploit \ppxderiving and annotate the type definition with
+As an illustration, in \fref{fig:expr05}, we use an \itertwo visitor to write
+a function that tests whether two expressions are syntactically equal. This is
+just a matter of performing a synchronous traversal of the two expressions and
+detecting a \oc|StructuralMismatch| exception: if this exception is raised,
+one must return \oc|false|, otherwise one must return \oc|true|. For
+convenience, the functions \oc|VisitorsRuntime.wrap| and
+\oc|VisitorsRuntime.wrap2| can be used to run a user-supplied function (of
+arity 1 or 2, respectively) within an exception handler and return a Boolean
+result, which is \oc|true| if no exception was raised. Here, we run the
+function
+%
+\oc|new iter2 # visit_expr ()|, whose type is \oc|expr -> expr -> unit|,
+within such a handler.
+
+Naturally, to test whether two expressions are syntactically equal, one could
+also use OCaml's primitive equality operator \oc|=|. Alternatively, one could
+exploit \ppxderiving and annotate the type definition with
+%
 \oc|[@@deriving eq]|. Visitors offer greater flexibility: for instance, if our
-arithmetic expressions contained variables, we could easily define an
-operation that tests whether two expressions are equal up to a renaming of
-variables.
-% More generally, if expressions contained variables and binders, we could
-% define an operation that tests whether two expressions are $\alpha$-equivalent.
+arithmetic expressions contained variables and binders, we could easily define
+an operation that tests whether two expressions are $\alpha$-equivalent.
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
+\begin{figure}[p]
 \orig{expr06}
 \caption{Visitors for a family of types}
 \label{fig:expr06}
