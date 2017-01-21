@@ -24,6 +24,20 @@ exception StructuralMismatch
 let fail () =
   raise StructuralMismatch
 
+let wrap f t =
+  try
+    f t;
+    true
+  with StructuralMismatch ->
+    false
+
+let wrap2 f t1 t2 =
+  try
+    f t1 t2;
+    true
+  with StructuralMismatch ->
+    false
+
 (* -------------------------------------------------------------------------- *)
 
 (* A virtual base class for monoids. *)

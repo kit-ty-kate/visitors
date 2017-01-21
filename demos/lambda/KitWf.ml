@@ -32,10 +32,3 @@ class ['self] iter = object (_ : 'self)
   method private extend = extend
   method private visit_'fn = lookup
 end
-
-let wrap f t =
-  try
-    f t;
-    true
-  with VisitorsRuntime.StructuralMismatch ->
-    false

@@ -133,7 +133,7 @@ class equiv = object
 end
 
 let equiv : nominal_term -> nominal_term -> bool =
-  KitEquiv.wrap2 (new equiv # visit_term KitEquiv.empty)
+  VisitorsRuntime.wrap2 (new equiv # visit_term KitEquiv.empty)
 
 class wf = object
   inherit [_] iter
@@ -141,4 +141,4 @@ class wf = object
 end
 
 let wf : nominal_term -> bool =
-  KitWf.wrap (new wf # visit_term KitWf.empty)
+  VisitorsRuntime.wrap (new wf # visit_term KitWf.empty)
