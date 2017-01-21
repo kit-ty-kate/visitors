@@ -481,6 +481,8 @@ the illustration that follows, we wish to instantiate this class.
 
 % TEMPORARY if visit_int is no longer provided by default,
 % we will need to define it
+% if we keep it, we should explain that it fails when the two integers
+% are different
 
 \begin{figure}[p]
 \codefollowup{expr02}
@@ -504,7 +506,7 @@ function
 within such a handler.
 
 Naturally, to test whether two expressions are syntactically equal, one could
-also use OCaml's primitive equality operator \oc|=|. Alternatively, one could
+also use the primitive equality operator \oc|=|. Alternatively, one could
 exploit \ppxderiving and annotate the type definition with
 %
 \oc|[@@deriving eq]|. Visitors offer greater flexibility: for instance, if our
