@@ -554,46 +554,44 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 \subsection{Visitors for parameterized types}
 \label{sec:intro:parameterized}
 
-Visitors can be generated for parameterized types, too. (Technically, we
-impose a restriction to \emph{regular} types; see \S\ref{sec:regularity}.)
+Visitors can be generated for parameterized types, too.%
+%
+\footnote{Technically, we impose a restriction to regular types; see
+  \S\ref{sec:regularity}.}
 %
 In \fref{fig:expr09}, for instance, we define a variant of arithmetic
 expressions where every tree node is decorated with a value of type
 \oc|'info|. We request the generation of a \map visitor, whose code is shown
 in the second part of \fref{fig:expr09}. The generated code has exactly the
 same structure as in the previous sections. The only new feature is that the
-class \map now has a virtual method, \tyconvisitor{'info}.
+class \map now has a virtual method, \tyconvisitor{'info}. The general rule
+is, for each type parameter, there is one virtual method, named after it.
 
-% TEMPORARY clarifier qu'on engendre une déclaration de méthode virtuelle
-% pour chaque variable de types
-
-% TEMPORARY noter que le type de la méthode virtuelle n'est pas connu de nous,
-%    mais est inféré par OCaml
-
-The visitor methods are \emph{not} declared polymorphic in the type
-variable~\oc|'info|, or in two type variables~\oc|'info1| and~\oc|'info2|, as
+The visitor methods are \emph{not} declared polymorphic in a type
+variable~\oc|'info|, or in two type variables \oc|'info1|~and~\oc|'info2|, as
 one might perhaps expect. In fact, they must not be declared polymorphic:
 indeed, the user who implements \tyconvisitor{'info} in a subclass of \map may
 wish to provide an implementation that expects and/or produces specific types
 of information.
 
 As a result, a visitor \emph{object} is monomorphic: its method
-\tyconvisitor{'info} must have type \oc|info1 ->| \oc|info2| for certain specific
-types \oc|info1| and \oc|info2|. Fortunately, the visitor \emph{class} is
-polymorphic: therefore, two distinct visitor objects can have distinct types.
-% TEMPORARY pointer le fait qu'on peut très bien hériter d'une classe qui
-%           contient des méthodes polymorphes.
+\tyconvisitor{'info} must have type \oc|info1 ->| \oc|info2| for certain
+specific types \oc|info1| and \oc|info2|. Fortunately, because it is
+parameterized over \oc|'self|,\footnote{We explain in \sref{sec:oo:self} why
+  all visitor classes are parameterized over \oc|'self|.} the visitor
+\emph{class} is polymorphic: two distinct visitor objects can have distinct
+types.
 
-The class \map is \emph{not} parameterized over the type variable~\oc|'info|,
-or over two type variables~\oc|'info1| and~\oc|'info2|, as one might perhaps
-expect. This is not necessary.%
-\footnote{The class is parameterized over \oc|'self|, and that is sufficient.
-  Indeed, the type \oc|'self| determines the type of all methods, including
-  \tyconvisitor{'info}. Therefore, \oc|'self| determines \oc|'info|.}
-% TEMPORARY documenter plus clairement le fait que toutes nos classes
-%           sont paramétrées vis-à-vis du type de 'self,
-%           et les classes héritées via [ancestors] doivent suivre cette
-%           même convention.
+It is worth noting that, although every \emph{automatically generated} method
+is monomorphic, a visitor class can nevertheless \emph{inherit} polymorphic
+methods from a parent class, whose name is specified via the \ancestors parameter
+(\sref{sec:ancestors}). For instance, the \oc|visit_list| methods provided by
+the classes \oc|VisitorsRuntime.iter|, \oc|VisitorsRuntime.map|, and so on, are
+polymorphic in the types of the list elements. (See \sref{sec:intro:nonlocal}
+for more information on the treatment of preexisting types.)
+
+% TEMPORARY noter que le type de la méthode virtuelle n'est pas connu de nous,
+% mais est inféré par OCaml; pointer sur la section où on discute ce truc.
 
 \fref{fig:expr10} presents two example uses of the class \map. In the first
 example, we define a function \oc|strip|, of type \oc|'info expr -> unit expr|,
@@ -867,6 +865,23 @@ all sharing (therefore possibly causing an exponential explosion).
 The implementation of these functions is simple: it is just
 a matter of overriding \tyconvisitor{'expr} so as to deconstruct
 one kind of expression and reconstruct the other kind.
+
+% ------------------------------------------------------------------------------
+
+\section{To be completed}
+% TEMPORARY
+
+\label{sec:regularity}
+% The regularity restriction.
+
+\label{sec:ancestors}
+% The \ancestors parameter.
+
+\label{sec:oo:self}
+% documenter plus clairement le fait que toutes nos classes
+%           sont paramétrées vis-à-vis du type de 'self,
+%           et les classes héritées via [ancestors] doivent suivre cette
+%           même convention.
 
 % ------------------------------------------------------------------------------
 
