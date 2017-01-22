@@ -307,6 +307,7 @@ data structure, this is discouraged, as it may lead to unexpected behavior.
 \end{figure}
 
 \begin{figure}[p]
+\codefollowup{expr15}
 \origfirstline{expr15b}{3}
 \caption{Computing the size of an expression using a \reduce visitor}
 \label{fig:reduce}
@@ -585,7 +586,7 @@ types.
 Although every \emph{automatically generated} method
 is monomorphic, a visitor class can nevertheless \emph{inherit} polymorphic
 methods from a parent class, whose name is specified via the \ancestors parameter
-(\sref{sec:ancestors}). For instance, the \oc|visit_list| methods provided by
+(\sref{sec:ancestors}). For instance, the \tyconvisitor{list} methods provided by
 the classes \oc|VisitorsRuntime.iter|, \oc|VisitorsRuntime.map|, and so on, are
 polymorphic in the types of the list elements. (See \sref{sec:intro:nonlocal}
 for more information on the treatment of preexisting types.)
@@ -626,7 +627,7 @@ also known as \emph{local} types. For instance, in \fref{fig:expr00}, the
 definition of \oc|EAdd| contains two references to a local type, namely
 \oc|expr|.
 
-A type definition can also contain references to pre-existing types, also
+A type definition can also contain references to preexisting types, also
 known as \emph{nonlocal} types. For instance, in \fref{fig:expr00}, the
 definition of \oc|EConst| contains a reference to a nonlocal type, namely
 \oc|int|, which happens to be one of OCaml's primitive types. In
@@ -640,28 +641,45 @@ for instance, for the local type \oc|expr|, we define the (concrete) method
 \tyconvisitor{expr}.
 
 The treatment of nonlocal types is the same, except the visitor method is not
-defined. It is called, but not defined. Its definition must be provided by an
-ancestor class.
+defined, nor declared. That is, it is called, but is neither defined (as a
+concrete method) or declared (as a virtual method). Therefore, its definition
+must be provided by an ancestor class.
 
-% TEMPORARY section à revoir
-
-% TEMPORARY illustrer le traitement des listes; expliquer qu'on peut écrire *à
-% la main* un visiteur dont les méthodes sont polymorphes; expliquer via un
-% exemple pourquoi c'est utile; noter qu'on ne peut pas engendrer ce visiteur
-% car on ne peut engendrer que des méthodes monomorphes
-
-For every OCaml primitive type, the library module \oc|VisitorsRuntime|, which
-is automatically opened in the generated code, supplies suitable visitor
-classes. The module \oc|VisitorsRuntime| contains several classes named
+For most of OCaml primitive or built-in types, support is provided by the
+module \oc|VisitorsRuntime|. This module contains several classes named
 \oc|iter|, \oc|map|, and so on; each of them supplies methods named
-\tyconvisitor{int}, \tyconvisitor{list}, and so on. (Please consult
-  \srcFile{VisitorsRuntime.mli} for details.) The generated visitor
-automatically inherits from one of these classes, so it gets default
-implementations of the methods \tyconvisitor{int}, \tyconvisitor{list},
-and so on.
+\tyconvisitor{int}, \tyconvisitor{list}, and so on.%
+%
+\footnote{As an exception to this rule, the classes \oc|VisitorsRuntime.fold|
+  and \oc|VisitorsRuntime.fold2| do not supply any methods, because we do not
+  wish to prematurely fix the types of the visitor methods. Please consult
+  \srcFile{VisitorsRuntime.ml} to check which methods exist and what they
+  do.} %
+%
+As is evident in Figures~\ref{fig:expr00}, \fref{fig:expr01}, and so on, the
+generated visitor automatically inherits from the appropriate class in
+\oc|VisitorsRuntime|, so it receives default implementations of the methods
+\tyconvisitor{int}, \tyconvisitor{list}, and so on. The visitor methods for
+parameterized data types (\oc|array|, \oc|Lazy.t|, \oc|list|, \oc|option|,
+\oc|ref|, \oc|result|) are polymorphic, so it is not a problem if both lists
+of apples and lists of oranges need to be traversed.
 
-% TEMPORARY document the behavior of [map] at mutable types like ref and array:
-% a copy is performed
+Nevertheless, at a primitive type, it is advisable to carefully consider what
+behavior is desired. On the one hand, perhaps the inherited method
+\tyconvisitor{int} need not be invoked in the first place; this behavior can
+be obtained by using \oc|(int[@opaque])| instead of \oc|int|. (See
+\sref{sec:opaque} for details.) This is done, for instance, in
+\fref{fig:expr15}, where one can check that no call to \tyconvisitor{int} is
+generated. On the other hand, when one decides to use an inherited method, one
+should make sure that one understands its behavior. The methods
+\tyconvisitor{array} and \tyconvisitor{ref} in the class
+\oc|VisitorsRuntime.map|, for instance, perform a copy of a mutable memory
+block: one should be aware that such a copy is taking place. If this behavior
+is undesirable, it can be overridden.
+
+It is possible to inherit as many classes as one wishes, beyond those defined
+in \oc|VisitorsRuntime|. This is done via the \ancestors parameter
+(\sref{sec:ancestors}).
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -881,6 +899,10 @@ one kind of expression and reconstruct the other kind.
 \label{sec:ancestors}
 % The \ancestors parameter.
 
+\label{sec:opaque}
+% The @opaque annotation.
+(Note the parentheses, which are required.)
+
 \label{sec:oo:self}
 % documenter plus clairement le fait que toutes nos classes
 %           sont paramétrées vis-à-vis du type de 'self,
@@ -978,3 +1000,8 @@ related work, for proof assistants:
 
 crazy title ideas:
   Dr Boilerplate, or: how I learned to stop worrying and love bound names
+
+limitations:
+  generated methods monomorphic, hand-written methods polymorphic
+  problematic if a generated visitor for a parameterized data type
+  later needs to be multi-instantiated in another data type.
