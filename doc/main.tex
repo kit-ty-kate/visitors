@@ -582,7 +582,7 @@ parameterized over \oc|'self|,\footnote{We explain in \sref{sec:oo:self} why
 \emph{class} is polymorphic: two distinct visitor objects can have distinct
 types.
 
-It is worth noting that, although every \emph{automatically generated} method
+Although every \emph{automatically generated} method
 is monomorphic, a visitor class can nevertheless \emph{inherit} polymorphic
 methods from a parent class, whose name is specified via the \ancestors parameter
 (\sref{sec:ancestors}). For instance, the \oc|visit_list| methods provided by
@@ -590,19 +590,23 @@ the classes \oc|VisitorsRuntime.iter|, \oc|VisitorsRuntime.map|, and so on, are
 polymorphic in the types of the list elements. (See \sref{sec:intro:nonlocal}
 for more information on the treatment of preexisting types.)
 
-% TEMPORARY noter que le type de la méthode virtuelle n'est pas connu de nous,
-% mais est inféré par OCaml; pointer sur la section où on discute ce truc.
-
-\fref{fig:expr10} presents two example uses of the class \map. In the first
-example, we define a function \oc|strip|, of type \oc|'info expr -> unit expr|,
-which strips off the decorations in an arithmetic expression, replacing them
-with unit values. In the second example, we define a function \oc|number|,
-of type \oc|'info expr -> int expr|, which decorates each node in an arithmetic
-expression with a unique integer number.%
+\fref{fig:expr10} presents two example uses of the class \map defined in
+\fref{fig:expr09}. In the first example, we define a function \oc|strip|, of
+type \oc|'info expr -> unit expr|, which strips off the decorations in an
+arithmetic expression, replacing them with unit values. In the second example,
+we define a function \oc|number|, of type \oc|'info expr -> int expr|, which
+decorates each node in an arithmetic expression with a unique integer number.%
 \footnote{Because the \oc|info| field appears before the \oc|node| field in
   the definition of the type \oc|expr|, and because fields are visited
   left-to-right, we get a prefix numbering scheme. By exchanging these fields,
-  we would get postfix numbering.}
+  we would get postfix numbering.} %
+These function definitions differ slightly in that, in the case of \oc|strip|,
+a single immutable visitor object is created initially and serves in every
+call to \oc|strip|, whereas, in the case of \oc|number|, a new visitor object
+is created every time \oc|number| is called. The latter style should be used
+when the visitor object has mutable state.
+% On pourrait ré-utiliser le même objet à chaque fois en remettant son champ à
+% zéro... Mais ce serait sale et pas ré-entrant.
 
 % ------------------------------------------------------------------------------
 
@@ -882,6 +886,13 @@ one kind of expression and reconstruct the other kind.
 %           sont paramétrées vis-à-vis du type de 'self,
 %           et les classes héritées via [ancestors] doivent suivre cette
 %           même convention.
+
+% documenter le fait que le code engendré ne contient aucune déclaration
+% de type de méthode (ni concrète, ni virtuelle); nous laissons OCaml les
+% inférer, ce qui réduit notre effort, nous garantit d'obtenir le type le
+% plus général possible. De plus, en présence d'héritage de parents inconnus
+% (via \ancestors) il nous est impossible de construire par nous-mêmes les
+% types de ces méthodes.
 
 % ------------------------------------------------------------------------------
 
