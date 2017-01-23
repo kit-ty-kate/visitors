@@ -122,9 +122,6 @@ Finally, a user of \merlin should add the following lines in her project's
 
 % ------------------------------------------------------------------------------
 
-% TEMPORARY marquer int[@opaque] dans tous les exemples, pour éviter
-% l'appel à visit_int; expliquer
-
 \begin{figure}[t]
 % In an OCaml source file, a type definition can be annotated with
 % \oc|[@@deriving visitors { ... }]|:
@@ -172,12 +169,11 @@ In an \iter visitor, the generated visitor methods do nothing. In
 argument \oc|this| and recursively invokes either \dataconvisitor{EConst} or
 \dataconvisitor{EAdd}, as appropriate. The method \dataconvisitor{EConst} does
 nothing.\footnote{More precisely, it calls the method \tyconvisitor{int},
-  which is inherited from \oc|VisitorsRuntime.iter| and does nothing.}
-% TEMPORARY supprimer cette note si la méthode visit_int disparaît
-% TEMPORARY noter qu'on peut marquer (int[@opaque]) pour éviter cet appel
-The method \dataconvisitor{EAdd} performs two recursive calls to
-\tyconvisitor{expr}, which does nothing, so \dataconvisitor{EAdd} itself does
-nothing.
+  which is inherited from the class \oc|VisitorsRuntime.iter|, and does
+  nothing. This call to \tyconvisitor{int} can be avoided, if desired, by using
+  \oc|(int[@opaque])| instead of \oc|int|; see \sref{sec:opaque}.} The method
+\dataconvisitor{EAdd} performs two recursive calls to \tyconvisitor{expr},
+which does nothing, so \dataconvisitor{EAdd} itself does nothing.
 
 Every method is parameterized with an environment \oc|env|, which is carried
 down into every recursive call and is otherwise unused. The type of this
@@ -275,7 +271,10 @@ visitor systematically allocates a copy of the memory block that it receives
 as an argument, an \mapendo visitor (\fref{fig:expr00endo}) first tests if the
 newly allocated block would have exactly the same contents as the original
 block, and if so, re-uses the original block instead.
-% TEMPORARY I have heard this idea attributed to Gérard Huet.
+% Didier attributes this idea to Gérard Huet,
+% at least in the case of a dictionary insertion operation,
+% where Gérard would raise an exception so as to go back to
+% the toplevel and avoid re-allocating a path.
 
 This trick allows saving memory: for instance, when a performing a
 substitution operation on a term, the subterms that are unaffected
@@ -490,11 +489,6 @@ to indicate that the generated class should not be virtual. (By default,
 every generated class is declared \oc|virtual|.) We do this because, in
 the illustration that follows, we wish to instantiate this class.
 
-% TEMPORARY if visit_int is no longer provided by default,
-% we will need to define it
-% if we keep it, we should explain that it fails when the two integers
-% are different
-
 \begin{figure}[p]
 \codefollowup{expr02}
 \origfirstline{expr05}{3}
@@ -506,15 +500,18 @@ As an illustration, in \fref{fig:expr05}, we use an \itertwo visitor to write
 a function that tests whether two expressions are syntactically equal. This is
 just a matter of performing a synchronous traversal of the two expressions and
 detecting a \oc|StructuralMismatch| exception: if this exception is raised,
-one must return \oc|false|, otherwise one must return \oc|true|. For
-convenience, the functions \oc|VisitorsRuntime.wrap| and
-\oc|VisitorsRuntime.wrap2| can be used to run a user-supplied function (of
-arity 1 or 2, respectively) within an exception handler and return a Boolean
-result, which is \oc|true| if no exception was raised. Here, we run the
-function
+one must return \oc|false|, otherwise one must return \oc|true|. We rely on
+the fact that the method \tyconvisitor{int}, which is inherited from the class
+\oc|VisitorsRuntime.iter2|, fails when when its two integer argument are
+unequal.
+
+The convenience functions \oc|VisitorsRuntime.wrap| and
+\oc|VisitorsRuntime.wrap2| run a user-supplied function (of arity 1 or 2,
+respectively) within an exception handler and return a Boolean result, which
+is \oc|true| if no exception was raised. Here, we run the function
 %
 \oc|new iter2 # visit_expr ()|, whose type is \oc|expr -> expr -> unit|,
-within such a handler.
+in the scope of such a handler.
 
 Naturally, to test whether two expressions are syntactically equal, one could
 also use the primitive equality operator \oc|=|. Alternatively, one could
@@ -886,7 +883,7 @@ There, the function \oc|import| converts an ordinary expression
 to a hash-consed expression, thereby imposing maximal sharing.
 Conversely, the function \oc|export| converts a hash-consed
 expression into an ordinary expression, thereby abandoning
-all sharing (therefore possibly causing an exponential explosion).
+all sharing (and possibly causing an exponential explosion).
 The implementation of these functions is simple: it is just
 a matter of overriding \tyconvisitor{'expr} so as to deconstruct
 one kind of expression and reconstruct the other kind.
