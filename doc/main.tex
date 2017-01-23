@@ -750,7 +750,7 @@ whose single data constructor is named~\oc|E|.%
 \footnote{We mark this algebraic data type \oc|[@@unboxed]|, which (as of
   OCaml 4.04) guarantees that there is no runtime cost associated with the
   data constructor~\oc|E|. Although \oc|expr| and \oc|expr oexpr| are
-  considered distinct types by the OCaml type-checker, they have the same
+  considered distinct types by the OCaml typechecker, they have the same
   runtime representation.}
 
 Let us now construct a visitor class for the type \oc|expr|. It is easy to
@@ -889,6 +889,7 @@ a matter of overriding \tyconvisitor{'expr} so as to deconstruct
 one kind of expression and reconstruct the other kind.
 
 % ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 
 \section{Little-known aspects of OCaml objects}
 \label{sec:oo}
@@ -896,19 +897,210 @@ one kind of expression and reconstruct the other kind.
 In this section, we document a few relatively little-known aspects of OCaml's
 class and object system that play an essential role in our visitors.
 
+% ------------------------------------------------------------------------------
+
+\subsection{Type inference for concrete and virtual methods}
+\label{sec:oo:infer}
+
+It is well-known that OCaml can infer the type of a concrete method. In the
+following simple example, it infers that the field \oc|x| has type \oc|int|
+and that (therefore) the methods \oc|get| and \oc|set| must have types
+\oc|int| and \oc|int -> unit|, respectively:
+%
+\orig{OOinfer}
+
+It is perhaps lesser known that \emph{OCaml can also infer the type of a
+  virtual method}, based on the manner in which this method is used. In the
+following variant of the previous example, it infers that the method
+\oc|check| must have type \oc|int -> int|, as it receives an integer argument
+and produces a result that is stored in the field \oc|x|.
+%
+\orig{OOinfervirtual}
+
+The type annotation \oc|_| that appears in the declaration of the method
+\oc|check| stands for an unconstrained type variable. It lets the OCaml
+typechecker infer a most general monomorphic type for this method.
+A~polymorphic type cannot be inferred. If we wished for the method \oc|check|
+to have type \oc|'a . 'a -> 'a|, then we would have to explicitly annotate the
+declaration with this polymorphic type.
+
+% ------------------------------------------------------------------------------
+
+\subsection{Virtues of self-parameterized classes}
 \label{sec:oo:self}
-% documenter plus clairement le fait que toutes nos classes
-%           sont paramétrées vis-à-vis du type de 'self,
-%           et les classes héritées via [ancestors] doivent suivre cette
-%           même convention.
 
-% documenter le fait que le code engendré ne contient aucune déclaration
-% de type de méthode (ni concrète, ni virtuelle); nous laissons OCaml les
-% inférer, ce qui réduit notre effort, nous garantit d'obtenir le type le
-% plus général possible. De plus, en présence d'héritage de parents inconnus
-% (via \ancestors) il nous est impossible de construire par nous-mêmes les
-% types de ces méthodes.
+Popular belief holds that inferring a method's type fails if ``some type
+variables are unbound in this type''. For instance, in the following variant
+of the previous example, OCaml infers that the method \oc|check| has type
+\oc|'a -> int|, where the type variable \oc|'a| is unconstrained:
+%
+\orig{OOinfererror}
 
+At that point, it fails with a type error message:
+%
+\begin{mdframed}[backgroundcolor=red!10]
+\begin{lstlisting}[keywords={}]
+Error: Some type variables are unbound in this type:
+  class virtual int_cell :
+    object
+      val mutable x : int
+      method virtual check : 'a -> int
+      method get : int
+      method set : 'a -> unit
+    end
+The method check has type 'a -> int where 'a is unbound
+\end{lstlisting}
+\end{mdframed}
+
+In this case, the OCaml manual says, ``the class should be parametric'', and
+``the type parameters must be [subject] somewhere in the class body to a type
+constraint''. In the above example, one might choose to parameterize the class
+over a type variable~\oc|'a| and to add a type annotation that requires
+\oc|'a| to be the domain of the virtual method \oc|check|:
+%
+\orig{OOinferfixed}
+
+This eliminates the type error: this code is well-typed. One problem with this
+approach, though, is that further changes to the code might require
+introducing further type parameters. Suppose for instance that, instead of
+initializing the field~\oc|x| with the value \oc|0|, we wish to parameterize
+the class over an initial value~\oc|init|. We modify the code as follows:
+%
+\orig{OOinfererroragain}
+
+Unfortunately, this modification makes the code ill-typed again:
+%
+\begin{mdframed}[backgroundcolor=red!10]
+\begin{lstlisting}[keywords={}]
+Error: Some type variables are unbound in this type:
+  class virtual ['a] cell :
+    'b ->
+    object
+      val mutable x : 'b
+      method virtual check : 'a -> 'b
+      method get : 'b
+      method set : 'a -> unit
+    end
+The method check has type 'a -> 'b where 'b is unbound
+\end{lstlisting}
+\end{mdframed}
+
+A natural reaction to this type error message might be to parameterize the
+class over both \oc|'a| and \oc|'b|, as follows:
+%
+\orig{OOinferfixedagain}
+
+This eliminates the type error: this code is well-typed. However, it seems
+unfortunate that one cannot depend on the typechecker to infer the types of
+all methods. Instead, it seems that one must introduce an unpredictable number
+of type parameters, as well as an unpredictable amount of explicit type
+annotations, for the code to be accepted.
+
+Fortunately, there is a solution to this problem.
+
+Let us first note that, in the above example, even though both the argument
+type and result type of the method \oc|check| are undetermined, \emph{it is
+  not necessary to introduce two type parameters} \oc|'a| and~\oc|'b|. Indeed,
+one type parameter suffices, provided this parameter determines both the
+argument type and result type of \oc|check|. To illustrate this, let us
+parameterize the class over a type variable \oc|'check|, and provide a type
+annotation that equates \oc|'check| with the type of the method \oc|check|:
+%
+\orig{OOinferfixedagaincheck}
+
+This code is well-typed, too. Its inferred type is as follows:
+%
+\begin{mdframed}[backgroundcolor=green!10]
+\begin{lstlisting}[keywords={}]
+class virtual ['check] cell :
+  'b ->
+  object
+    constraint 'check = 'a -> 'b  (* a type equation *)
+    val mutable x : 'b
+    method virtual check : 'check
+    method get : 'b
+    method set : 'a -> unit
+  end
+\end{lstlisting}
+\end{mdframed}
+
+Because the typechecker infers and records the type equation %
+\oc|'check = 'a -> 'b|, instantiating the type variable~\oc|'check| with a
+concrete type suffices to determine the values of both~\oc|'a| and~\oc|'b|.
+For instance, if~\oc|'check| is instantiated with \oc|float -> int|, then
+\oc|'a| must be \oc|float| and \oc|'b| must be \oc|int|. For this reason,
+there is no need to parameterize the class over \oc|'a| and~\oc|'b|.
+Parameterizing it over \oc|'check| suffices.
+
+This remark alone does not quite solve our problem yet. It still seems as if,
+for a class definition to be accepted, one must introduce an unpredictable
+number of type parameters, as well as an unpredictable amount of explicit type
+annotations and/or type equations.
+
+Fortunately, there is a general way out of this problem. In fact, \emph{one
+  type parameter always suffices}. The trick is to constrain this type
+parameter to be the type of ``self''. Indeed, in OCaml, the type of ``self''
+is an OCaml object type that lists the names and types of all (public)
+methods. Therefore, fixing the type of ``self'' is enough to determine the
+type of every method.
+
+% A curious remark: even though the private methods do not appear in the type
+% of self, OCaml still allows their types to contain unconstrained type
+% variables.
+
+We modify the example as follows. We parameterize the class over a single type
+variable, named \oc|'self|, which we constrain to be the type of ``self'', via
+the type annotation \oc|self : 'self|.
+%
+\orig{OOinferself}
+
+Even though, this time, we have not given the type of the method \oc|check|,
+this code is well-typed. \emph{In~a self-parameterized OCaml class, a
+  monomorphic type can be inferred for every method}, be it concrete or
+virtual. In other words, in~a self-parameterized class, the OCaml typechecker
+never complains that ``some type variables are unbound''.
+
+\begin{comment}
+% TEMPORARY would like to show the inferred type
+% and explain that the "constraint" is redundant
+% but there is something I don't understand.
+The inferred type of the above code is as follows:
+\begin{mdframed}[backgroundcolor=green!10]
+\begin{lstlisting}[keywords={}]
+class virtual ['a] cell :
+  'b ->
+  object ('a)
+    constraint 'a = < check : 'c -> 'b;
+                      get : 'b;
+                      set : 'c -> unit;
+                      .. >
+    val mutable x : 'b
+    method virtual check : 'c -> 'b
+    method get : 'b
+    method set : 'c -> unit
+  end
+\end{lstlisting}
+\end{mdframed}
+\end{comment}
+
+In the \visitors package, this remark solves several problems. First, we never
+need to wonder how many type parameters a class should have, and what they
+should be: the answer is always one, namely \oc|'self|. Second, we never need
+to annotate a method with its type: every virtual method can be annotated with
+the wildcard \oc|_|. These properties are of utmost importance, as we cannot
+in general predict the types of the generated methods. These types may depend
+upon the types of the classes that we inherit (\sref{sec:ancestors}), which we
+do not have access to, as a \texttt{ppx} preprocessor transforms untyped
+syntax trees to untyped syntax trees.
+
+Since self-parameterized classes seem so great, one may wonder whether, in
+everyday life, it would be a good idea to parameterize every class over
+\oc|'self| in this manner. The answer is, it probably would not. Such an
+approach leads to verbose class types, as the type of ``self'' contains a list
+of all (public) methods. It also gives rise to recursive object types, of the
+form \oc|'self c as 'self|, where \oc|c| is a class.
+
+% ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
 \section{Reference}
@@ -922,6 +1114,10 @@ class and object system that play an essential role in our visitors.
 
 \label{sec:ancestors}
 % The \ancestors parameter.
+
+% documenter le fait que toutes nos classes sont paramétrées vis-à-vis du type
+% de 'self, et les classes héritées via [ancestors] doivent suivre cette même
+% convention.
 
 \label{sec:opaque}
 % The @opaque annotation.
