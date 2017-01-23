@@ -1046,7 +1046,16 @@ type of every method.
 
 % A curious remark: even though the private methods do not appear in the type
 % of self, OCaml still allows their types to contain unconstrained type
-% variables.
+% variables. For instance, the following is allowed, with and without
+% self-parameterization:
+%
+% class virtual foo = object
+%   method private virtual f: _
+% end
+%
+% class virtual ['self] foo = object (_ : 'self)
+%   method private virtual f: _
+% end
 
 We modify the example as follows. We parameterize the class over a single type
 variable, named \oc|'self|, which we constrain to be the type of ``self'', via
