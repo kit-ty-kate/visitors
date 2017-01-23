@@ -890,18 +890,11 @@ one kind of expression and reconstruct the other kind.
 
 % ------------------------------------------------------------------------------
 
-\section{To be completed}
-% TEMPORARY
+\section{Little-known aspects of OCaml objects}
+\label{sec:oo}
 
-\label{sec:regularity}
-% The regularity restriction.
-
-\label{sec:ancestors}
-% The \ancestors parameter.
-
-\label{sec:opaque}
-% The @opaque annotation.
-(Note the parentheses, which are required.)
+In this section, we document a few relatively little-known aspects of OCaml's
+class and object system that play an essential role in our visitors.
 
 \label{sec:oo:self}
 % documenter plus clairement le fait que toutes nos classes
@@ -915,6 +908,24 @@ one kind of expression and reconstruct the other kind.
 % plus général possible. De plus, en présence d'héritage de parents inconnus
 % (via \ancestors) il nous est impossible de construire par nous-mêmes les
 % types de ces méthodes.
+
+% ------------------------------------------------------------------------------
+
+\section{Reference}
+
+% TEMPORARY
+% document all parameters
+% document the shape of the generated code (per-type)
+
+\label{sec:regularity}
+% The regularity restriction.
+
+\label{sec:ancestors}
+% The \ancestors parameter.
+
+\label{sec:opaque}
+% The @opaque annotation.
+(Note the parentheses, which are required.)
 
 % ------------------------------------------------------------------------------
 
