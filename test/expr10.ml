@@ -1,11 +1,11 @@
 open Expr09
 
-let strip : _ expr -> unit expr =
+let strip (e : _ expr) : unit expr =
   let v = object
     inherit [_] map
     method visit_'info _env _info = ()
   end in
-  v # visit_expr ()
+  v # visit_expr () e
 
 let number (e : _ expr) : int expr =
   let v = object
