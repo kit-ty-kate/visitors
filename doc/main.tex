@@ -341,6 +341,16 @@ methods \oc|zero| and \oc|plus| as the integer \oc|0| and integer addition,
 respectively. There remains to override the method \tyconvisitor{expr} so as
 to indicate that every node contributes 1 to the size of an expression.
 
+Incidentally, this code is written in such a manner that a single visitor
+object is created initially and serves in every call to the function
+\oc|size|. This style can be used when the visitor object is immutable and
+when the function that one wishes to define is monomorphic. When it cannot be
+used, one begins with \oc|let size (e : expr) : int = ...| and ends with %
+\oc|v # visit_expr () e|. That style causes a new visitor object to be created
+every time \oc|size| is called.
+% On pourrait ré-utiliser le même objet à chaque fois en remettant son champ à
+% zéro... Mais ce serait sale et pas ré-entrant.
+
 The size of an expression can also be computed using an \iter visitor equipped
 with mutable state, in the style of \fref{fig:expr04}. It is mostly a matter
 of style whether such a computation should be performed using \iter or
@@ -601,13 +611,6 @@ decorates each node in an arithmetic expression with a unique integer number.%
   the definition of the type \oc|expr|, and because fields are visited
   left-to-right, we get a prefix numbering scheme. By exchanging these fields,
   we would get postfix numbering.} %
-These function definitions differ slightly in that, in the case of \oc|strip|,
-a single immutable visitor object is created initially and serves in every
-call to \oc|strip|, whereas, in the case of \oc|number|, a new visitor object
-is created every time \oc|number| is called. The latter style should be used
-when the visitor object has mutable state.
-% On pourrait ré-utiliser le même objet à chaque fois en remettant son champ à
-% zéro... Mais ce serait sale et pas ré-entrant.
 
 % ------------------------------------------------------------------------------
 
@@ -685,8 +688,6 @@ in \oc|VisitorsRuntime|. This is done via the \ancestors parameter
 % ------------------------------------------------------------------------------
 
 \section{Advanced examples}
-% TEMPORARY ou: applications, illustrations?
-%           ou: playing with open/closed data types, tying knots, hash-consing?
 \label{sec:advanced}
 
 % ------------------------------------------------------------------------------
@@ -698,7 +699,6 @@ in \oc|VisitorsRuntime|. This is done via the \ancestors parameter
 \caption{An open type of arithmetic expressions} % and a visitor for it
 \label{fig:expr12}
 \end{figure}
-% TEMPORARY also an example of explicit [name]
 
 \begin{figure}[p]
 \codefollowup{expr12}
@@ -724,15 +724,16 @@ is recursive: an expression of type \oc|expr| has subexpressions of type
 
 It is often desirable, for greater flexibility, to first define an \emph{open}
 type of arithmetic expressions. Such a type, say \oc|oexpr|, is parameterized
-over a type variable~\oc|'expr|. It is nonrecursive: an expression of type
+over a type variable~\oc|'expr|. It is not recursive: an expression of type
 \oc|'expr oexpr| has subexpressions of type \oc|'expr|. It is shown in
 \fref{fig:expr12}. Naturally, we may request the generation of visitors for
 the type \oc|oexpr|. In \fref{fig:expr12}, we generate a class of \map
-visitors, which we name \oc|omap|. As explained earlier
-(\sref{sec:intro:parameterized}), this class has a virtual method,
-\tyconvisitor{'expr}.
+visitors, which we name \oc|omap|. (This is an example of using an explicit
+\name parameter.) As explained earlier (\sref{sec:intro:parameterized}),
+because the type \oc|oexpr| is parameterized over the type variable
+\oc|'expr|, the visitor class has a virtual method, \tyconvisitor{'expr}.
 
-The closed (recursive) type of expressions, \oc|expr|, can then be defined in
+A closed (recursive) type of expressions, \oc|expr|, can then be defined in
 terms of \oc|expr|. This is done in \fref{fig:expr13}. In type-theoretical
 terms, one would like to define \oc|expr| as the fixed point of the functor
 \oc|oexpr|.
@@ -742,7 +743,7 @@ This is not accepted by OCaml, though;%
 %
 \footnote{It would be accepted by OCaml with the command line switch
   \texttt{-rectypes}, which instructs the typechecker to tolerate
-  equirecursive types. However, this is \emph{not} a good idea, as it causes
+  equirecursive types. However, this is not a good idea, as it causes
   the typechecker to suddenly accept many meaningless programs and infer
   bizarre types for them.}
 %
@@ -751,19 +752,21 @@ whose single data constructor is named~\oc|E|.%
 %
 \footnote{We mark this algebraic data type \oc|[@@unboxed]|, which (as of
   OCaml 4.04) guarantees that there is no runtime cost associated with the
-  data constructor~\oc|E|. A value of type \oc|expr| is represented at
-  runtime as a value of type \oc|expr oexpr|.}
+  data constructor~\oc|E|. Although \oc|expr| and \oc|expr oexpr| are
+  considered distinct types by the OCaml type-checker, they have the same
+  runtime representation.}
 
 Let us now construct a visitor class for the type \oc|expr|. It is easy to
 do so, by hand, in a few lines of code.%
 %
 \footnote{We could request the generation of a visitor class via a
   \oc|[@@deriving]| annotation. However, the type \oc|oexpr| would then be
-  viewed as nonlocal; therefore, we would have to first define a visitor
-  function \oc|Oexpr.map| for the type \oc|oexpr|. That could be done. More
-  seriously, the generated visitor class would have only one method, namely
-  \tyconvisitor{expr}, so it would not be customizable by inheritance, as it
-  should be.}
+  viewed as nonlocal; therefore, in the generated code, the method
+  \tyconvisitor{oexpr} would be applied to \oc|self#visit_expr|, a
+  parameter which it does not expect.}
+%
+% Also, we would have to inherit from \oc|omap|, but that would cause us
+% to inherit twice from \oc|VisitorsRuntime.map|, causing warnings.
 %
 We define a class \oc|map|, a subclass of \oc|omap|, and provide a concrete
 implementation of the virtual method \tyconvisitor{'expr}. In the definition
