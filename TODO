@@ -2,14 +2,7 @@
 
 TODO (REALLY)
 
-Treat all primitive atomic types as implicitly opaque?
-  (in which case they should not be shadowed)
-  (in which case we might wish to add @transparent)
-Or, better, add [opaque] as an option, carrying a list of types.
-
-Remove support for primitive atomic types in VisitorsRuntime?
-  Note that at arity 2, the methods do something nontrivial.
-  Decide whether EConst of int should be @opaque in the doc.
+Add [opaque] as an option, carrying a list of types?
 
 Decide what to put in the class VisitorsRuntime.fold.
   Provide no methods at all, so we do not fix the types of these methods?
