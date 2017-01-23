@@ -9,10 +9,10 @@ and crowd =
 [@@deriving visitors { variety = "fold" }]
 
 let convert : crowd -> (string * string) list =
-  let o = object
+  let v = object
     inherit [_] fold
     method build_person  () f s = (f, s)
     method build_Nobody  ()     = []
     method build_Someone () p c = p :: c
   end
-  in o # visit_crowd ()
+  in v # visit_crowd ()
