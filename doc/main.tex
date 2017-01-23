@@ -169,7 +169,7 @@ In an \iter visitor, the generated visitor methods do nothing. In
 argument \oc|this| and recursively invokes either \dataconvisitor{EConst} or
 \dataconvisitor{EAdd}, as appropriate. The method \dataconvisitor{EConst} does
 nothing.\footnote{More precisely, it calls the method \tyconvisitor{int},
-  which is inherited from the class \oc|VisitorsRuntime.iter|, and does
+  which is inherited from the class \runtime{iter}, and does
   nothing. This call to \tyconvisitor{int} can be avoided, if desired, by using
   \oc|(int[@opaque])| instead of \oc|int|; see \sref{sec:opaque}.} The method
 \dataconvisitor{EAdd} performs two recursive calls to \tyconvisitor{expr},
@@ -328,14 +328,14 @@ no recursive calls, so there is nothing to combine: the result is
 \oc|self#zero|.
 
 The virtual methods \oc|zero| and \oc|plus| are declared in the class
-\oc|VisitorsRuntime.reduce|, which is automatically inherited. The type of the
+\runtime{reduce}, which is automatically inherited. The type of the
 monoid elements, at this point, is undetermined: it is up to the
 (user-defined) subclasses of the class \reduce to decide what this type should
 be and what the monoid operations should be.
 
 As an example application, \fref{fig:reduce} shows how to compute the size of
 an expression using a \reduce visitor. We inherit the class \reduce. We also
-inherit the class \oc|VisitorsRuntime.addition_monoid|, which defines the
+inherit the class \runtime{addition_monoid}, which defines the
 methods \oc|zero| and \oc|plus| as the integer \oc|0| and integer addition,
 respectively. There remains to override the method \tyconvisitor{expr} so as
 to indicate that every node contributes 1 to the size of an expression.
@@ -478,8 +478,8 @@ method \tyconvisitor{expr} expects an environment and two expressions. These
 expressions must have identical structure: indeed, if \tyconvisitor{expr}
 finds that they exhibit different tags at the root, say \oc|EConst| versus
 \oc|EAdd|, then it invokes the method \tyconfail{expr}, whose default
-implementation calls the function \oc|VisitorsRuntime.fail|. This function
-throws the exception \oc|VisitorsRuntime.StructuralMismatch|.
+implementation calls the function \runtime{fail}. This function
+throws the exception \runtime{StructuralMismatch}.
 
 In \fref{fig:expr02}, we have added the optional parameter
 %
@@ -502,11 +502,11 @@ just a matter of performing a synchronous traversal of the two expressions and
 detecting a \oc|StructuralMismatch| exception: if this exception is raised,
 one must return \oc|false|, otherwise one must return \oc|true|. We rely on
 the fact that the method \tyconvisitor{int}, which is inherited from the class
-\oc|VisitorsRuntime.iter2|, fails when when its two integer argument are
+\runtime{iter2}, fails when when its two integer argument are
 unequal.
 
-The convenience functions \oc|VisitorsRuntime.wrap| and
-\oc|VisitorsRuntime.wrap2| run a user-supplied function (of arity 1 or 2,
+The convenience functions \runtime{wrap} and
+\runtime{wrap2} run a user-supplied function (of arity 1 or 2,
 respectively) within an exception handler and return a Boolean result, which
 is \oc|true| if no exception was raised. Here, we run the function
 %
@@ -594,7 +594,7 @@ Although every \emph{automatically generated} method
 is monomorphic, a visitor class can nevertheless \emph{inherit} polymorphic
 methods from a parent class, whose name is specified via the \ancestors parameter
 (\sref{sec:ancestors}). For instance, the \tyconvisitor{list} methods provided by
-the classes \oc|VisitorsRuntime.iter|, \oc|VisitorsRuntime.map|, and so on, are
+the classes \runtime{iter}, \runtime{map}, and so on, are
 polymorphic in the types of the list elements. (See \sref{sec:intro:nonlocal}
 for more information on the treatment of preexisting types.)
 
@@ -650,8 +650,8 @@ module \oc|VisitorsRuntime|. This module contains several classes named
 \oc|iter|, \oc|map|, and so on; each of them supplies methods named
 \tyconvisitor{int}, \tyconvisitor{list}, and so on.%
 %
-\footnote{As an exception to this rule, the classes \oc|VisitorsRuntime.fold|
-  and \oc|VisitorsRuntime.fold2| do not supply any methods, because we do not
+\footnote{As an exception to this rule, the classes \runtime{fold}
+  and \runtime{fold2} do not supply any methods, because we do not
   wish to prematurely fix the types of the visitor methods. Please consult
   \srcFile{VisitorsRuntime.ml} to check which methods exist and what they
   do.} %
@@ -673,7 +673,7 @@ be obtained by using \oc|(int[@opaque])| instead of \oc|int|. (See
 generated. On the other hand, when one decides to use an inherited method, one
 should make sure that one understands its behavior. The methods
 \tyconvisitor{array} and \tyconvisitor{ref} in the class
-\oc|VisitorsRuntime.map|, for instance, perform a copy of a mutable memory
+\runtime{map}, for instance, perform a copy of a mutable memory
 block: one should be aware that such a copy is taking place. If this behavior
 is undesirable, it can be overridden.
 
@@ -763,7 +763,7 @@ do so, by hand, in a few lines of code.%
   parameter which it does not expect.}
 %
 % Also, we would have to inherit from \oc|omap|, but that would cause us
-% to inherit twice from \oc|VisitorsRuntime.map|, causing warnings.
+% to inherit twice from \runtime{map}, causing warnings.
 %
 We define a class \oc|map|, a subclass of \oc|omap|, and provide a concrete
 implementation of the virtual method \tyconvisitor{'expr}. In the definition
