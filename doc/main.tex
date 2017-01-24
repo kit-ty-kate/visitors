@@ -1117,17 +1117,9 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
 
 % ------------------------------------------------------------------------------
 
-\subsection{Parameters}
-
-The following parameters can be passed as part of the
-%
-\oc|[@@deriving visitors { ... }]|
-%
-annotation, inside the curly braces.
-
-% TEMPORARY vertical spacing
-% TEMPORARY make it breakable
-\begin{tabular}{@{}l@{\qquad}l@{\qquad}p{.6\textwidth}@{}}
+\begin{figure}[t]
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{@{}r@{\qquad}l@{\qquad}p{.6\textwidth}@{}}
   \ancestors & (list of strings) &
     A list of classes that the generated class should inherit.
     The class \runtime{<variety>} is implicitly prepended to this list.
@@ -1167,6 +1159,19 @@ annotation, inside the curly braces.
     \foldtwo (\sref{sec:intro:aritytwo}).
 \\
 \end{tabular}
+\vspace{5mm}
+\caption{Parameters of \oc|[@@deriving visitors {...}]|}
+\label{fig:params}
+\end{figure}
+
+\subsection{Parameters}
+
+The parameters that can be passed as part of the
+%
+\oc|[@@deriving visitors { ... }]|
+%
+annotation, inside the curly braces,
+are described in \fref{fig:params}.
 
 % TEMPORARY
 % document the shape of the generated code (per-type)
