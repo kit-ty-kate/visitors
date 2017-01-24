@@ -125,7 +125,7 @@ Finally, a user of \merlin should add the following lines in her project's
 
 \begin{figure}[t]
 % In an OCaml source file, a type definition can be annotated with
-% \oc|[@@deriving visitors { ... }]|:
+% \derivingvisitors:
 \orig{expr00}
 % This causes the following code to be (invisibly) generated:
 \vspace{-\baselineskip}
@@ -142,7 +142,7 @@ literals and binary additions. The abstract syntax of these expressions can be
 described by an algebraic data type \oc|expr|, shown in the first part of
 \fref{fig:expr00}.
 %
-By annotating this type definition with \oc|[@@deriving visitors { ... }]|, we
+By annotating this type definition with \derivingvisitors, we
 request the automated generation of a visitor for expressions. The annotation
 \oc|[@@deriving visitors| \oc|{ ... }]| must carry at least one parameter,
 \variety, which indicates what variety of visitor is desired.
@@ -1170,16 +1170,15 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
 \subsection{Parameters}
 \label{sec:ancestors}
 
-The parameters that can be passed as part of the
-%
-\oc|[@@deriving visitors { ... }]|
-%
-annotation, inside the curly braces,
-are described in \fref{fig:params}.
+The parameters that can be passed as part of the \derivingvisitors annotation,
+inside the curly braces, are described in \fref{fig:params}.
 
 % ------------------------------------------------------------------------------
 
 \subsection{How to examine the generated code}
+
+The generated code is conceptually inserted into the user's source code just
+after the type definition that is decorated with \derivingvisitors.
 
 It can be useful to inspect the generated code, so as to understand how it
 works, what are the arguments and result of each method, and so on. This can
@@ -1192,10 +1191,22 @@ named \oc|%.processed.ml| out of the source file \oc|%.ml|. This file contains
 just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
 \oc|ocp-indent| to extract and beautify the code.
 
+We note that \derivingvisitors can be used only in an \oc|%.ml| file, not in
+an \oc|%.mli| file. If this annotation is used in an \oc|%.ml| file, then the
+corresponding \oc|%.mli| file should be either omitted altogether or
+hand-written. This may seem sad, but is unavoidable, as we cannot in general
+predict the types of the generated methods.
+
+The type of the generated code can be inspected, if desired, by requesting the
+OCaml compiler to infer and display it. A command of the form
+\verb|ocamlbuild -use-ocamlfind <other-flags> %.inferred.mli| can be used for
+this purpose.
+
 % ------------------------------------------------------------------------------
 
 % TEMPORARY incomplete:
 
+% note that \derivingvisitors can be used only in an .ml file, not in an .mli file
 % document the shape of the generated code (per-type)
 % say that every generated class is self-parameterized
 
