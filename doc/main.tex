@@ -1116,6 +1116,7 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
 \section{Reference}
 
 % ------------------------------------------------------------------------------
+% Parameters.
 
 \begin{figure}[t]
 \renewcommand{\arraystretch}{1.5}
@@ -1128,14 +1129,14 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
     which is typically (but not necessarily) the type of ``self''.
 \\
   \concrete & (Boolean) &
-    If \oc|true|, the generated class is declared
+    If \texttt{true}, the generated class is declared
     concrete; otherwise, it is declared virtual.
-    This is an optional parameter; its default value is \oc|false|.
+    This is an optional parameter; its default value is \texttt{false}.
 \\
   \irregular & (Boolean) &
-    If \oc|true|, the regularity check (\sref{sec:regularity}) is disabled;
+    If \texttt{true}, the regularity check (\sref{sec:regularity}) is disabled;
     otherwise, it is enabled.
-    This is an optional parameter; its default value is \oc|false|.
+    This is an optional parameter; its default value is \texttt{false}.
 \\
   \name & (string) &
     The name of the generated class.
@@ -1176,7 +1177,25 @@ The parameters that can be passed as part of the
 annotation, inside the curly braces,
 are described in \fref{fig:params}.
 
-% TEMPORARY
+% ------------------------------------------------------------------------------
+
+\subsection{How to examine the generated code}
+
+It can be useful to inspect the generated code, so as to understand how it
+works, what are the arguments and result of each method, and so on. This can
+be especially useful when the generated code is ill-typed (which can happen,
+for instance, when arbitrary user code is inherited via the \ancestors
+parameter).
+
+The file \srcFile{Makefile.preprocess} offers a recipe that builds a file
+named \oc|%.processed.ml| out of the source file \oc|%.ml|. This file contains
+just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
+\oc|ocp-indent| to extract and beautify the code.
+
+% ------------------------------------------------------------------------------
+
+% TEMPORARY incomplete:
+
 % document the shape of the generated code (per-type)
 % say that every generated class is self-parameterized
 
@@ -1197,8 +1216,6 @@ are described in \fref{fig:params}.
 % TEMPORARY
 
 document the speed overhead compared to a native recursive function
-
-document how to see the preprocessed code
 
 document how to see its inferred type
   explain why we do not work in .mli files
