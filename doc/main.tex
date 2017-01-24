@@ -142,10 +142,10 @@ literals and binary additions. The abstract syntax of these expressions can be
 described by an algebraic data type \oc|expr|, shown in the first part of
 \fref{fig:expr00}.
 %
-By annotating this type definition with \derivingvisitors, we
-request the automated generation of a visitor for expressions. The annotation
-\oc|[@@deriving visitors| \oc|{ ... }]| must carry at least one parameter,
-\variety, which indicates what variety of visitor is desired.
+By annotating this type definition with \derivingvisitors, we request the
+automated generation of a visitor for expressions. The annotation
+\derivingvisitors must carry at least one parameter, \variety, which indicates
+what variety of visitor is desired.
 
 The code of the visitor class, which is automatically generated and in normal
 use remains invisible, is shown in the second part of \fref{fig:expr00}. The
@@ -1162,8 +1162,10 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
     \foldtwo (\sref{sec:intro:aritytwo}).
 \\
 \end{tabular}
-\vspace{5mm}
-\caption{Parameters of \oc|[@@deriving visitors {...}]|}
+\vspace{2.5mm}
+\hrule
+\vspace{2.5mm}
+\caption{Parameters of \derivingvisitors}
 \label{fig:params}
 \end{figure}
 
