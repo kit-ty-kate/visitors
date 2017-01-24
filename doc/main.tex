@@ -223,6 +223,64 @@ type of expressions is extended with new cases.
 
 % ------------------------------------------------------------------------------
 
+\subsection{What is the type of a visitor?}
+\label{sec:intro:type}
+
+In this document, most of the time, we prefer to show the code of a visitor
+class and omit its type. There are two reasons for this. First, this type is
+often verbose, as the class has many methods, and complex, as several type
+variables are often involved. Second, although we can explain the type of a
+generated visitor on a case-by-case basis, we cannot in the general case
+predict the type of a generated visitor (or even predict whether it is
+well-typed). The reason is, the type of a generated visitor depends upon the
+types of the classes that are inherited via the \ancestors parameter
+(\sref{sec:ancestors}). Because a \texttt{ppx} syntax extension transforms
+untyped syntax trees to untyped syntax trees, the \visitors syntax extension
+does not have access to this information.
+
+For this reason, the \visitors syntax extension cannot generate any type
+declarations. Thus, the annotation \derivingvisitors can be used only in an
+\texttt{\%.ml} file, not in an \texttt{\%.mli} file. When it is used in an
+\texttt{\%.ml} file, the corresponding \texttt{\%.mli} file should either be
+omitted altogether or be written by hand.
+
+\input{types}
+
+Nevertheless, the type of the generated code can be inspected, if desired, by
+requesting the OCaml compiler to infer and display it. For this purpose, one
+can use a command of the following form:
+\begin{quote}
+\verb|ocamlbuild -use-ocamlfind <other-flags> %.inferred.mli|
+\end{quote}
+
+\fref{fig:inferred} shows the type that is inferred via such a command for the
+\iter visitor of \fref{fig:expr00}. This type is rather verbose, for two
+reasons. First, an explicit type equation, introduced by the \oc|constraint|
+keyword, relates the type parameter \oc|'self| with an OCaml object type that
+lists the public methods with their types. Second, the class \iter has many more
+methods than one might think. This is because it inherits a large number of
+private methods from the class \runtime{iter}. In the present case, all of
+these methods except \tyconvisitor{int} are in fact unused.
+
+Fortunately, this complicated type can be manually simplified. This is done in
+\fref{fig:simplified}. Two main simplifications have been performed. First, we
+have omitted all private methods. Indeed, the most important property of
+private methods in OCaml is precisely the fact that it is permitted to hide
+their existence. Second, we have omitted the type constraint that bears on
+the type variable \oc|'self|, as it is in fact redundant: it is implicit in OCaml
+that the type of ``self'' must be an object type that lists the public methods.
+The bizarre-looking \oc|'monomorphic.| annotations indicate that the methods have
+monomorphic types; this trick is explained in \sref{sec:oo:monomorphic}.
+
+The class type shown in \fref{fig:simplified} cannot be further simplified.
+The methods \tyconvisitor{EConst} and \tyconvisitor{EAdd} cannot be hidden, as
+they are public. That said, if one wished to hide them, one could add the parameter %
+\oc|public = ["visit_expr"]| to the annotation \derivingvisitors in \fref{fig:expr00}.
+These two methods would then be declared private in the generated code,
+so it would be permitted to hide their existence.
+
+% ------------------------------------------------------------------------------
+
 \begin{figure}[p]
 \orig{expr01}
 \vspace{-\baselineskip}
@@ -1012,7 +1070,7 @@ annotation that equates \oc|'check| with the type of the method \oc|check|:
 This code is well-typed, too. Its inferred type is as follows:
 %
 \begin{mdframed}[backgroundcolor=green!10]
-\begin{lstlisting}[keywords={}]
+\begin{lstlisting}
 class virtual ['check] cell :
   'b ->
   object
@@ -1076,7 +1134,7 @@ never complains that ``some type variables are unbound''.
 % but there is something I don't understand.
 The inferred type of the above code is as follows:
 \begin{mdframed}[backgroundcolor=green!10]
-\begin{lstlisting}[keywords={}]
+\begin{lstlisting}
 class virtual ['a] cell :
   'b ->
   object ('a)
@@ -1098,10 +1156,7 @@ need to wonder how many type parameters a class should have, and what they
 should be: the answer is always one, namely \oc|'self|. Second, we never need
 to annotate a method with its type: every virtual method can be annotated with
 the wildcard \oc|_|. These properties are of utmost importance, as we cannot
-in general predict the types of the generated methods. These types may depend
-upon the types of the classes that we inherit (\sref{sec:ancestors}), which we
-do not have access to, as a \texttt{ppx} preprocessor transforms untyped
-syntax trees to untyped syntax trees.
+in general predict the types of the generated methods.
 
 Since self-parameterized classes seem so great, one may wonder whether, in
 everyday life, it would be a good idea to parameterize every class over
@@ -1109,6 +1164,11 @@ everyday life, it would be a good idea to parameterize every class over
 approach leads to verbose class types, as the type of ``self'' contains a list
 of all (public) methods. It also gives rise to recursive object types, of the
 form \oc|'self c as 'self|, where \oc|c| is a class.
+
+% ------------------------------------------------------------------------------
+
+\subsection{Simplifying a class type}
+\label{sec:oo:monomorphic}
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -1177,7 +1237,7 @@ inside the curly braces, are described in \fref{fig:params}.
 
 % ------------------------------------------------------------------------------
 
-\subsection{How to examine the generated code}
+\subsection{Examining the generated code}
 
 The generated code is conceptually inserted into the user's source code just
 after the type definition that is decorated with \derivingvisitors.
@@ -1193,22 +1253,15 @@ named \oc|%.processed.ml| out of the source file \oc|%.ml|. This file contains
 just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
 \oc|ocp-indent| to extract and beautify the code.
 
-We note that \derivingvisitors can be used only in an \oc|%.ml| file, not in
-an \oc|%.mli| file. If this annotation is used in an \oc|%.ml| file, then the
-corresponding \oc|%.mli| file should be either omitted altogether or
-hand-written. This may seem sad, but is unavoidable, as we cannot in general
-predict the types of the generated methods.
-
-The type of the generated code can be inspected, if desired, by requesting the
-OCaml compiler to infer and display it. A command of the form
-\verb|ocamlbuild -use-ocamlfind <other-flags> %.inferred.mli| can be used for
-this purpose.
+% ------------------------------------------------------------------------------
 
 % ------------------------------------------------------------------------------
 
+
+
+
 % TEMPORARY incomplete:
 
-% note that \derivingvisitors can be used only in an .ml file, not in an .mli file
 % document the shape of the generated code (per-type)
 % say that every generated class is self-parameterized
 
@@ -1230,13 +1283,6 @@ this purpose.
 
 document the speed overhead compared to a native recursive function
 
-document how to see its inferred type
-  explain why we do not work in .mli files
-  we cannot predict the types of the generated methods,
-    because it depends on the types of the ancestor classes
-  the generator is type-agnostic
-    and although that may deemed disappointing,
-    it is also the key reason why it is so simple and versatile
   show inferred types in the manual?
     tricky: many private methods
             a redundant constraint
@@ -1258,10 +1304,11 @@ document how to deal with unsupported types
 also unsupported: existential types, GADTs
 
 document the OCaml object tricks that are used
-  1. normally, unbound variables in method types are disallowed;
-     one must make them parameters of the class (see OCaml manual)
-     here, every class is parameterized over ['self]
-     which allows all method types to be inferred (including virtual methods)
+  1. tricks used in \sref{sec:intro:type}
+     can omit private methods (well-known)
+     can omit explicit constraint on 'self (lesser known)
+     can circumvent the fact that OCaml interprets a monomorphic method type
+     as a polymorphic method type but using 'monomorphic
   2. methods are monomorphic, but a class can be polymorphic
   3. can inherit classes that provide polymorphic methods
      i.e., user can supply code both a priori (by providing ancestor classes)
