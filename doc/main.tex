@@ -1122,8 +1122,10 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
 \begin{tabular}{@{}r@{\qquad}l@{\qquad}p{.6\textwidth}@{}}
   \ancestors & (list of strings) &
     A list of classes that the generated class should inherit.
-    The class \runtime{<variety>} is implicitly prepended to this list.
     This is an optional parameter; its default value is the empty list.
+    The class \runtime{<variety>} is implicitly prepended to this list.
+    Every ancestor class must have exactly \emph{one} type parameter,
+    which is typically (but not necessarily) the type of ``self''.
 \\
   \concrete & (Boolean) &
     If \oc|true|, the generated class is declared
@@ -1165,6 +1167,7 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
 \end{figure}
 
 \subsection{Parameters}
+\label{sec:ancestors}
 
 The parameters that can be passed as part of the
 %
@@ -1175,16 +1178,10 @@ are described in \fref{fig:params}.
 
 % TEMPORARY
 % document the shape of the generated code (per-type)
+% say that every generated class is self-parameterized
 
 \label{sec:regularity}
 % The regularity restriction.
-
-\label{sec:ancestors}
-% The \ancestors parameter.
-
-% documenter le fait que toutes nos classes sont paramétrées vis-à-vis du type
-% de 'self, et les classes héritées via [ancestors] doivent suivre cette même
-% convention.
 
 \label{sec:opaque}
 % The @opaque annotation.
