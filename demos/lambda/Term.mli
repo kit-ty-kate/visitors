@@ -5,7 +5,7 @@ type ('fn, 'bn) term =
 
 class virtual ['self] iter : object ('self)
   method private virtual extend : 'bn -> 'env -> 'env
-  method private virtual visit_'fn : 'env -> 'fn -> _ (* TEMPORARY why can't I write [unit]? *)
+  method private virtual visit_'fn : 'env -> 'fn -> _
   method visit_term : 'env -> ('fn, 'bn) term -> unit
 end
 
