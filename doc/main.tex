@@ -1170,21 +1170,21 @@ form \oc|'self c as 'self|, where \oc|c| is a class.
 \subsection{Simplifying the type of a self-parameterized class}
 \label{sec:oo:monomorphic}
 
-We have used in \sref{sec:intro:type} a few rules that allow the type of a
-class, as inferred by OCaml, to be simplified. In going from
-\fref{fig:inferred} to \fref{fig:simplified}, we have used the well-known
-property that private methods can be omitted in a class type. We have also
-exploited the perhaps lesser-known fact that, in a self-parameterized class,
-the constraint that bears on the type parameter \oc|'self| can be omitted, as
-it is implicit in OCaml that the type of ``self'' must be an object type that
-lists the public methods.
+We have used in \sref{sec:intro:type} a few rules that allow an inferred class
+type to be manually simplified. In going from \fref{fig:inferred} to
+\fref{fig:simplified}, we have used the well-known property that private
+methods can be omitted in a class type. We have also exploited the perhaps
+lesser-known fact that, in a self-parameterized class, the constraint that
+bears on the type parameter \oc|'self| can be omitted, as it is implicit in
+OCaml that the type of ``self'' must be an object type that lists the public
+methods.
 
 There remains to explain the surprising use of the \oc|'monomorphic.| prefix
 in \fref{fig:simplified}. On the face of it, this is a universal
 quantification over a type variable, named \oc|'monomorphic|, which does
-\emph{not} appear in the type of the method. In principle, such a universal
-quantification is logically superfluous. Yet, here, it is required, due to
-the following peculiarity of OCaml:
+\emph{not} appear in the type of the method. From a purely logical standpoint,
+such a universal quantification should be superfluous. Yet, here, it is
+required, due to the following peculiarity of OCaml~\cite{ocaml7465}:
 \begin{quote}
   In a class type,
   if the type of a method exhibits a free variable~\oc|'a|,
@@ -1195,6 +1195,14 @@ the following peculiarity of OCaml:
   % Personal communication with Jacques Garrigue.
   % https://caml.inria.fr/mantis/view.php?id=7465
 \end{quote}
+We must work around this syntactic convention: in \fref{fig:inferred}, for
+instance, the method \tyconvisitor{expr} has monomorphic type %
+\oc|'env -> expr -> unit|, where the type variable \oc|'env| is connected with
+\oc|'self| via an implicit constraint and (like \oc|'self|) is quantified at
+the level of the class. This method does \emph{not} have polymorphic type %
+\oc|'env. 'env -> expr -> unit|. The logically redundant quantification over
+\oc|'monomorphic.| serves as a syntactic mark that we really intend the type
+variable~\oc|'env| to appear free in the method type.
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -1301,7 +1309,7 @@ just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
 % ------------------------------------------------------------------------------
 
 \bibliographystyle{plain}
-\bibliography{english}
+\bibliography{english,local}
 
 \end{document}
 
@@ -1326,11 +1334,6 @@ document how to deal with unsupported types
 also unsupported: existential types, GADTs
 
 document the OCaml object tricks that are used
-  1. tricks used in \sref{sec:intro:type}
-     can omit private methods (well-known)
-     can omit explicit constraint on 'self (lesser known)
-     can circumvent the fact that OCaml interprets a monomorphic method type
-     as a polymorphic method type but using 'monomorphic
   2. methods are monomorphic, but a class can be polymorphic
   3. can inherit classes that provide polymorphic methods
      i.e., user can supply code both a priori (by providing ancestor classes)
