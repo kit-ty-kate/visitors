@@ -351,7 +351,7 @@ whence the name ``\mapendo''.%
 \sref{sec:advanced:hashconsed} and \fref{fig:expr14}.
 
 In principle, \mapendo visitors should be created only for immutable data
-structures. Although the tool can produce a \mapendo visitor for a mutable
+structures. Although the tool can produce an \mapendo visitor for a mutable
 data structure, this is discouraged, as it may lead to unexpected behavior.
 
 % ------------------------------------------------------------------------------
@@ -1293,20 +1293,176 @@ just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
 \subsection{Structure of the generated code}
 \label{sec:structure}
 
-The generated code consists of a single class, whose name is the value of the
-\variety parameter (\sref{sec:params}). This class has one type parameter,
-namely \oc|'self|, the type of ``self'' (\sref{sec:oo:self}). This class has
-no fields.
+The \derivingvisitors annotation applies to a type definition. A type
+definition may define several types, and these types may be parameterized. A
+local type is one that is defined as part of this type definition, whereas a
+nonlocal type is one that preexists (\sref{sec:intro:nonlocal}).
 
-% list parent classes
-% list methods
+The generated code consists of \emph{a single class}, whose name is \oc|<variety>|,
+that is, the value of the \variety parameter (\sref{sec:params}). This class
+has \emph{one type parameter}, namely \oc|'self|, the type of ``self''
+(\sref{sec:oo:self}). It has no fields. It \emph{inherits} from the class
+\runtime{<variety>} (see \srcFile{VisitorsRuntime.ml}) and from the classes
+listed via the \ancestors parameter (\sref{sec:params}), in that order.
+
+In the following, the index~\oc|i| ranges from 0 (included) to \oc|<arity>|
+(excluded), where \oc|<arity>| is the arity of the generated visitor (thus,
+either 1 or 2).
+
+The following \emph{concrete methods} are \emph{defined}:
+%
+\begin{itemize}
+\item for every local type \oc|foo|, a visitor method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \tyconvisitor{foo} \\
+        arguments:   & \oc|env|    & an environment of type \oc|'env| \\
+                     & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
+        invoked:     & on the way down \\
+        example:     & \fref{fig:expr00}
+      \end{tabular}
+
+\item for every data constructor \oc|Foo| of a local sum type \oc|foo|, a visitor method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \dataconvisitor{Foo} \\
+        arguments:   & \oc|env|         & an environment of type \oc|'env| \\
+                     & \oc|this|        & a data structure of type \oc|??? foo| \\
+                     &                  & (only in an \mapendo visitor) \\
+                     & \oc|c0_0|, \oc|c0_1|, \ldots & for each \oc|i|, the first component of a \oc|Foo| value \\
+                     & \oc|c1_0|, \oc|c1_1|, \ldots & for each \oc|i|, the next component of a \oc|Foo| value \\
+                     & \ldots                      & \ldots and so on \\
+        invoked:     & on the way down \\
+        example:     & \fref{fig:expr00}
+      \end{tabular}
+
+\item if the visitor has arity two (\sref{sec:intro:aritytwo}),
+      for every local type \oc|foo|,
+      a failure method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \tyconfail{foo} \\
+        arguments:   & \oc|env|    & an environment of type \oc|'env| \\
+                     & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
+        invoked:     & \multicolumn{2}{l}{when two distinct data constructors \oc|Foo| and \oc|Bar| are found} \\
+        example:     & \fref{fig:expr02}
+      \end{tabular}
+
+\end{itemize}
+%
+
+The following \emph{virtual methods} are \emph{declared}:
+%
+\begin{itemize}
+\item for every type parameter \oc|'foo| of a local type,
+      a visitor method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \tyconvisitor{'foo} \\
+        arguments:   & \oc|env|    & an environment of type \oc|'env| \\
+                     & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|'foo| \\
+        invoked:     & on the way down \\
+        example:     & \fref{fig:expr09}
+      \end{tabular}
+
+\item if this is a \reduce visitor (\sref{sec:intro:reduce}),
+      the monoid methods.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \oc|zero| \\
+        arguments:   & none \\
+        result:      & a summary \\
+        example:     & \fref{fig:expr15}
+      \end{tabular}
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \oc|plus| \\
+        arguments:   & two summaries \\
+        result:      & a summary \\
+        example:     & \fref{fig:expr15}
+      \end{tabular}
+
+\item if this is a \fold visitor (\sref{sec:intro:fold}),
+      for every local record type \oc|foo|,
+      a build method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \tyconascendingmethod{foo} \\
+        arguments:   & \oc|env|    & an environment of type \oc|'env| \\
+                     & \oc|r_0|    & the result of the first recursive call \\
+                     & \oc|r_1|    & the result of the next recursive call \\
+                     &             & \ldots and so on \\
+        invoked:     & on the way up \\
+        example:     & none in this document
+      \end{tabular}
+
+\item if this is a \fold visitor (\sref{sec:intro:fold}),
+      for every data constructor \oc|Foo| of a local sum type,
+      a build method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \dataconascendingmethod{Foo} \\
+        arguments:   & \oc|env|    & an environment of type \oc|'env| \\
+                     & \oc|r_0|    & the result of the first recursive call \\
+                     & \oc|r_1|    & the result of the next recursive call \\
+                     &             & \ldots and so on \\
+        invoked:     & on the way up \\
+        example:     & \fref{fig:expr00fold}
+      \end{tabular}
+
+\end{itemize}
+
+The following methods are \emph{called}, therefore are expected to exist.
+These methods are neither defined nor declared: they must be inherited from a
+parent class. These methods can have a polymorphic type.
+%
+\begin{itemize}
+\item for every nonlocal type \oc|foo|, a visitor method.
+
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+        method name: & \tyconvisitor{foo} \\
+        arguments:   & \oc|f_0|, \oc|f_1|, \ldots & for each type parameter of \oc|foo|, \\
+                     &                            & a visitor function for this type \\
+                     & \oc|env|    & an environment of type \oc|'env| \\
+                     & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
+        invoked:     & on the way down \\
+        example:     & \fref{fig:expr11}
+      \end{tabular}
+
+\end{itemize}
+
+All of the above methods are parameterized with an environment \oc|env|, which
+is propagated in a top-down manner, that is, into the recursive calls. The
+environment is not returned out of the recursive calls, therefore not
+propagated bottom-up or left-to-right. The type of this environment is
+undetermined: it is a type variable \oc|'env|.
+% (which is implicitly related with \oc|'self|)
+
+The result types of the visitor methods, build methods, and failure methods
+depend on the parameter \variety (\sref{sec:params}). In an \iter visitor,
+every method has result type \oc|unit|. In a \map or \mapendo visitor, the
+visitor method associated with the type \oc|foo| has result type \oc|??? foo|.%
+%
+\footnote{The question marks \oc|???| stand for the type parameters of \oc|foo|,
+which can be a parameterized type. In a \map visitor, the type parameters that
+appear in the method's argument type and in the method's result type can differ.
+In an \mapendo visitor, they must be the same.}
+%
+In a \reduce visitor, every method has result type \oc|'z|, if \oc|'z| is the
+monoid, that is, if the methods \oc|zero| and \oc|plus| respectively have type \oc|'z|
+and \oc|'z -> 'z -> 'z|.
+%
+In a \fold visitor, it is up to the user to decide what the result types of
+the visitor methods should be (subject to certain consistency constraints,
+naturally). In particular, two visitor methods \tyconvisitor{foo} and
+\tyconvisitor{bar} can have distinct result types; this is illustrated
+in \fref{fig:fold}.
 
 % ------------------------------------------------------------------------------
 
 % TEMPORARY incomplete:
 
 % document the shape of the generated code (per-type)
-% say that every generated class is self-parameterized
 
 \label{sec:regularity}
 % The regularity restriction.
@@ -1355,7 +1511,9 @@ référence:
   document the regularity restriction \label{sec:regularity} and the option irregular
   avoid shadowing the following names: VisitorsRuntime, Lazy, Pervasives
   document which builtin types are supported by VisitorsRuntime
-  document which OCaml types can/cannot be traversed
+
+
+
 
 related work, for OCaml:
   ppx_deriving (generates monolithic code) (fixed number of templates)
