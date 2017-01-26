@@ -1182,6 +1182,55 @@ the level of the class. This method does \emph{not} have polymorphic type %
 variable~\oc|'env| to appear free in the method type.
 
 % ------------------------------------------------------------------------------
+
+\subsection{Monomorphic methods, polymorphic classes}
+
+Even if a method is monomorphic, the class that contains this method can be
+polymorphic. In the following example, the \oc|identity| method is annotated
+with a monomorphic type, which implies that, if \oc|o| is an object of
+class~\oc|c|, then the method \oc|o#identity| cannot be applied both to apples
+and to oranges. However, the class~\oc|c| is polymorphic, which means that two
+distinct instances of this class can be used (separately) with apples and with
+oranges.
+\begin{origenv}
+\lstinputlisting{polyclass.ml}
+\end{origenv}
+This (well-known) property of classes is exploited in the \visitors package.
+Though every generated visitor method is monomorphic, the visitor classes are
+polymorphic, so (distinct) visitor objects can be used at many different
+types.
+
+% ------------------------------------------------------------------------------
+
+\subsection{Customization from above and from below}
+
+In the object-oriented world, a traditional way of ensuring that a piece of
+code has customizable behavior is to write it in the form of a class with many
+(concrete or virtual) methods. These methods can later be overridden in a
+subclass: this is ``customization from below''.
+
+When the class is automatically generated, as is the case of our visitor
+classes, another approach to customization is to let the user choose which
+classes should be inherited: this is done via the \ancestors parameter
+(\sref{sec:params}). This is ``customization from above''. It is a somewhat
+more unusual customization mechanism.
+
+As the (concrete and virtual) methods that we generate must be monomorphic,
+customization from below is restricted, in our situation, to providing
+monomorphic code fragments. Fortunately, no such restriction bears on
+customization from above: a parent class can provide (hand-written)
+polymorphic methods.
+
+For this reason, customization from above plays a key role in our setting. For
+instance, the methods \oc|visit_array|, \oc|visit_list|, and so on, which must
+be polymorphic, must be hand-written, and must be inherited from a parent
+class. The asymmetry between hand-written methods (which may be polymorphic)
+and generated methods (which must be monomorphic) is admittedly unfortunate,
+but this is the best that we offer, at present.
+
+% This treatment of polymorphism leads to a lack of compositionality.
+
+% ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
 \section{Reference}
@@ -1556,7 +1605,7 @@ whether this behavior is appropriate.
 
 \end{document}
 
-% TEMPORARY
+% TEMPORARY to do:
 
 add a use case that shows an environment in use
   e.g. expressions with let bindings,
@@ -1564,19 +1613,10 @@ add a use case that shows an environment in use
 
 document the speed overhead compared to a native recursive function
 
-document the OCaml object tricks that are used
-  2. methods are monomorphic, but a class can be polymorphic
-  3. can inherit classes that provide polymorphic methods
-     i.e., user can supply code both a priori (by providing ancestor classes)
-           and a posteriori (by defining child classes after the fact)
-
 document the lazy-initializer trick, if used
 
 référence:
   avoid shadowing the following names: VisitorsRuntime, Lazy, Pervasives
-
-
-
 
 related work, for OCaml:
   ppx_deriving (generates monolithic code) (fixed number of templates)
@@ -1597,11 +1637,3 @@ related work, for proof assistants:
   Steven Keuchel
   Autosubst (voir Kaiser et al., CPP 2017)
   voir Guillaume Allais (CPP 2017, Agda et Haskell) et Goguen & McKinna
-
-crazy title ideas:
-  Dr Boilerplate, or: how I learned to stop worrying and love bound names
-
-limitations:
-  generated methods monomorphic, hand-written methods polymorphic
-  problematic if a generated visitor for a parameterized data type
-  later needs to be multi-instantiated in another data type.
