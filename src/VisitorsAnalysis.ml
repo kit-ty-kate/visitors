@@ -2,6 +2,7 @@ open Longident
 open Asttypes
 open Parsetree
 open Ppx_deriving
+open VisitorsPlugin
 
 (* This module offers helper functions for abstract syntax tree analysis. *)
 
@@ -82,7 +83,7 @@ let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list op
                    We could support this form, but it makes life slightly simpler
                    to disallow it. It is usually used only in GADTs anyway. *)
                 raise_errorf ~loc:ty.ptyp_loc
-                  "visitors: every formal type parameter should be named."
+                  "%s: every formal type parameter should be named." plugin
             | _ ->
                 assert false
         in

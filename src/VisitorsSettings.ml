@@ -3,15 +3,9 @@ open List
 let sprintf = Printf.sprintf
 open Parsetree
 open Ppx_deriving
+open VisitorsPlugin
 open VisitorsAnalysis
 open VisitorsGeneration
-
-(* -------------------------------------------------------------------------- *)
-
-(* The name of our [ppx_deriving] plugin. *)
-
-let plugin =
-  "visitors"
 
 (* -------------------------------------------------------------------------- *)
 

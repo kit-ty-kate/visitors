@@ -6,6 +6,7 @@ open Parsetree
 open Ast_helper
 open Ast_convenience
 open Ppx_deriving
+open VisitorsPlugin
 open VisitorsAnalysis
 open VisitorsGeneration
 open VisitorsSettings
