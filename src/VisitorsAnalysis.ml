@@ -1,6 +1,7 @@
 open Longident
 open Asttypes
 open Parsetree
+open Ppx_deriving
 
 (* This module offers helper functions for abstract syntax tree analysis. *)
 
@@ -74,8 +75,16 @@ let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list op
         let extract : core_type * variance -> tyvar =
           fun (ty, _) ->
             match ty.ptyp_desc with
-            | Ptyp_var tv -> tv
-            | _ -> assert false
+            | Ptyp_var tv ->
+                tv
+            | Ptyp_any ->
+                (* This error occurs if a formal type parameter is a wildcard [_].
+                   We could support this form, but it makes life slightly simpler
+                   to disallow it. It is usually used only in GADTs anyway. *)
+                raise_errorf ~loc:ty.ptyp_loc
+                  "visitors: every formal type parameter should be named."
+            | _ ->
+                assert false
         in
         Some (List.map extract decl.ptype_params)
       else
