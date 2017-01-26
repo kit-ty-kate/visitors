@@ -1128,29 +1128,6 @@ this code is well-typed. \emph{In~a self-parameterized OCaml class, a
 virtual. In other words, in~a self-parameterized class, the OCaml typechecker
 never complains that ``some type variables are unbound''.
 
-\begin{comment}
-% TEMPORARY would like to show the inferred type
-% and explain that the "constraint" is redundant
-% but there is something I don't understand.
-The inferred type of the above code is as follows:
-\begin{mdframed}[backgroundcolor=green!10]
-\begin{lstlisting}
-class virtual ['a] cell :
-  'b ->
-  object ('a)
-    constraint 'a = < check : 'c -> 'b;
-                      get : 'b;
-                      set : 'c -> unit;
-                      .. >
-    val mutable x : 'b
-    method virtual check : 'c -> 'b
-    method get : 'b
-    method set : 'c -> unit
-  end
-\end{lstlisting}
-\end{mdframed}
-\end{comment}
-
 In the \visitors package, this remark solves several problems. First, we never
 need to wonder how many type parameters a class should have, and what they
 should be: the answer is always one, namely \oc|'self|. Second, we never need
@@ -1530,6 +1507,8 @@ polymorphic variant types (\oc+[ `A| `B ]+),
 universal types (\oc|'a. 'a -> 'a|),
 and
 packaged module types (\oc|(module S)|).
+If these forms appear in a type definition,
+they must be marked \oc|@opaque| (\sref{sec:opaque}).
 
 In theory, at each arity, the tuple type constructor could be viewed as a
 parameterized nonlocal type constructor. At arity 2, for instance, the pair
@@ -1544,11 +1523,31 @@ visitor at a tuple type is fixed: it cannot be overridden in a subclass. The
 behavior of a \fold visitor at a tuple type is to rebuild a tuple, just like a
 \map visitor would do.
 
-% TEMPORARY
+% ------------------------------------------------------------------------------
+
+\subsection{Treating a subterm as opaque}
 \label{sec:opaque}
-% The @opaque annotation.
-% (Note the parentheses, which are required.)
-% @opaque
+
+One sometimes wishes for a component of a data structure \emph{not} to be
+visited, either for efficiency reasons, or because this component is of an
+unsupported type. This can be requested by annotating the type of this
+component with the attribute \oc|[@opaque]|. This is done, for instance, if
+\fref{fig:expr15}, where the integer argument of the data constructor
+\oc|EConst| is marked opaque. (Note the parentheses, which are required.) The
+effect of this annotation is that this component is not visited: in the method
+\dataconvisitor{EConst}, instead of a call to \oc|self#visit_int|, we find a
+call to \oc|self#zero|, as this is a \reduce visitor.
+
+Generating a visitor of arity two for a data structure with \oc|@opaque|
+components requires some care. The methods \tyconvisitor{int} defined in the
+classes \runtime{iter2}, \runtime{map2}, and so on, raise a
+\oc|StructuralMismatch| exception when their two integer arguments differ. If
+\oc|int| is replaced with \oc|(int[@opaque])|, then these methods are not
+invoked, so no exception is raised. It is up to the user to decide which
+behavior is desired. Furthermore, it should be noted that \maptwo and \foldtwo
+visitors follow an arbitrary convention at \oc|@opaque| components: they
+return the first of their two arguments. Again, it is up to the user to decide
+whether this behavior is appropriate.
 
 % ------------------------------------------------------------------------------
 
@@ -1559,33 +1558,22 @@ behavior of a \fold visitor at a tuple type is to rebuild a tuple, just like a
 
 % TEMPORARY
 
+add a use case that shows an environment in use
+  e.g. expressions with let bindings,
+       and if a variable is bound to a constant, replace it with its value
+
 document the speed overhead compared to a native recursive function
-
-document @opaque
-  careful with map2: an arbitrary choice takes place
-
-list which types forms are unsupported
-document how to deal with unsupported types
-  wrap them in @opaque
-  or replace them with type variables
-  note the user can define their own opaque-like parameterized types
-    and actually perform nontrivial treatment of the data of unsupported type
-  could do HOAS as an example!
-also unsupported: existential types, GADTs
 
 document the OCaml object tricks that are used
   2. methods are monomorphic, but a class can be polymorphic
   3. can inherit classes that provide polymorphic methods
      i.e., user can supply code both a priori (by providing ancestor classes)
            and a posteriori (by defining child classes after the fact)
-  4. can hide private methods in the signature
-  -- anything else?
-  -- the lazy-initializer trick, if used
+
+document the lazy-initializer trick, if used
 
 référence:
-  document the regularity restriction \label{sec:regularity} and the option irregular
   avoid shadowing the following names: VisitorsRuntime, Lazy, Pervasives
-  document which builtin types are supported by VisitorsRuntime
 
 
 
