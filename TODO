@@ -2,24 +2,6 @@
 
 TODO (REALLY)
 
-Add [opaque] as an option, carrying a list of types?
-
-Include an option [except] to omit the definition of certain methods.
-  That would allow the user to provide their own implementation,
-  (possibly inherited / polymorphic),
-  without having to satisfy the type constraints imposed by our implementation.
-
-Decide if hoisting is a good idea.
-  Benchmark it on a real application?
-  If we do keep it, try to share identical definitions.
-
-Benchmark with flambda.
-  Check if the compiler is able to avoid the closure allocations.
-  Decide if the inlining tricks in VisitorsRuntime are worth the trouble.
-
-Develop a real test suite, with expected output.
-  Check for left-to-right traversal order.
-
 Hunt TEMPORARY.
 
 Document everything.
@@ -43,6 +25,22 @@ Announce.
 
 TODO (PERHAPS)
 
+If [iter], [map], etc. inherited from [fold],
+  with implementations of the [build_] methods,
+  then it would be possible to override one of these methods
+  to obtain custom behavior.
+
+Develop a real test suite, with expected output.
+  Check for left-to-right traversal order.
+
+Add [opaque] as an option, carrying a list of types.
+  That would be lighter than writing [@opaque] at every occurrence.
+
+Include an option [except] to omit the definition of certain methods.
+  That would allow the user to provide their own implementation,
+  (possibly inherited / polymorphic),
+  without having to satisfy the type constraints imposed by our implementation.
+
 Detect and reject existential types and GADTs.
 
 Could define a fold visitor where the methods receive the names of the types,
@@ -51,6 +49,9 @@ ppx_tools/genlifter.)
 
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
+
+Re-introduce hoisting of closure allocations of the form [self#visit_foo]?
+  If so, share them when they have several occurrences.
 
 [variety] could be a list.
   But then, one would need to replace <variety> with variety in
