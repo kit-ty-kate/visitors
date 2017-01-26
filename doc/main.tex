@@ -21,8 +21,6 @@
 \renewcommand{\emph}[1]{\textbf{#1}}
 \input{version}
 
-% TEMPORARY vérifier placement et enchaînement des figures
-
 % ------------------------------------------------------------------------------
 % Headings.
 
@@ -281,7 +279,7 @@ so it would be permitted to hide their existence.
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[p]
+\begin{figure}[t]
 \orig{expr01}
 \vspace{-\baselineskip}
 \processed{expr01}
@@ -364,7 +362,7 @@ data structure, this is discouraged, as it may lead to unexpected behavior.
 \label{fig:expr15}
 \end{figure}
 
-\begin{figure}[p]
+\begin{figure}[t]
 \codefollowup{expr15}
 \origfirstline{expr15b}{3}
 \caption{Computing the size of an expression using a \reduce visitor}
