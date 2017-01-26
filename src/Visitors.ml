@@ -374,7 +374,6 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
           app
             (call (tycon_visitor_method tycon) [])
             (map (visit_type false) tys)
-            (* TEMPORARY decide whether it is worthwhile to [hoist] the arguments *)
       end
 
   (* A type variable [tv] is handled by a virtual visitor method. *)
@@ -461,7 +460,7 @@ and visit_types tys (ess : expression list list) : expression list =
      whose length is [arity]. *)
   assert (is_matrix (length tys) arity ess);
   map2 (fun ty es ->
-    app (visit_type true ty) es (* TEMPORARY eliminate administrative beta-redexes *)
+    app (visit_type true ty) es
   ) tys ess
 
 (* -------------------------------------------------------------------------- *)
@@ -486,9 +485,6 @@ let constructor_declaration (cd : constructor_declaration) : case =
          "%s: @opaque, attached to a data constructor, is ignored.\n\
           It should be attached to a type. Please use parentheses."
          plugin);
-
-  (* TEMPORARY use [cd.pcd_res] to check if this is a GADT
-     or an existential type? *)
 
   (* This is either a traditional data constructor, whose components are
      anonymous, or a data constructor whose components form an ``inline

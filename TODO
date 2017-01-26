@@ -49,6 +49,7 @@ ppx_tools/genlifter.)
 
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
+  See [visit_types].
 
 Re-introduce hoisting of closure allocations of the form [self#visit_foo]?
   If so, share them when they have several occurrences.
