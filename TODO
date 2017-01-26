@@ -2,10 +2,6 @@
 
 TODO (REALLY)
 
-Hunt TEMPORARY.
-
-Document everything.
-
 Show to:
   François Bobot, Virgile Prevosto.
   Andrei Paskevich, Jean-Christophe Filliâtre.
@@ -15,10 +11,10 @@ Show to:
   Thibaut Balabonski.
   Yann Régis-Gianas.
 
-Add a LICENSE.
 Create an opam package. Dependency on 4.03. Note @@unboxed requires 4.04.
   Dependencies on other packages for tests: hashcons, core_bench...
   Run these tests only if these packages are installed, warn otherwise?
+
 Announce.
 
 ------------------------------------------------------------------------------
