@@ -84,18 +84,14 @@ let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list)
    a descending method, as it is invoked when going down into the tree. *)
 
 let tycon_visitor_method (tycon : Longident.t) : methode =
-  (* We support qualified names, and, in that case, use every part of the
+  (* We support qualified names, and, in that case, use the last part of the
      qualified name to obtain the name of the visitor method. A qualified name
-     is probably a nonlocal type, that is, not part of the current set of type
-     declarations. *)
+     must denote a nonlocal type. *)
   (* One might like to use [last tycon] directly as the name of the method, but
      that could (in theory) create a conflict with the names of other methods.
      In order to guarantee the absence of conflicts, we must use a nonempty
      prefix. *)
-  "visit_" ^ String.concat "_" (
-    map String.uncapitalize_ascii (Longident.flatten tycon)
-    (* TEMPORARY there could be clashes *)
-  )
+  "visit_" ^ Longident.last tycon
 
 (* For every local record type constructor [tycon], there is an ascending
    method, which is invoked on the way up, in order to re-build some data

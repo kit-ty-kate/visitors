@@ -7,7 +7,7 @@ type t =
   | Int of int
   | Int32 of int32
   | Int64 of int64
-  | Lazy of t Lazy.t
+  | Lazy of t lazy_t
   | List of t list
   | Nativeint of nativeint
   | Option of t option
@@ -18,11 +18,11 @@ type t =
   | Tuple2 of (t * t)
   | Tuple3 of (t * t * t)
 [@@deriving
-     visitors { variety = "iter" },
-     visitors { variety = "map" },
-     visitors { variety = "reduce" },
-     visitors { variety = "endo" },
-     visitors { variety = "iter2" },
-     visitors { variety = "map2" },
-     visitors { variety = "reduce2" }
+     visitors { variety = "iter"; concrete = true },
+     visitors { variety = "map"; concrete = true },
+     visitors { variety = "reduce"; ancestors=["VisitorsRuntime.addition_monoid"]; concrete = true },
+     visitors { variety = "endo"; concrete = true },
+     visitors { variety = "iter2"; concrete = true },
+     visitors { variety = "map2"; concrete = true },
+     visitors { variety = "reduce2"; ancestors=["VisitorsRuntime.addition_monoid"]; concrete = true }
 ]
