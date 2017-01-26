@@ -1460,16 +1460,95 @@ in \fref{fig:fold}.
 
 % ------------------------------------------------------------------------------
 
-% TEMPORARY incomplete:
+\subsection{Supported forms of types}
 
-% document the shape of the generated code (per-type)
+The following forms of type definitions are supported:
+\begin{itemize}
+\item Definitions of \emph{type abbreviations} (also known as type synonyms).
+\item Definitions of \emph{record types}. \\ Mutable fields are supported.
+\item Definitions of \emph{sum types} (also known as variant types and as algebraic
+  data types). \\ Data constructors whose arguments form an ``inline record'' are
+  supported.
+\end{itemize}
+
+Definitions of abstract types and of extensible sum types are not supported.
 
 \label{sec:regularity}
 % The regularity restriction.
 
+Definitions of \emph{parameterized types} are supported. However, only
+\emph{regular} parameterized types are supported. A parameterized type is
+regular if, within its own definition, it is applied only to its formal
+parameters. For instance, the well-known definition of lists is regular:
+\begin{origenv}
+\begin{lstlisting}
+type 'a list =
+| []
+| (::) of 'a * 'a list
+\end{lstlisting}
+\end{origenv}
+whereas the following definition of a random access
+list~\cite[\S10.1.2]{okasaki-book-99} is not:
+\begin{origenv}
+\begin{lstlisting}
+type 'a seq =
+| Nil
+| Zero of     ('a * 'a) seq
+| One of 'a * ('a * 'a) seq
+\end{lstlisting}
+\end{origenv}
+Irregular data types are also known as
+``nonuniform''~\cite[\S10.1]{okasaki-book-99} or ``nested'' data
+types~\cite{bird-meertens-98}.
+%
+The reason why the \visitors package enforces a regularity restriction is that
+(in most cases) attempting to generate a visitor for an irregular data type
+would produce ill-typed code. Indeed, proper support for irregular data types
+would require the visitor methods to be polymorphic; unfortunately, at
+present, only monomorphic methods can be generated.
+%
+The regularity check performed by the \visitors package can be disabled via
+the \irregular parameter (\sref{sec:params}).
+
+For analogous reasons, generalized algebraic data types (GADTs) are not
+supported either.
+
+In the right-hand side of a type definition, the following forms of types are
+supported:
+\begin{itemize}
+\item Type constructors, possibly applied to a number of types, such as
+  \oc|foo| and \oc|('a * 'b) bar|.
+\item Type variables, such as \oc|'foo|.
+\item Tuple types, such as \oc|int * expr|.
+\end{itemize}
+The unsupported forms of types include
+anonymous type variables (\oc|_|),
+function types (\oc|int -> unit|),
+object types (\oc|<get: int>| and \oc|#point|),
+recursive types (\oc|int -> 'a as 'a|),
+polymorphic variant types (\oc+[ `A| `B ]+),
+universal types (\oc|'a. 'a -> 'a|),
+and
+packaged module types (\oc|(module S)|).
+
+In theory, at each arity, the tuple type constructor could be viewed as a
+parameterized nonlocal type constructor. At arity 2, for instance, the pair
+type \oc|'a * 'b| could be treated as a nonlocal type \oc|('a, 'b) tuple2|.
+Then, to traverse a value of this type, one would invoke a method
+\tyconvisitor{tuple2}, which necessarily would be inherited from a parent
+class. That would be somewhat inconvenient, as these (polymorphic) methods
+would have to be manually written, at each arity. Instead, special treatment
+for tuple types is built-in. There are no visitor methods or build methods for
+tuples; instead, ad hoc code is generated. This means that the behavior of a
+visitor at a tuple type is fixed: it cannot be overridden in a subclass. The
+behavior of a \fold visitor at a tuple type is to rebuild a tuple, just like a
+\map visitor would do.
+
+% TEMPORARY
 \label{sec:opaque}
 % The @opaque annotation.
 % (Note the parentheses, which are required.)
+% @opaque
 
 % ------------------------------------------------------------------------------
 
@@ -1481,10 +1560,6 @@ in \fref{fig:fold}.
 % TEMPORARY
 
 document the speed overhead compared to a native recursive function
-
-document that non-regular ADTs are not supported
-  existential types, GADTs not supported either
-  that would require polymorphic methods
 
 document @opaque
   careful with map2: an arbitrary choice takes place
