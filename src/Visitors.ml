@@ -491,6 +491,9 @@ let constructor_declaration (cd : constructor_declaration) : case =
           It should be attached to a type. Please use parentheses."
          plugin);
 
+  (* TEMPORARY use [cd.pcd_res] to check if this is a GADT
+     or an existential type? *)
+
   (* This is either a traditional data constructor, whose components are
      anonymous, or a data constructor whose components form an ``inline
      record''. This is a new feature of OCaml 4.03. *)
