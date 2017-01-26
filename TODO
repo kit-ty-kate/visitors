@@ -4,10 +4,6 @@ TODO (REALLY)
 
 Add [opaque] as an option, carrying a list of types?
 
-Decide what to put in the class VisitorsRuntime.fold.
-  Provide no methods at all, so we do not fix the types of these methods?
-    Let the user provide their own methods via [ancestors].
-
 Include an option [except] to omit the definition of certain methods.
   That would allow the user to provide their own implementation,
   (possibly inherited / polymorphic),
@@ -46,6 +42,8 @@ Announce.
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+Detect and reject existential types and GADTs.
 
 Could define a fold visitor where the methods receive the names of the types,
 data constructors, and record fields that are being visited. (As in

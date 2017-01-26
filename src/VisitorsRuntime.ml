@@ -500,6 +500,11 @@ end
 
 class ['self] fold = object (_self)
 
+  (* No methods are provided, as we do not wish to fix the types of these
+     methods. It is up to the user to inherit from a class that defines
+     appropriate methods. Note that [RuntimeVisitors.map] is likely to be
+     appropriate in many situations. *)
+
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -830,5 +835,7 @@ end
 (* [fold2] *)
 
 class ['self] fold2 = object (_self)
+
+  (* See the comment in the class [fold] above. *)
 
 end
