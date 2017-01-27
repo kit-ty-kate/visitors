@@ -1338,7 +1338,7 @@ The following \emph{concrete methods} are \emph{defined}:
 \begin{itemize}
 \item for every local type \oc|foo|, a visitor method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconvisitor{foo} \\
         arguments:   & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
@@ -1348,7 +1348,7 @@ The following \emph{concrete methods} are \emph{defined}:
 
 \item for every data constructor \oc|Foo| of a local sum type \oc|foo|, a visitor method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \dataconvisitor{Foo} \\
         arguments:   & \oc|env|         & an environment of type \oc|'env| \\
                      & \oc|this|        & a data structure of type \oc|??? foo| \\
@@ -1364,7 +1364,7 @@ The following \emph{concrete methods} are \emph{defined}:
       for every local type \oc|foo|,
       a failure method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconfail{foo} \\
         arguments:   & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
@@ -1381,7 +1381,7 @@ The following \emph{virtual methods} are \emph{declared}:
 \item for every type parameter \oc|'foo| of a local type,
       a visitor method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconvisitor{'foo} \\
         arguments:   & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|'foo| \\
@@ -1392,14 +1392,14 @@ The following \emph{virtual methods} are \emph{declared}:
 \item if this is a \reduce visitor (\sref{sec:intro:reduce}),
       the monoid methods.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \oc|zero| \\
         arguments:   & none \\
         result:      & a summary \\
         example:     & \fref{fig:expr15}
       \end{tabular}
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \oc|plus| \\
         arguments:   & two summaries \\
         result:      & a summary \\
@@ -1410,7 +1410,7 @@ The following \emph{virtual methods} are \emph{declared}:
       for every local record type \oc|foo|,
       a build method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconascendingmethod{foo} \\
         arguments:   & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|r_0|    & the result of the first recursive call \\
@@ -1424,7 +1424,7 @@ The following \emph{virtual methods} are \emph{declared}:
       for every data constructor \oc|Foo| of a local sum type,
       a build method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \dataconascendingmethod{Foo} \\
         arguments:   & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|r_0|    & the result of the first recursive call \\
@@ -1443,7 +1443,7 @@ parent class. These methods can have a polymorphic type.
 \begin{itemize}
 \item for every nonlocal type \oc|foo|, a visitor method.
 
-      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{8cm}}
+      \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconvisitor{foo} \\
         arguments:   & \oc|f_0|, \oc|f_1|, \ldots & for each type parameter of \oc|foo|, \\
                      &                            & a visitor function for this type \\
