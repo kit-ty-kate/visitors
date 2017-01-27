@@ -79,11 +79,11 @@ check:
 	echo "   * Extracting. " && \
 	(cd $$TEMPDIR && tar xfz $(TARBALL)) && \
 	echo "   * Compiling and installing." && \
-	(cd $$TEMPDIR/$(PACKAGE)/src && make reinstall \
+	(cd $$TEMPDIR/$(PACKAGE) && make reinstall \
 	) > $$TEMPDIR/install.log 2>&1 \
 		|| (cat $$TEMPDIR/install.log; exit 1) && \
 	echo "   * Uninstalling." && \
-	(cd $$TEMPDIR/$(PACKAGE)/src && make uninstall \
+	(cd $$TEMPDIR/$(PACKAGE) && make uninstall \
 	) > $$TEMPDIR/uninstall.log 2>&1 \
 		|| (cat $$TEMPDIR/uninstall.log; exit 1) && \
 	rm -rf $$TEMPDIR ; }
