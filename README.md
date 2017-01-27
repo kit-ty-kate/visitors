@@ -1,6 +1,8 @@
 An OCaml syntax extension (technically, a ppx_deriving plugin) which generates
 object-oriented visitors for traversing and transforming data structures.
 
+Here is the [documentation of the latest released version](http://gallium.inria.fr/~fpottier/visitors/manual.pdf).
+
 The easiest way of installing the latest released version of this package is
 via `opam`, the OCaml package manager.
 ```bash
