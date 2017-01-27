@@ -5,14 +5,11 @@
 SHELL := bash
 export CDPATH=
 
-.PHONY: all package check export opam pin unpin
+.PHONY: package check export opam pin unpin
 
 # -------------------------------------------------------------------------
 
-# A dummy entry.
-
-all:
-	@echo Please go down into src/ to compile and install this package.
+include Makefile
 
 # -------------------------------------------------------------------------
 
@@ -39,7 +36,7 @@ TARBALL  := $(CURRENT)/$(PACKAGE).tar.gz
 # This does not include the src/ and doc/ directories, which require
 # special treatment.
 
-DISTRIBUTED_FILES := AUTHORS CHANGES LICENSE
+DISTRIBUTED_FILES := AUTHORS CHANGES LICENSE Makefile
 
 # -------------------------------------------------------------------------
 
