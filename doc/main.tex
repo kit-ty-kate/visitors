@@ -1504,6 +1504,7 @@ Definitions of \emph{parameterized types} are supported. However, only
 \emph{regular} parameterized types are supported. A parameterized type is
 regular if, within its own definition, it is applied only to its formal
 parameters. For instance, the well-known definition of lists is regular:
+
 \begin{origenv}
 \begin{lstlisting}
 type 'a list =
@@ -1511,8 +1512,10 @@ type 'a list =
 | (::) of 'a * 'a list
 \end{lstlisting}
 \end{origenv}
+
 whereas the following definition of a random access
 list~\cite[\S10.1.2]{okasaki-book-99} is not:
+
 \begin{origenv}
 \begin{lstlisting}
 type 'a seq =
@@ -1521,6 +1524,7 @@ type 'a seq =
 | One of 'a * ('a * 'a) seq
 \end{lstlisting}
 \end{origenv}
+
 Irregular data types are also known as
 ``nonuniform''~\cite[\S10.1]{okasaki-book-99} or ``nested'' data
 types~\cite{bird-meertens-98}.
