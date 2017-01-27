@@ -4,6 +4,7 @@ object-oriented visitors for traversing and transforming data structures.
 The easiest way of installing the latest released version of this package is
 via `opam`, the OCaml package manager.
 ```bash
+opam update
 opam install visitors
 ```
 
