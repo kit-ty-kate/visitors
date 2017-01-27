@@ -105,18 +105,18 @@ hand-written visitor classes, making the framework quite powerful.
 
 In order to install the \visitors package, an \opam user should issue the
 following commands:
-\begin{verbatim}
+\begin{lstlisting}[keywords={}]
   opam update
   opam install visitors
-\end{verbatim}
+\end{lstlisting}
 To use the package, an \ocamlbuild user should add the
 following line in her project's \texttt{\_tags} file:
-\begin{lstlisting}
+\begin{lstlisting}[keywords={}]
   true: package(visitors.ppx), package(visitors.runtime)
 \end{lstlisting}
 Finally, a user of \merlin should add the following lines in her project's
 \texttt{.merlin} file:
-\begin{lstlisting}
+\begin{lstlisting}[keywords={}]
   PKG visitors.ppx
   PKG visitors.runtime
 \end{lstlisting}
