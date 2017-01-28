@@ -58,13 +58,18 @@ let hprint oc t =
   (* works for closed terms only, as of now *)
   Print.term oc (export KitExport.empty t)
 
-let print_size t =
-  printf "size(%a) = %d\n%!"
-    nhprint t
-    (size t)
-
 let () =
-  evaluate print_size
+  printf "Testing size...\n";
+  [
+    TVar y, 1;
+    id, 2;
+    TApp (id, TVar y), 4;
+    TApp (id, copy id), 5;
+    delta, 4;
+    omega, 9;
+  ] |> List.iter (fun (t, i) ->
+    assert (size t = i)
+  )
 
 let print_copy t =
   printf "copy(%a) = %a\n%!"
