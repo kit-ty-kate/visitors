@@ -1,4 +1,49 @@
+module Make (Term : sig
+
+  type ('fn, 'bn) term
+
+  class virtual ['self] iter : object ('self)
+    method private virtual extend : 'bn -> 'env -> 'env
+    method private virtual visit_'fn : 'env -> 'fn -> _
+    method visit_term : 'env -> ('fn, 'bn) term -> unit
+  end
+
+  class virtual ['self] map : object ('self)
+    method private virtual extend : 'bn1 -> 'env -> 'bn2 * 'env
+    method private virtual visit_'fn : 'env -> 'fn1 -> 'fn2
+    method visit_term : 'env -> ('fn1, 'bn1) term -> ('fn2, 'bn2) term
+    method private visit_TVar : 'env -> 'fn1 -> ('fn2, 'bn2) term
+  end
+
+  class virtual ['self] endo : object ('self)
+    method private virtual extend : 'bn -> 'env -> 'bn * 'env
+    method private virtual visit_'fn : 'env -> 'fn -> 'fn
+    method visit_term : 'env -> ('fn, 'bn) term -> ('fn, 'bn) term
+    method private visit_TVar : 'env -> ('fn, 'bn) term -> 'fn -> ('fn, 'bn) term
+  end
+
+  class virtual ['self] reduce : object ('self)
+    method private virtual extend : 'bn -> 'env -> 'env
+    method private virtual plus : 'z -> 'z -> 'z
+    method private virtual restrict : 'bn -> 'z -> 'z
+    method private virtual visit_'fn : 'env -> 'fn -> 'z
+    method visit_term : 'env -> ('fn, 'bn) term -> 'z
+    method private virtual zero : 'z
+  end
+
+  class virtual ['self] iter2 : object ('self)
+    method private virtual extend : 'bn1 -> 'bn2 -> 'env -> 'env
+    method private virtual visit_'fn : 'env -> 'fn1 -> 'fn2 -> _
+    method visit_term : 'env -> ('fn1, 'bn1) term -> ('fn2, 'bn2) term -> unit
+  end
+
+end) = struct
+
 open Term
+
+type raw_term = (string, string) term
+type nominal_term = (Atom.t, Atom.t) term
+type db_term = (int, unit) term
 
 (* TEMPORARY some of the following functions are restricted to closed
    terms, and should not be. *)
@@ -104,7 +149,6 @@ class subst = object
            to maintain the GUH. *)
         copy u
     | exception Not_found ->
-        assert (this = TVar x);
         this
 end
 
@@ -142,3 +186,5 @@ end
 
 let wf : nominal_term -> bool =
   VisitorsRuntime.wrap (new wf # visit_term KitWf.empty)
+
+end

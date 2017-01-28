@@ -1,6 +1,7 @@
 open Printf
 open Term
-open Toolbox
+module T = Toolbox.Make(Term)
+open T
 
 (* Sample terms. *)
 
