@@ -1,6 +1,23 @@
 module Make (Term : sig
 
+  (* Suppose there is a type of terms, which is parameterized over the
+     representations of free name occurrences and binding name occurrences. *)
+
   type ('fn, 'bn) term
+
+  (* Suppose the type of terms is equipped with the following visitors. *)
+
+  (* The private virtual method [visit_'fn] is used to specify what should
+     be done at free name occurrences. The private virtual method [extend]
+     is used to indicate how the environment should be extended when an
+     abstraction is entered. In the [reduce] visitor, the private methods
+     [zero] and [plus] are used to specify how summaries should be computed,
+     while the private method [restrict] is used to specify how a summary
+     should be restricted when an abstraction is exited. *)
+
+  (* Suppose the data constructor for variables is named [TVar], so that
+     the method [visit_TVar] is used to specify what behavior at variables
+     is desired. *)
 
   class virtual ['self] iter : object ('self)
     method private virtual extend : 'bn -> 'env -> 'env
@@ -24,11 +41,11 @@ module Make (Term : sig
 
   class virtual ['self] reduce : object ('self)
     method private virtual extend : 'bn -> 'env -> 'env
+    method private virtual visit_'fn : 'env -> 'fn -> 'z
+    method private virtual zero : 'z
     method private virtual plus : 'z -> 'z -> 'z
     method private virtual restrict : 'bn -> 'z -> 'z
-    method private virtual visit_'fn : 'env -> 'fn -> 'z
     method visit_term : 'env -> ('fn, 'bn) term -> 'z
-    method private virtual zero : 'z
   end
 
   class virtual ['self] iter2 : object ('self)
@@ -47,8 +64,6 @@ type db_term = (int, unit) term
 
 (* TEMPORARY some of the following functions are restricted to closed
    terms, and should not be. *)
-
-(* TEMPORARY try to make this a functor wrt terms and their visitors. *)
 
 class ['self] size = object (_ : 'self)
   inherit [_] reduce as super
