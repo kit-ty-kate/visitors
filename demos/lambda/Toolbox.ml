@@ -1,3 +1,8 @@
+(* -------------------------------------------------------------------------- *)
+
+(* This functor is applied to a type of terms, equipped with visitor classes.
+   It produces a toolbox of useful functions that operate on terms. *)
+
 module Make (Term : sig
 
   (* Suppose there is a type of terms, which is parameterized over the
@@ -58,12 +63,33 @@ end) = struct
 
 open Term
 
-type raw_term = (string, string) term
-type nominal_term = (Atom.t, Atom.t) term
-type db_term = (int, unit) term
+(* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY some of the following functions are restricted to closed
-   terms, and should not be. *)
+(* A raw term is one where every name is represented as a string. This form is
+   typically produced by a parser, and consumed by a printer. It is not used
+   internally. *)
+
+type raw_term =
+  (string, string) term
+
+(* A nominal term is one where every name is represented as an atom. Although
+   this is not visible in this type definition, we may additionally impose a
+   Global Uniqueness Hypothesis (GUH), that is, we may require every binding
+   name occurrence to carry a distinct atom. *)
+
+type nominal_term =
+  (Atom.t, Atom.t) term
+
+(* A de Bruijn term is one where free name occurrences are represented as a
+   de Bruijn index and binding name occurrences carry no information. This
+   definition is used for illustrative purposes only. *)
+
+type debruijn_term =
+  (int, unit) term
+
+(* -------------------------------------------------------------------------- *)
+
+(* [size] computes the size of its argument. *)
 
 class ['self] size = object (_ : 'self)
   inherit [_] reduce as super
@@ -74,8 +100,13 @@ class ['self] size = object (_ : 'self)
 end
 
 let size : 'fn 'bn . ('fn, 'bn) term -> int =
-  fun t ->
-    new size # visit_term () t
+  fun t -> new size # visit_term () t
+
+(* -------------------------------------------------------------------------- *)
+
+(* [show] converts its argument to a raw term, in a NONHYGIENIC manner, using
+   [Atom.show] both at free name occurrences and bound name occurrences. It
+   is a debugging tool. *)
 
 class ['self] show = object (_ : 'self)
   inherit [_] map
@@ -85,6 +116,11 @@ end
 let show : nominal_term -> raw_term =
   new show # visit_term ()
 
+(* -------------------------------------------------------------------------- *)
+
+(* [copy] returns a copy of its argument where every bound name has been
+   replaced with a fresh copy, and every free name is unchanged. *)
+
 class ['self] copy = object (_ : 'self)
   inherit [_] map
   inherit [_] KitCopy.map
@@ -92,6 +128,11 @@ end
 
 let copy : nominal_term -> nominal_term =
   new copy # visit_term KitCopy.empty
+
+(* -------------------------------------------------------------------------- *)
+
+(* TEMPORARY some of the following functions are restricted to closed
+   terms, and should not be. *)
 
 class ['self] import = object (_ : 'self)
   inherit [_] map
@@ -132,7 +173,7 @@ class raw2debruijn = object
   inherit [_] KitToDeBruijn.String.map
 end
 
-let raw2debruijn : raw_term -> db_term =
+let raw2debruijn : raw_term -> debruijn_term =
   new raw2debruijn # visit_term KitToDeBruijn.String.empty
 
 class nominal2debruijn = object
@@ -140,7 +181,7 @@ class nominal2debruijn = object
   inherit [_] KitToDeBruijn.Atom.map
 end
 
-let nominal2debruijn : nominal_term -> db_term =
+let nominal2debruijn : nominal_term -> debruijn_term =
   new nominal2debruijn # visit_term KitToDeBruijn.Atom.empty
 
 class subst_atom = object
