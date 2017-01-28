@@ -1,24 +1,33 @@
 (* This kit serves to construct a [copy] function for terms. *)
 
+(* An environment maps atoms to atoms. *)
+
 type env =
-  Atom.subst
+  Atom.atom Atom.Map.t
 
 let empty =
-    Atom.Subst.id
+  Atom.Map.empty
 
-(* TEMPORARY move this function to [Atom.Subst]? *)
-let extend x sigma =
-  (* Under the global uniqueness assumption, the atom [x] cannot appear
-     in the domain or codomain of the substitution [sigma]. We check at
-     runtime that this is the case. *)
-  assert (Atom.Subst.is_fresh_for x sigma);
+(* TEMPORARY move these functions to [Atom]? *)
+
+let lookup env x =
+  try
+    Atom.Map.find x env
+  with Not_found ->
+    (* Outside of its domain, the renaming acts as the identity. *)
+    x
+
+let extend x env =
+  (* Under the global uniqueness assumption, the atom [x] cannot appear in the
+     domain or codomain of the environment. We check at runtime that this is
+     the case; however, only the domain check can be efficiently implemented. *)
+  assert (not (Atom.Map.mem x env));
   (* Generate a fresh copy of [x]. *)
   let x' = Atom.fresha x in
-  (* Extend [sigma] when descending in the body. *)
-  let sigma = Atom.Subst.extend sigma x x' in
-  x', sigma
+  (* Extend [env] when descending in the body. *)
+  x', Atom.Map.add x x' env
 
 class ['self] map = object (_ : 'self)
   method private extend = extend
-  method private visit_'fn = Atom.Subst.apply
+  method private visit_'fn = lookup
 end
