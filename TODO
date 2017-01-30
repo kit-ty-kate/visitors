@@ -19,6 +19,13 @@ If [iter], [map], etc. inherited from [fold],
   then it would be possible to override one of these methods
   to obtain custom behavior.
 
+In [fold],
+  the build_ methods could take not only the results of the recursive calls,
+  but also their arguments (for added expressive power).
+
+Think about developing a version of "visitors" that works as an external tool.
+It would read a .cmi file (or an .ml file?) and produce visitors for an existing type.
+
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
   Release the test suite, too?
