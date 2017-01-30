@@ -294,6 +294,8 @@ let wf t =
 
 (* [closed t] tests whether the term [t] is closed, i.e., has no free atom. *)
 
+(* [occurs x t] tests whether the atom [x] occurs free in [t]. *)
+
 let filter p : nominal_term -> Atom.t option =
   let filter = object
     inherit [_] iter
@@ -306,6 +308,9 @@ let pick_fa : nominal_term -> Atom.t option =
 
 let closed (t : nominal_term) : bool =
   match pick_fa t with None -> true | Some _ -> false
+
+let occurs x =
+  filter (fun y -> Atom.equal x y)
 
 (* -------------------------------------------------------------------------- *)
 
