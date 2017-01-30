@@ -1,7 +1,14 @@
+If TVar is a constructor of some type other than term
+  (e.g. value: one substitues values for variables in terms)
+  then Toolbox must be adapted.
+
 Check that every module has an .mli file, except where that would be too heavy.
 The type (_, _) abstraction could be transparent, private, or opaque.
 
 Benchmark fa versus fa' and decide which one to keep.
+
+Possibly cut Toolbox.Make down into several smaller functors.
+  At least [subst] should be a separate functor.
 
 Operations on terms:
   simultaneous opening? (nominal)
@@ -13,7 +20,7 @@ Operations on terms:
 Operations on each kind of environment:
   Entering a binder (and testing for global uniqueness).
 
-Add printers for Atom.Map, Atom.Subst,
+Add printers for Atom.Map
 and possibly the various kinds of environments that we use.
 
 Document the precondition and postcondition of every function
@@ -25,6 +32,8 @@ Try dealing with binding and hash-consing at the same time.
 
 Try dealing with suspended substitutions.
   (As a distinct construct. Not necessarily at abstractions.)
+
+Look at the visitors in Why3.
 
 ------------------------------------------------------------------------------
 
