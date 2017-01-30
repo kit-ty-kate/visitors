@@ -142,7 +142,7 @@ let () =
 let print_wf t =
   printf "wf(%a) = %b\n%!"
     nhprint t
-    (wf t)
+    (try wf t; true with IllFormed _ -> false)
 
 let () =
   evaluate print_wf

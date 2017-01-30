@@ -251,8 +251,7 @@ let subst1 u x t =
 
 (* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY some of the following functions are restricted to closed
-   terms, and should not be. *)
+(* [equiv] tests whether two terms are alpha-equivalent. *)
 
 class equiv = object
   inherit [_] iter2
@@ -264,12 +263,28 @@ let equiv : nominal_term -> nominal_term -> bool =
 
 (* -------------------------------------------------------------------------- *)
 
-class wf = object
-  inherit [_] iter
-  inherit [_] KitWf.iter
+(* [ba] computes the set of bound atoms of a term and (at the same time)
+   checks that this term is well-formed, that is, no atom is bound twice. The
+   exception [IllFormed x] is raised if the atom [x] occurs twice in a binding
+   position. *)
+
+exception IllFormed = KitBa.IllFormed
+
+class ['self] ba = object (_ : 'self)
+  inherit [_] reduce
+  inherit [_] KitBa.reduce
 end
 
-let wf : nominal_term -> bool =
-  VisitorsRuntime.wrap (new wf # visit_term KitWf.empty)
+let ba : nominal_term -> Atom.Set.t =
+  new ba # visit_term ()
+
+(* [wf t] checks whether the term [t] is well-formed, and returns no result.
+   The exception [IllFormed x] is raised if the atom [x] occurs twice in a
+   binding position.*)
+
+let wf t =
+  let (_ : Atom.Set.t) = ba t in ()
+
+(* -------------------------------------------------------------------------- *)
 
 end
