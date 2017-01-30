@@ -213,17 +213,6 @@ let nominal2debruijn : KitToDeBruijn.Atom.env -> nominal_term -> debruijn_term =
 (* TEMPORARY some of the following functions are restricted to closed
    terms, and should not be. *)
 
-class subst_atom = object
-  inherit [_] endo (* we could also use [map] *)
-  inherit [_] KitSubstAtom.map
-end
-
-let subst_atom : Atom.subst -> nominal_term -> nominal_term =
-  new subst_atom # visit_term
-
-let subst_atom1 u x t =
-  subst_atom (Atom.Subst.singleton x u) t
-
 class subst = object
   inherit [_] endo
   inherit [_] KitSubst.map
