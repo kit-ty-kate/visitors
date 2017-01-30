@@ -24,5 +24,5 @@ class ['self] map = object (_ : 'self)
   method private visit_'fn _sigma _x = assert false
 end
 
-(* TEMPORARY could we abandon the runtime check and use [KitTrivial]
-   instead? should [KitSubstAtom] be a special case of [KiSubst]? *)
+(* TEMPORARY could we abandon the runtime check and use [KitTrivial.map]
+   instead? *)
