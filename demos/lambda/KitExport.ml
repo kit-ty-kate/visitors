@@ -56,7 +56,3 @@ class ['self] map = object (_ : 'self)
   method private extend = extend
   method private visit_'fn = lookup
 end
-
-(* TEMPORARY can we precompute fa(every subterm) ahead of time and
-   attach this info to binders, so that the free atoms are available when
-   printing? *)
