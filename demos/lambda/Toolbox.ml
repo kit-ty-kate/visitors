@@ -210,11 +210,28 @@ let nominal2debruijn : KitToDeBruijn.Atom.env -> nominal_term -> debruijn_term =
 
 (* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY some of the following functions are restricted to closed
-   terms, and should not be. *)
+(* [subst] applies a substitution to a nominal term, yielding a nominal term. *)
+
+(* A substitution is a finite map of atoms to nominal terms. *)
+
+type substitution =
+  nominal_term Atom.Map.t
+
+(* When applying a substitution [sigma] to a term [t], the GUH guarantees that
+   the free atoms of (the codomain of) [sigma] cannot be captured by a binder
+   within [t]. The GUH also guarantees that a binder within [t] cannot appear
+   in the domain of [sigma], which means that we can go down into [t] and apply
+   [sigma] to every variable. *)
+
+(* The GUH is preserved by copying the terms that are grafted into [t]. Thus,
+   it is not even necessary that [sigma] and [t] be disjoint, or that the
+   terms in the codomain of [sigma] be pairwise disjoint. One should note,
+   however, that the result of the substitution is not disjoint with [t], so
+   one should no longer use [t] after the substitution (or, one should apply
+   the substitution to a copy). *)
 
 class subst = object
-  inherit [_] endo
+  inherit [_] endo (* we could also use [map] *)
   inherit [_] KitSubst.map
   method! private visit_TVar sigma this x =
     match Atom.Map.find x sigma with
@@ -226,24 +243,16 @@ class subst = object
         this
 end
 
-type substitution =
-  nominal_term Atom.Map.t
-
 let subst : substitution -> nominal_term -> nominal_term =
   new subst # visit_term
 
 let subst1 u x t =
   subst (Atom.Map.singleton x u) t
 
-(* In [substitute], the precondition is [sigma * t]
-   and the postcondition is [sigma * \result].
-   The caller loses the permission to use [t]. *)
-(* One could design other variants, e.g. one where the caller
-   loses [sigma], so copying is not needed when a variable [x]
-   is encountered for the first time. In that case, we need
-   either a static affinity hypothesis (each variable in the
-   domain of [sigma] occurs at most once in [t]) or a dynamic
-   occurrence counting mechanism. *)
+(* -------------------------------------------------------------------------- *)
+
+(* TEMPORARY some of the following functions are restricted to closed
+   terms, and should not be. *)
 
 class equiv = object
   inherit [_] iter2
@@ -252,6 +261,8 @@ end
 
 let equiv : nominal_term -> nominal_term -> bool =
   VisitorsRuntime.wrap2 (new equiv # visit_term KitEquiv.empty)
+
+(* -------------------------------------------------------------------------- *)
 
 class wf = object
   inherit [_] iter
