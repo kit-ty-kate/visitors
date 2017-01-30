@@ -168,10 +168,7 @@ let export : KitExport.env -> nominal_term -> raw_term =
 
 (* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY some of the following functions are restricted to closed
-   terms, and should not be. *)
-
-
+(* [fa] computes the free atoms of a term. *)
 
 class fa = object
   inherit [_] iter
@@ -191,21 +188,30 @@ end
 let fa' : nominal_term -> Atom.Set.t =
   new fa' # visit_term ()
 
+(* -------------------------------------------------------------------------- *)
+
+(* Conversions from raw terms and from nominal terms to de Bruijn terms. *)
+
 class raw2debruijn = object
   inherit [_] map
   inherit [_] KitToDeBruijn.String.map
 end
 
-let raw2debruijn : raw_term -> debruijn_term =
-  new raw2debruijn # visit_term KitToDeBruijn.String.empty
+let raw2debruijn : KitToDeBruijn.String.env -> raw_term -> debruijn_term =
+  new raw2debruijn # visit_term
 
 class nominal2debruijn = object
   inherit [_] map
   inherit [_] KitToDeBruijn.Atom.map
 end
 
-let nominal2debruijn : nominal_term -> debruijn_term =
-  new nominal2debruijn # visit_term KitToDeBruijn.Atom.empty
+let nominal2debruijn : KitToDeBruijn.Atom.env -> nominal_term -> debruijn_term =
+  new nominal2debruijn # visit_term
+
+(* -------------------------------------------------------------------------- *)
+
+(* TEMPORARY some of the following functions are restricted to closed
+   terms, and should not be. *)
 
 class subst_atom = object
   inherit [_] endo (* we could also use [map] *)
