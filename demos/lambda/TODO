@@ -4,8 +4,6 @@ The type (_, _) abstraction could be transparent, private, or opaque.
 Benchmark fa versus fa' and decide which one to keep.
 
 Operations on terms:
-  test x \in fv(t) (nominal)
-  test closed(t)
   simultaneous opening? (nominal)
   conversion from debruijn back to nominal
   a printer for debruijn terms?
