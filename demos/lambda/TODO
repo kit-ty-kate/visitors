@@ -1,7 +1,7 @@
-Make Toolbox a functor, i.e., independent of the structure of terms.
-
 Check that every module has an .mli file, except where that would be too heavy.
 The type (_, _) abstraction could be transparent, private, or opaque.
+
+Benchmark fa versus fa' and decide which one to keep.
 
 Operations on terms:
   test x \in fv(t) (nominal)
