@@ -81,3 +81,19 @@ class ['self] reduce = object (_ : 'self)
   method private visit_'fn () x = Atom.Set.singleton x
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Testing whether a term has a free atom. *)
+
+exception Free of Atom.t
+
+class closed = object
+  inherit [_] free
+  method visit_free x =
+    raise (Free x)
+end
+
+let wrap (f : 'term -> unit) : 'term -> Atom.t option =
+  fun t ->
+    try f t; None with Free x -> Some x
