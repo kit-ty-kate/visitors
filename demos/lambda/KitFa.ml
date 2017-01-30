@@ -7,6 +7,33 @@
 
 (* -------------------------------------------------------------------------- *)
 
+(* The auxiliary class [scope] defines the environment to be a set of atoms
+   (the atoms that are currently in scope). It defines the method [extend]
+   so as to update this set. *)
+
+class ['self] scope = object (_ : 'self)
+  method private extend = Atom.Set.add
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* The auxiliary class [free] inherits [scope] and further defines the method
+   [visit_'fn] so that, at a free name occurrence: -1. if the name is local,
+   nothing happens; -2. if the name is free, then the method [visit_free] is
+   invoked. *)
+
+class virtual ['self] free = object (self : 'self)
+  inherit [_] scope
+  method private visit_'fn env x =
+    if not (Atom.Set.mem x env) then
+      self#visit_free x
+  method virtual visit_free: _
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* Computing the free atoms of a term, via [iter]. *)
+
 (* The environment is a set of atoms (the atoms that are currently in scope). *)
 
 (* We use a mutable instance variable to keep track of the free atoms that
@@ -21,22 +48,22 @@ let empty =
   Atom.Set.empty
 
 class ['self] iter = object (_ : 'self)
+  inherit [_] free
 
   val mutable accu = Atom.Set.empty
 
   method accu = accu (* must be public *)
 
-  method private extend = Atom.Set.add
-
-  method private visit_'fn env x =
-    if not (Atom.Set.mem x env) then
-      accu <- Atom.Set.add x accu
+  method private visit_free x =
+    accu <- Atom.Set.add x accu
 
 end
 
 (* -------------------------------------------------------------------------- *)
 
-(* In the bottom-up style, no environment is required. *)
+(* Computing the free atoms of a term, via [reduce]. *)
+
+(* In this style, no environment is required. *)
 
 (* type env = unit *)
 
