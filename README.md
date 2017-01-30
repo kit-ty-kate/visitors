@@ -12,14 +12,14 @@ opam install visitors
 
 To install the latest development version, also via `opam`, please proceed as follows:
 ```bash
-  git clone git@gitlab.inria.fr:fpottier/visitors.git
+  git clone https://gitlab.inria.fr/fpottier/visitors.git
   cd visitors
   make pin
 ```
 
 To install the latest development version, outside of `opam`, please proceed as follows:
 ```bash
-  git clone git@gitlab.inria.fr:fpottier/visitors.git
+  git clone https://gitlab.inria.fr/fpottier/visitors.git
   cd visitors
   make -C src install
 ```
