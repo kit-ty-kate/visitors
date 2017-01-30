@@ -1,4 +1,0 @@
-B _build
-PKG pprint
-PKG visitors.ppx
-PKG visitors.runtime
