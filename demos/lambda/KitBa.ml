@@ -16,6 +16,7 @@ class ['self] reduce = object (_ : 'self)
   method private visit_'fn () _x =
     Atom.Set.empty
 
+  (* TEMPORARY could move this monoid to [Atom] *)
   (* The monoid of sets of atoms, equipped with disjoint union, is used. *)
   method zero =
     Atom.Set.empty
