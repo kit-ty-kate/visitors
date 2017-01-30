@@ -287,4 +287,31 @@ let wf t =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [pick_fa t] returns a free atom of the term [t], if there is one. *)
+
+(* [closed t] tests whether the term [t] is closed, i.e., has no free atom. *)
+
+exception Free of Atom.t
+
+class closed = object
+  inherit [_] iter
+  inherit [_] KitFa.free
+  method visit_free x =
+    raise (Free x)
+end
+
+let pick_fa : nominal_term -> Atom.t option =
+  let c = new closed in
+  fun t ->
+    try
+      c # visit_term KitFa.empty t;
+      None
+    with Free x ->
+      Some x
+
+let closed (t : nominal_term) : bool =
+  match pick_fa t with None -> true | Some _ -> false
+
+(* -------------------------------------------------------------------------- *)
+
 end
