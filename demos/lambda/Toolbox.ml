@@ -131,8 +131,18 @@ let copy : nominal_term -> nominal_term =
 
 (* -------------------------------------------------------------------------- *)
 
-(* TEMPORARY some of the following functions are restricted to closed
-   terms, and should not be. *)
+(* [import] converts a raw term to a nominal term that satisfies the Global
+   Uniqueness Hypothesis, that is, a nominal term where every binding name
+   occurrence is represented by a unique atom. [import] expects every free
+   name occurrence to be in the domain of [env]. If that is not the case,
+   the exception [Unbound] is raised. *)
+
+(* TEMPORARY use string * loc so as to be able to give a location *)
+
+(* TEMPORARY maybe [module Import = KitImport] so that the user does not
+   have to know about the kits at all. *)
+
+exception Unbound = KitImport.Unbound
 
 class ['self] import = object (_ : 'self)
   inherit [_] map
@@ -142,6 +152,12 @@ end
 let import : KitImport.env -> raw_term -> nominal_term =
   new import # visit_term
 
+(* -------------------------------------------------------------------------- *)
+
+(* [export] converts a nominal term to a raw term, in a hygienic manner. This
+   is the proper way of displaying a term. [export] expects every free name
+   occurrence to be in the domain of [env]. *)
+
 class ['self] export = object (_ : 'self)
   inherit [_] map
   inherit [_] KitExport.map
@@ -149,6 +165,13 @@ end
 
 let export : KitExport.env -> nominal_term -> raw_term =
   new export # visit_term
+
+(* -------------------------------------------------------------------------- *)
+
+(* TEMPORARY some of the following functions are restricted to closed
+   terms, and should not be. *)
+
+
 
 class fa = object
   inherit [_] iter
