@@ -287,17 +287,22 @@ let wf t =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [filter p t] returns a free atom of the term [t] that satisfies the
+   predicate [p], if such an atom exists. *)
+
 (* [pick_fa t] returns a free atom of the term [t], if there is one. *)
 
 (* [closed t] tests whether the term [t] is closed, i.e., has no free atom. *)
 
-class closed = object
-  inherit [_] iter
-  inherit KitFa.closed
-end
+let filter p : nominal_term -> Atom.t option =
+  let filter = object
+    inherit [_] iter
+    inherit KitFa.filter p
+  end in
+  KitFa.wrap (filter # visit_term KitFa.empty)
 
 let pick_fa : nominal_term -> Atom.t option =
-  KitFa.wrap (new closed # visit_term KitFa.empty)
+  filter (fun _ -> true)
 
 let closed (t : nominal_term) : bool =
   match pick_fa t with None -> true | Some _ -> false

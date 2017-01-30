@@ -84,16 +84,17 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* Testing whether a term has a free atom. *)
+(* Testing whether a term has a free atom that satisfies a predicate [p]. *)
 
-exception Free of Atom.t
+exception Found of Atom.t
 
-class closed = object
+class filter (p : Atom.t -> bool) = object
   inherit [_] free
   method visit_free x =
-    raise (Free x)
+    if p x then
+      raise (Found x)
 end
 
 let wrap (f : 'term -> unit) : 'term -> Atom.t option =
   fun t ->
-    try f t; None with Free x -> Some x
+    try f t; None with Found x -> Some x
