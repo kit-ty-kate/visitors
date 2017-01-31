@@ -17,8 +17,4 @@ class compare = object
 end
 
 let compare (e1 : expr) (e2 : expr) : int =
-  try
-    new compare # visit_expr () e1 e2;
-    0
-  with Different c ->
-    c
+  try new compare # visit_expr () e1 e2; 0 with Different c -> c
