@@ -1,3 +1,4 @@
+PKG ppx_import
 PKG visitors.ppx
 PKG visitors.runtime
 PKG hashcons
