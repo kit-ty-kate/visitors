@@ -1,6 +1,6 @@
 true: \
   safe_string, \
-  warn(A), \
+  warn(A-44), \
   package(visitors.ppx), \
   package(visitors.runtime)
 
