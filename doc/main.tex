@@ -555,6 +555,13 @@ the illustration that follows, we wish to instantiate this class.
 \label{fig:expr05}
 \end{figure}
 
+\begin{figure}[p]
+\codefollowup{expr02}
+\origfirstline{expr05lexico}{3}
+\caption{Determining which way two expressions are ordered}
+\label{fig:expr05lexico}
+\end{figure}
+
 As an illustration, in \fref{fig:expr05}, we use an \itertwo visitor to write
 a function that tests whether two expressions are syntactically equal. This is
 just a matter of performing a synchronous traversal of the two expressions and
@@ -580,9 +587,32 @@ exploit \ppxderiving and annotate the type definition with
 arithmetic expressions contained variables and binders, we could easily define
 an operation that tests whether two expressions are $\alpha$-equivalent.
 
+As a second illustration, in \fref{fig:expr05lexico}, we use an \itertwo
+visitor to write a lexicographic ordering function for expressions. Again,
+this involves a synchronous traversal of the two expressions. When a mismatch
+is detected, however, one must not raise a \oc|StructuralMismatch| exception:
+instead, one must raise an exception that carries one bit of information,
+namely, which of the two expressions is strictly ``smaller'' in the ordering.
+The exception \oc|Different| is introduced for this purpose; it carries an
+integer return code, which by convention is either -1 or +1. Two visitor methods
+must be overridden, namely \tyconvisitor{int}, which is in charge of detecting
+a mismatch between two integer constants, and \tyconfail{expr}, which is invoked
+when a mismatch between (the head constructors of) two expressions is detected.
+The auxiliary function \oc|tag| returns an integer code for the head constructor
+of an expression. It must be hand-written. One could in principle write such a
+function once and for all by using the undocumented operations in OCaml's
+\href{https://caml.inria.fr/pub/docs/manual-ocaml/libref/Obj.html}{\oc|Obj|}
+module, but that is discouraged.
+
+% Il faut au minimum distinguer les constructeurs constants des autres,
+% en utilisant is_int. Il y a peut-être d'autres pièges. De plus, on ne
+% peut pas (je crois?) garantir que l'ordre des constructeurs sera bien
+% celui de la déclaration de types, parce que les constructeurs constants
+% et les autres sont codés indépendamment.
+
 % ------------------------------------------------------------------------------
 
-\begin{figure}[p]
+\begin{figure}[t]
 \orig{expr06}
 \caption{Visitors for a family of types}
 \label{fig:expr06}
