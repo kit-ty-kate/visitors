@@ -269,7 +269,7 @@ private methods in OCaml is precisely the fact that it is permitted to hide
 their existence. Second, we have omitted the type constraint that bears on
 the type variable \oc|'self|, as it is in fact redundant: it is implicit in OCaml
 that the type of ``self'' must be an object type that lists the public methods.
-The bizarre-looking \oc|'monomorphic.| annotations indicate that the methods have
+The bizarre-looking ``\oc|'monomorphic.|'' annotations indicate that the methods have
 monomorphic types; this trick is explained in \sref{sec:oo:monomorphic}.
 
 The class type shown in \fref{fig:simplified} cannot be further simplified.
@@ -1156,7 +1156,7 @@ bears on the type parameter \oc|'self| can be omitted, as it is implicit in
 OCaml that the type of ``self'' must be an object type that lists the public
 methods.
 
-There remains to explain the surprising use of the \oc|'monomorphic.| prefix
+There remains to explain the surprising use of the ``\oc|'monomorphic.|'' prefix
 in \fref{fig:simplified}. On the face of it, this is a universal
 quantification over a type variable, named \oc|'monomorphic|, which does
 \emph{not} appear in the type of the method. From a purely logical standpoint,
@@ -1178,7 +1178,7 @@ instance, the method \tyconvisitor{expr} has monomorphic type %
 \oc|'self| via an implicit constraint and (like \oc|'self|) is quantified at
 the level of the class. This method does \emph{not} have polymorphic type %
 \oc|'env. 'env -> expr -> unit|. The logically redundant quantification over
-\oc|'monomorphic.| serves as a syntactic mark that we really intend the type
+\oc|'monomorphic| serves as a syntactic mark that we really intend the type
 variable~\oc|'env| to appear free in the method type.
 
 % ------------------------------------------------------------------------------
