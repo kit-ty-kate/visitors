@@ -708,7 +708,7 @@ decorates each node in an arithmetic expression with a unique integer number.%
 \label{fig:expr11}
 \end{figure}
 
-\subsection{Dealing with preexisting types}
+\subsection{Dealing with references to preexisting types}
 \label{sec:intro:nonlocal}
 
 A type definition can contain references to the types that are being defined,
@@ -769,6 +769,46 @@ is undesirable, it can be overridden.
 It is possible to inherit as many classes as one wishes, beyond those defined
 in \oc|VisitorsRuntime|. This is done via the \ancestors parameter
 (\sref{sec:ancestors}).
+
+% ------------------------------------------------------------------------------
+
+\subsection{Generating visitors for preexisting types}
+
+Because the \derivingvisitors annotation must be attached to the type
+definition, it may seem as if it is impossible to generate a visitor for a
+type whose definition is out of reach. Suppose, for instance, that the type
+\oc|expr| of arithmetic expressions is defined in a module \oc|Expr|, which,
+for some reason, we cannot modify. Can we generate a visitor for this type?
+
+Fortunately, the answer is positive. The basic trick, documented in the
+\href{https://github.com/whitequark/ppx_deriving/#working-with-existing-types}
+{\texttt{ppx\_deriving} \textsc{readme}},
+consists in defining a new type \oc|expr| of arithmetic expressions and to
+explicitly declare that it is equal to the preexisting type \oc|Expr.expr|,
+as follows.
+
+\orig{expr_redef}
+
+As can be seen above, the new definition of \oc|expr| can be annotated with
+\derivingvisitors, yielding a visitor for the new type \oc|expr|, which by
+definition, is equal to the preexisting type \oc|Expr.expr|. Thus, this
+visitor class be used to traverse expressions of type \oc|Expr.expr|.
+
+This approach works, but requires repeating the definition of the type \oc|expr|.
+This duplication can be eliminated thanks to the \ppximport syntax extension,
+as follows:
+
+\orig{expr_import}
+
+This expands to the code shown previously. (To use this syntax extension,
+assuming you are using \ocamlbuild and \ocamlfind, just add the line
+\texttt{true: package(ppx\_import)} to your \texttt{\_tags} file.) As icing on
+the cake, \ppximport allows decorating the type definition, on the fly, with
+new attributes. In the following examples, we replace all occurrences of
+\oc|int| with \oc|int[@opaque]| (\sref{sec:opaque}), so as to ensure that the
+generated visitor does not invoke the method \tyconvisitor{int}:
+
+\orig{expr_import_opaque}
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------

@@ -1,2 +1,6 @@
+2017/01/31:
+Documentation: added an example of constructing a lexicographic ordering.
+Documentation: discussed generating visitors for existing types and ppx_import.
+
 2017/01/26:
 Initial release.
