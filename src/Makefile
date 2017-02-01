@@ -21,7 +21,6 @@ OCAMLBUILD := \
   -j 0 \
   -use-ocamlfind \
   -classic-display \
-  -cflags "-g" -lflags "-g"
 
 # ------------------------------------------------------------------------------
 
