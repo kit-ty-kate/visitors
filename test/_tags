@@ -1,7 +1,7 @@
 true: \
+  debug, \
   safe_string, \
   warn(A-44), \
-  package(ppx_import), \
   package(visitors.ppx), \
   package(visitors.runtime)
 
@@ -11,3 +11,6 @@ true: \
 <bench.*>: \
   thread, \
   package(core_bench)
+
+<expr_import*>: \
+  package(ppx_import)
