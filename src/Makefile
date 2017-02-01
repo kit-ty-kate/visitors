@@ -18,7 +18,6 @@ TARGET := \
 
 OCAMLBUILD := \
   ocamlbuild \
-  -j 0 \
   -use-ocamlfind \
   -classic-display \
 
