@@ -1,4 +1,4 @@
-open Expr09
+open Expr_info
 
 let strip (e : _ expr) : unit expr =
   let v = object
