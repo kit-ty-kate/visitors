@@ -55,27 +55,36 @@
 
 \subsection{What is a visitor?}
 
-A visitor for a data structure is a class whose methods implement a traversal
-of this data structure. By default, the visitor methods do not have
+A visitor class for a data structure is a class whose methods implement a
+traversal of this data structure. By default, the visitor methods do not have
 interesting behavior: they just cause control to go down into the data
 structure and come back up, without performing any actual computation.
 Nevertheless, by defining subclasses where one method or a few methods are
 overridden, nontrivial behavior can be obtained. Therefore, visitors allow
 many operations on this data structure to be defined with little effort.
 
-Visitors come in several varieties. An \iter visitor traverses a data
+Visitor classes come in several varieties. An \iter visitor traverses a data
 structure and returns no result. It can nevertheless have side effects,
 including updating a piece of mutable state, raising an exception, and
 performing input/output. A \map visitor traverses a data structure and returns
 another data structure: typically, a copy of its argument that has been
-transformed in some way. A \reduce visitor traverses a data structure and
-returns a value that somehow summarizes it: computing the size of a data
-structure is a typical example. Finally, as it is sometimes necessary to
-simultaneously traverse two data structures of identical shape, there are
-visitors of arity two: we refer to them as \itertwo, \maptwo, and \reducetwo
-visitors.
+transformed in some way. An \mapendo visitor is a variant of a \map visitor
+that preserves physical sharing when possible. A \reduce visitor traverses a
+data structure and returns a value that somehow summarizes it: computing the
+size of a data structure is a typical example. All of these can be viewed as
+special cases of the \fold visitor, which performs a bottom-up computation
+over a data structure. The class \fold is equipped with virtual methods
+% (the ``\tyconascendingmethod{}'' methods)
+that can be overridden (in a subclass) so as to specify what computation is
+desired.
 
-% TEMPORARY mention \mapendo and \fold visitors, too
+Visitors also come in several arities. The visitors mentioned above have arity
+one: they traverse one data structure. However, it is sometimes necessary to
+simultaneously traverse two data structures of identical shape. For this
+purpose, there are visitors of arity two: here, they are known as \itertwo,
+\maptwo, \reducetwo, and \foldtwo visitors.
+
+% \mapendotwo does not exist.
 
 % ------------------------------------------------------------------------------
 
