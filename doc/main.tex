@@ -643,18 +643,18 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 % ------------------------------------------------------------------------------
 
 \begin{figure}[p]
-\orig{expr09}
+\orig{expr_info}
 \vspace{-\baselineskip}
-\processed{expr09}
+\processed{expr_info}
 \caption{A visitor for a parameterized type of decorated expressions}
-\label{fig:expr09}
+\label{fig:expr_info}
 \end{figure}
 
 \begin{figure}[p]
-\codefollowup{expr09}
-\origfirstline{expr10}{3}
+\codefollowup{expr_info}
+\origfirstline{expr_info_use}{3}
 \caption{Working with different types of decorations}
-\label{fig:expr10}
+\label{fig:expr_info_use}
 \end{figure}
 
 \subsection{Visitors for parameterized types}
@@ -665,10 +665,10 @@ Visitors can be generated for parameterized types, too.%
 \footnote{Technically, we impose a restriction to regular types; see
   \S\ref{sec:regularity}.}
 %
-In \fref{fig:expr09}, for instance, we define a variant of arithmetic
+In \fref{fig:expr_info}, for instance, we define a variant of arithmetic
 expressions where every tree node is decorated with a value of type
 \oc|'info|. We request the generation of a \map visitor, whose code is shown
-in the second part of \fref{fig:expr09}. The generated code has exactly the
+in the second part of \fref{fig:expr_info}. The generated code has exactly the
 same structure as in the previous sections. The only new feature is that the
 class \map now has a virtual method, \tyconvisitor{'info}. The general rule
 is, for each type parameter, there is one virtual method, named after it.
@@ -696,8 +696,8 @@ the classes \runtime{iter}, \runtime{map}, and so on, are
 polymorphic in the types of the list elements. (See \sref{sec:intro:nonlocal}
 for more information on the treatment of preexisting types.)
 
-\fref{fig:expr10} presents two example uses of the class \map defined in
-\fref{fig:expr09}. In the first example, we define a function \oc|strip|, of
+\fref{fig:expr_info_use} presents two example uses of the class \map defined in
+\fref{fig:expr_info}. In the first example, we define a function \oc|strip|, of
 type \oc|'info expr -> unit expr|, which strips off the decorations in an
 arithmetic expression, replacing them with unit values. In the second example,
 we define a function \oc|number|, of type \oc|'info expr -> int expr|, which
@@ -1467,7 +1467,7 @@ The following \emph{virtual methods} are \emph{declared}:
         arguments:   & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|'foo| \\
         invoked:     & on the way down \\
-        example:     & \fref{fig:expr09}
+        example:     & \fref{fig:expr_info}
       \end{tabular}
 
 \item if this is a \reduce visitor (\sref{sec:intro:reduce}),
