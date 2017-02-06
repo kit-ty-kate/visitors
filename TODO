@@ -6,6 +6,13 @@ TODO (REALLY)
 
 TODO (PERHAPS)
 
+Revisit the treatment of type parameters and polymorphic visitor methods.
+  Allow marking a type parameter as "generalized",
+  and in that case, generate type annotations, so
+  that the visitor methods are polymorphic in that
+  type parameter.
+  Works for iter, map, etc., but not for fold.
+
 Ancestors should be not just class names,
   but class expressions (e.g. a class name applied to some arguments).
 Then, one should also have the ability of parameterizing
