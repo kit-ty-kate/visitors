@@ -61,13 +61,20 @@ end
 
 (* Visitor methods for the primitive types. *)
 
+(* We COULD declare all of the methods below as polymorphic in ['env]. Indeed,
+   they ARE polymorphic in ['env], because they do not extend it or look it up.
+   However, by doing so, we would PREVENT users from overriding these methods
+   so as to actually extend or look up the environment. It probably does not
+   make much difference either way, but I feel better if the methods are not
+   polymorphic in ['env]. *)
+
 (* -------------------------------------------------------------------------- *)
 
 (* [iter] *)
 
 class ['self] iter = object (self)
 
-  method private visit_array: 'env 'a .
+  method private visit_array: 'a .
     ('env -> 'a -> unit) -> 'env -> 'a array -> unit
   = fun f env xs ->
       (* For speed, we inline [Array.iter]. Chances are, we save a closure
@@ -76,40 +83,40 @@ class ['self] iter = object (self)
         f env (Array.unsafe_get xs i)
       done
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> unit
   = fun _ _ -> ()
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> unit
   = fun _ _ -> ()
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> unit
   = fun _ _ -> ()
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> unit
   = fun _ _ -> ()
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> unit
   = fun _ _ -> ()
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> unit
   = fun _ _ -> ()
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> unit
   = fun _ _ -> ()
 
-  method private visit_lazy_t: 'env 'a .
+  method private visit_lazy_t: 'a .
     ('env -> 'a -> unit) -> 'env -> 'a Lazy.t -> unit
   = fun f env (lazy x) ->
       f env x
 
-  method private visit_list: 'env 'a .
+  method private visit_list: 'a .
     ('env -> 'a -> unit) -> 'env -> 'a list -> unit
   = fun f env xs ->
       match xs with
@@ -119,11 +126,11 @@ class ['self] iter = object (self)
           f env x;
           self # visit_list f env xs
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> unit
   = fun _ _ -> ()
 
-  method private visit_option: 'env 'a .
+  method private visit_option: 'a .
     ('env -> 'a -> unit) -> 'env -> 'a option -> unit
   = fun f env ox ->
       match ox with
@@ -132,12 +139,12 @@ class ['self] iter = object (self)
       | Some x ->
           f env x
 
-  method private visit_ref: 'env 'a .
+  method private visit_ref: 'a .
     ('env -> 'a -> unit) -> 'env -> 'a ref -> unit
   = fun f env rx ->
       f env !rx
 
-  method private visit_result: 'env 'a 'e.
+  method private visit_result: 'a 'e.
     ('env -> 'a -> unit) ->
     ('env -> 'e -> unit) ->
      'env -> ('a, 'e) result -> unit
@@ -146,11 +153,11 @@ class ['self] iter = object (self)
       | Ok a -> f env a
       | Error b -> g env b
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> unit
   = fun _ _ -> ()
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> unit
   = fun _ _ -> ()
 
@@ -162,7 +169,7 @@ end
 
 class ['self] map = object (self)
 
-  method private visit_array: 'env 'a 'b .
+  method private visit_array: 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
   = fun f env xs ->
       Array.map (f env) xs
@@ -170,35 +177,35 @@ class ['self] map = object (self)
          the closure [f env]. That would be a bit painful, though. Anyway,
          in [flambda] mode, the compiler might be able to do that for us. *)
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> bool
   = fun _ x -> x
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> bytes
   = fun _ x -> x
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> char
   = fun _ x -> x
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> float
   = fun _ x -> x
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> int
   = fun _ x -> x
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> int32
   = fun _ x -> x
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> int64
   = fun _ x -> x
 
-  method private visit_lazy_t: 'env 'a 'b .
+  method private visit_lazy_t: 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a Lazy.t -> 'b Lazy.t
   = fun f env thx ->
       (* We seem to have two options: either force the suspension now
@@ -208,7 +215,7 @@ class ['self] map = object (self)
          desired behavior, it can of course be overridden. *)
       lazy (f env (Lazy.force thx))
 
-  method private visit_list: 'env 'a 'b .
+  method private visit_list: 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
   = fun f env xs ->
       match xs with
@@ -218,11 +225,11 @@ class ['self] map = object (self)
           let x = f env x in
           x :: self # visit_list f env xs
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> nativeint
   = fun _ x -> x
 
-  method private visit_option: 'env 'a 'b .
+  method private visit_option: 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
   = fun f env ox ->
       match ox with
@@ -231,12 +238,12 @@ class ['self] map = object (self)
       | Some x ->
           Some (f env x)
 
-  method private visit_ref: 'env 'a 'b .
+  method private visit_ref: 'a 'b .
     ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
   = fun f env rx ->
       ref (f env !rx)
 
-  method private visit_result: 'env 'a 'b 'e 'f .
+  method private visit_result: 'a 'b 'e 'f .
     ('env -> 'a -> 'b) ->
     ('env -> 'e -> 'f) ->
      'env -> ('a, 'e) result -> ('b, 'f) result
@@ -245,11 +252,11 @@ class ['self] map = object (self)
       | Ok a -> Ok (f env a)
       | Error b -> Error (g env b)
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> string
   = fun _ x -> x
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> unit
   = fun _ x -> x
 
@@ -270,41 +277,41 @@ class ['self] endo = object (self)
      knows -- maybe the user wants this. Maybe she is using an array as an
      immutable data structure. *)
 
-  method private visit_array: 'env 'a .
+  method private visit_array: 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a array -> 'a array
   = fun f env xs ->
       let xs' = Array.map (f env) xs in
       if array_equal (==) xs xs' then xs else xs'
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> bool
   = fun _ x -> x
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> bytes
   = fun _ x -> x
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> char
   = fun _ x -> x
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> float
   = fun _ x -> x
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> int
   = fun _ x -> x
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> int32
   = fun _ x -> x
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> int64
   = fun _ x -> x
 
-  method private visit_lazy_t : 'env 'a .
+  method private visit_lazy_t : 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a Lazy.t -> 'a Lazy.t
   = fun f env thx ->
       (* We could use the same code as in [map], which does not preserve sharing.
@@ -316,7 +323,7 @@ class ['self] endo = object (self)
       let x' = f env x in
       if x == x' then thx else lazy x'
 
-  method private visit_list: 'env 'a .
+  method private visit_list: 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a list -> 'a list
   = fun f env this ->
       match this with
@@ -330,11 +337,11 @@ class ['self] endo = object (self)
           else
             x' :: xs'
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> nativeint
   = fun _ x -> x
 
-  method private visit_option: 'env 'a .
+  method private visit_option: 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a option -> 'a option
   = fun f env ox ->
       match ox with
@@ -352,7 +359,7 @@ class ['self] endo = object (self)
      it is consistent with the behavior of [endo] visitors at mutable
      record types. *)
 
-  method private visit_ref: 'env 'a .
+  method private visit_ref: 'a .
     ('env -> 'a -> 'a) -> 'env -> 'a ref -> 'a ref
   = fun f env rx ->
       let x = !rx in
@@ -362,7 +369,7 @@ class ['self] endo = object (self)
       else
         ref x'
 
-  method private visit_result: 'env 'a 'e .
+  method private visit_result: 'a 'e .
     ('env -> 'a -> 'a) ->
     ('env -> 'e -> 'e) ->
      'env -> ('a, 'e) result -> ('a, 'e) result
@@ -375,11 +382,11 @@ class ['self] endo = object (self)
           let b' = g env b in
           if b == b' then r else Error b'
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> string
   = fun _ x -> x
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> unit
   = fun _ x -> x
 
@@ -393,7 +400,7 @@ class virtual ['self] reduce = object (self : 'self)
 
   inherit ['z] monoid
 
-  method private visit_array: 'env 'a .
+  method private visit_array: 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
   = fun f env xs ->
       Array.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
@@ -401,40 +408,40 @@ class virtual ['self] reduce = object (self : 'self)
          allocation. That said, in flambda mode, the compiler might be
          able to do that automatically. *)
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_lazy_t: 'env 'a .
+  method private visit_lazy_t: 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a Lazy.t -> 'z
   = fun f env (lazy x) ->
       f env x
 
-  method private visit_list: 'env 'a .
+  method private visit_list: 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
   = fun f env xs ->
       self # list_fold_left f env self#zero xs
@@ -445,7 +452,7 @@ class virtual ['self] reduce = object (self : 'self)
          at least in non-flambda mode. A micro-benchmark shows no performance
          impact, either way. *)
 
-  method private list_fold_left: 'env 'a .
+  method private list_fold_left: 'a .
     ('env -> 'a -> 'z) -> 'env -> 'z -> 'a list -> 'z
   = fun f env z xs ->
     match xs with
@@ -455,11 +462,11 @@ class virtual ['self] reduce = object (self : 'self)
         let z = self#plus z (f env x) in
         self # list_fold_left f env z xs
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_option: 'env 'a .
+  method private visit_option: 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
   = fun f env ox ->
       match ox with
@@ -468,12 +475,12 @@ class virtual ['self] reduce = object (self : 'self)
       | None ->
           self#zero
 
-  method private visit_ref: 'env 'a .
+  method private visit_ref: 'a .
     ('env -> 'a -> 'z) -> 'env -> 'a ref -> 'z
   = fun f env rx ->
       f env !rx
 
-  method private visit_result: 'env 'a 'e .
+  method private visit_result: 'a 'e .
     ('env -> 'a -> 'z) ->
     ('env -> 'e -> 'z) ->
      'env -> ('a, 'e) result -> 'z
@@ -484,11 +491,11 @@ class virtual ['self] reduce = object (self : 'self)
       | Error b ->
           g env b
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> 'z
   = fun _env _ -> self#zero
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> 'z
   = fun _env _ -> self#zero
 
@@ -513,7 +520,7 @@ end
 
 class ['self] iter2 = object (self)
 
-  method private visit_array: 'env 'a 'b .
+  method private visit_array: 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a array -> 'b array -> unit
   = fun f env xs1 xs2 ->
       (* We inline [Array.iter2]. *)
@@ -524,40 +531,40 @@ class ['self] iter2 = object (self)
       else
         fail()
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> bool -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> bytes -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> char -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> float -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> int -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> int32 -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> int64 -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_lazy_t: 'env 'a 'b .
+  method private visit_lazy_t: 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> unit
   = fun f env (lazy x1) (lazy x2) ->
       f env x1 x2
 
-  method private visit_list: 'env 'a 'b .
+  method private visit_list: 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a list -> 'b list -> unit
   = fun f env xs1 xs2 ->
       match xs1, xs2 with
@@ -569,11 +576,11 @@ class ['self] iter2 = object (self)
       | _, _ ->
           fail()
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> nativeint -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_option: 'env 'a 'b .
+  method private visit_option: 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a option -> 'b option -> unit
   = fun f env ox1 ox2 ->
       match ox1, ox2 with
@@ -584,12 +591,12 @@ class ['self] iter2 = object (self)
       | _, _ ->
           fail()
 
-  method private visit_ref: 'env 'a 'b .
+  method private visit_ref: 'a 'b .
     ('env -> 'a -> 'b -> unit) -> 'env -> 'a ref -> 'b ref -> unit
   = fun f env rx1 rx2 ->
       f env !rx1 !rx2
 
-  method private visit_result: 'env 'a 'b 'e 'f .
+  method private visit_result: 'a 'b 'e 'f .
     ('env -> 'a -> 'b -> unit) ->
     ('env -> 'e -> 'f -> unit) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> unit
@@ -599,11 +606,11 @@ class ['self] iter2 = object (self)
       | Error b1, Error b2 -> g env b1 b2
       | _, _ -> fail()
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> string -> unit
   = fun _ x1 x2 -> if x1 = x2 then () else fail()
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> unit -> unit
   = fun _ _x1 _x2 -> ()
 
@@ -615,7 +622,7 @@ end
 
 class ['self] map2 = object (self)
 
-  method private visit_array: 'env 'a 'b 'c .
+  method private visit_array: 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a array -> 'b array -> 'c array
   = fun f env xs1 xs2 ->
       if Array.length xs1 = Array.length xs2 then
@@ -623,41 +630,41 @@ class ['self] map2 = object (self)
       else
         fail()
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> bool -> bool
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> bytes -> bytes
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> char -> char
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> float -> float
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> int -> int
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> int32 -> int32
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> int64 -> int64
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_lazy_t: 'env 'a 'b 'c .
+  method private visit_lazy_t: 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 'c Lazy.t
   = fun f env thx1 thx2 ->
       (* As in [map]. *)
       lazy (f env (Lazy.force thx1) (Lazy.force thx2))
 
-  method private visit_list: 'env 'a 'b 'c .
+  method private visit_list: 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a list -> 'b list -> 'c list
   = fun f env xs1 xs2 ->
       match xs1, xs2 with
@@ -669,11 +676,11 @@ class ['self] map2 = object (self)
       | _, _ ->
           fail()
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> nativeint -> nativeint
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_option: 'env 'a 'b 'c .
+  method private visit_option: 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a option -> 'b option -> 'c option
   = fun f env ox1 ox2 ->
       match ox1, ox2 with
@@ -685,12 +692,12 @@ class ['self] map2 = object (self)
       | _, _ ->
           fail()
 
-  method private visit_ref: 'env 'a 'b 'c .
+  method private visit_ref: 'a 'b 'c .
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a ref -> 'b ref -> 'c ref
   = fun f env rx1 rx2 ->
       ref (f env !rx1 !rx2)
 
-  method private visit_result: 'env 'a 'b 'c 'e 'f 'g .
+  method private visit_result: 'a 'b 'c 'e 'f 'g .
     ('env -> 'a -> 'b -> 'c) ->
     ('env -> 'e -> 'f -> 'g) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> ('c, 'g) result
@@ -700,11 +707,11 @@ class ['self] map2 = object (self)
       | Error b1, Error b2 -> Error (g env b1 b2)
       | _, _ -> fail()
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> string -> string
   = fun _ x1 x2 -> if x1 = x2 then x1 else fail()
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> unit -> unit
   = fun _ _x1 _x2 -> ()
 
@@ -718,7 +725,7 @@ class virtual ['self] reduce2 = object (self : 'self)
 
   inherit ['z] monoid
 
-  method private visit_array: 'env 'a 'b .
+  method private visit_array: 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a array -> 'b array -> 'z
   = fun f env xs1 xs2 ->
       (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2],
@@ -734,47 +741,47 @@ class virtual ['self] reduce2 = object (self : 'self)
       else
         fail()
 
-  method private visit_bool: 'env .
+  method private visit_bool:
     'env -> bool -> bool -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_bytes: 'env .
+  method private visit_bytes:
     'env -> bytes -> bytes -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_char: 'env .
+  method private visit_char:
     'env -> char -> char -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_float: 'env .
+  method private visit_float:
     'env -> float -> float -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_int: 'env .
+  method private visit_int:
     'env -> int -> int -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_int32: 'env .
+  method private visit_int32:
     'env -> int32 -> int32 -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_int64: 'env .
+  method private visit_int64:
     'env -> int64 -> int64 -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_lazy_t: 'env 'a 'b .
+  method private visit_lazy_t: 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 'z
   = fun f env (lazy x1) (lazy x2) ->
       f env x1 x2
 
-  method private visit_list: 'env 'a 'b .
+  method private visit_list: 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a list -> 'b list -> 'z
   = fun f env xs1 xs2 ->
       if List.length xs1 = List.length xs2 then
@@ -782,12 +789,12 @@ class virtual ['self] reduce2 = object (self : 'self)
       else
         fail()
 
-  method private visit_nativeint: 'env .
+  method private visit_nativeint:
     'env -> nativeint -> nativeint -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_option: 'env 'a 'b .
+  method private visit_option: 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a option -> 'b option -> 'z
   = fun f env ox1 ox2 ->
       match ox1, ox2 with
@@ -799,12 +806,12 @@ class virtual ['self] reduce2 = object (self : 'self)
       | None, Some _ ->
           fail()
 
-  method private visit_ref: 'env 'a 'b .
+  method private visit_ref: 'a 'b .
     ('env -> 'a -> 'b -> 'z) -> 'env -> 'a ref -> 'b ref -> 'z
   = fun f env rx1 rx2 ->
       f env !rx1 !rx2
 
-  method private visit_result: 'env 'a 'b 'e 'f .
+  method private visit_result: 'a 'b 'e 'f .
     ('env -> 'a -> 'b -> 'z) ->
     ('env -> 'e -> 'f -> 'z) ->
      'env -> ('a, 'e) result -> ('b, 'f) result -> 'z
@@ -818,12 +825,12 @@ class virtual ['self] reduce2 = object (self : 'self)
       | Error _, Ok _ ->
           fail()
 
-  method private visit_string: 'env .
+  method private visit_string:
     'env -> string -> string -> 'z
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
-  method private visit_unit: 'env .
+  method private visit_unit:
     'env -> unit -> unit -> 'z
   = fun _env () () ->
       self#zero
