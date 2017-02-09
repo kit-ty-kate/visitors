@@ -502,7 +502,10 @@ a \oc|string list|. A \fold visitor offers great flexibility.
 All previous varieties of visitors are special cases of \fold visitors. The
 specialized varieties of visitors are more convenient to use, when they can be
 used, because they do not require the user to provide \tyconascendingmethod{}
-methods. Yet, \fold visitors are more versatile.
+methods. Yet, \fold visitors are in principle more versatile.%
+%
+\footnote{This would be true in an untyped setting, but is not quite true in OCaml,
+due to restrictions imposed by OCaml's type discipline (\sref{sec:map_from_fold}).}
 
 % ppx_tools/genlifter is analogous, with a few differences:
 % - it is a command line tool, not as ppx extension;
@@ -1308,6 +1311,98 @@ and generated methods (which must be monomorphic) is admittedly unfortunate,
 but this is the best that we offer, at present.
 
 % This treatment of polymorphism leads to a lack of compositionality.
+
+% ------------------------------------------------------------------------------
+
+\subsection{Where the expressiveness of OCaml's type system falls short}
+\label{sec:map_from_fold}
+
+\begin{figure}[p]
+\orig{map_from_fold}
+\caption{An unsatisfactory definition of \oc|map| as a subclass of \oc|fold|}
+\label{fig:map_from_fold}
+\end{figure}
+
+\begin{figure}[p]
+\begin{mdframed}[backgroundcolor=green!10]
+\lstinputlisting{map_from_fold.mli}
+\end{mdframed}
+\caption{The type of the class \oc|map_from_fold| (\fref{fig:map_from_fold})}
+\label{fig:map_from_fold:type}
+\end{figure}
+
+We have noted earlier (\sref{sec:intro:fold}) that, among the varieties of
+visitors that we have presented, \fold visitors are in principle the most
+general. This raises the question: is it possible to define \map and \reduce
+as subclasses of \fold, equipped with appropriate \tyconascendingmethod{}
+methods?
+
+Doing so would be more economical: that is, it would significantly reduce the
+redundancy between the classes \map, \reduce, and \fold. When these classes
+are automatically generated, code duplication is not so much of a problem.
+However, there are situations where (parts of) visitor classes must be
+hand-written, and where duplication becomes painful.
+
+Furthermore, defining \map and \reduce as subclasses of \fold would give rise
+to new patterns of customization. It would become possible to define a
+subclass of \map or \reduce and override just one \tyconascendingmethod{}
+method so as to obtain custom behavior.%
+%
+\footnote{At present, this must be done by overriding a
+  \tyconvisitor{} method, thereby causing more code duplication than
+  necessary.}
+
+In an untyped setting, the question can be answered positively: \map and
+\reduce can be defined in terms of \fold. Unfortunately, in the setting
+of OCaml's type system, the answer is negative: although \reduce can be
+defined in terms of \fold, \map cannot.
+% (or cannot always).
+
+The situation is illustrated in \fref{fig:map_from_fold}. As an example, we
+define visitor methods, by hand, for the type \oc|'a option|.
+
+The methods \tyconvisitor{option} in the classes \reduce and \map are
+identical to those found in the classes \runtime{reduce} and \runtime{map}. We
+note that the method \tyconvisitor{option} in the class \reduce is polymorphic
+in \oc|'a|, whereas \tyconvisitor{option} in the class \map is polymorphic
+in~\oc|'a| and~\oc|'b|.
+
+There is some similarity between these methods, which is why we define a class
+\fold, whose method \tyconvisitor{option} contains calls to the virtual
+methods \dataconascendingmethod{None} and \dataconascendingmethod{Some}. We
+assign to this method the most general type that is expressible in OCaml's
+type system. It is polymorphic in \oc|'a|. The type variable~\oc|'r|, which
+represents the result of the function~\oc|f|, and the type variable~\oc|'s|,
+which represents the result of the methods \tyconvisitor{option},
+\dataconascendingmethod{None}, and \dataconascendingmethod{Some},
+cannot be universally quantified at the level of a method,
+since they appear in the types of several methods.
+They must be (implicitly) quantified at the level of the class.
+
+Is this definition of \fold satisfactory? To test this, let us now attempt to
+propose new definitions of \reduce and \map as subclasses of \fold. We define
+two more classes, \oc|reduce_from_fold| and \oc|map_from_fold|, which both
+inherit \oc|fold| and provide suitable definitions of the methods
+\dataconascendingmethod{None} and \dataconascendingmethod{Some}.
+
+In \oc|reduce_from_fold|, everything works fine. The type parameters \oc|'r|
+and \oc|'s| in \fold are both instantiated with \oc|'z|. As a result, the
+method \tyconvisitor{option} in the class \oc|reduce_from_fold| has type
+%
+\oc|'a. ('c -> 'a -> 'z) -> 'c -> 'a option -> 'z|,
+%
+just as in the class \reduce.
+
+In \oc|map_from_fold|, a problem arises. The code is well-typed, but its type
+is less general than desired. The OCaml typechecker infers that the type
+parameters \oc|'r| and \oc|'s| in \fold must be respectively instantiated with
+\oc|'b| and \oc|'b option|, where the type variable \oc|'b| must be quantified
+at the level of the class. Therefore, the type of \oc|map_from_fold| is as
+shown in \fref{fig:map_from_fold:type}. This type is \emph{not} polymorphic
+in~\oc|'b|, thus strictly less general than the type of the method
+\tyconvisitor{option} in the class \map (\fref{fig:map_from_fold}).
+
+
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
