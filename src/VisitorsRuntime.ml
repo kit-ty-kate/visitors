@@ -57,6 +57,12 @@ class ['z] addition_monoid = object
   method private plus = (+)
 end
 
+class ['z] unit_monoid = object
+  inherit ['z] monoid
+  method private zero = ()
+  method private plus () () = ()
+end
+
 (* -------------------------------------------------------------------------- *)
 
 (* Visitor methods for the primitive types. *)
