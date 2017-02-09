@@ -1402,7 +1402,37 @@ shown in \fref{fig:map_from_fold:type}. This type is \emph{not} polymorphic
 in~\oc|'b|, thus strictly less general than the type of the method
 \tyconvisitor{option} in the class \map (\fref{fig:map_from_fold}).
 
+What would it take to repair this problem? Apparently, the type of the method
+\tyconvisitor{option} in the class \fold is not general enough. Whereas the
+type variables \oc|'r| and \oc|'s| currently have kind \oc|*|, it seems that
+they should have kind \oc|* -> *|. The type of the class \fold should be as
+follows:
+%
+\begin{mdframed}[backgroundcolor=green!10]
+\begin{lstlisting}
+class ['self] fold : object ('self)
+  method private visit_option: 'a 'b .
+    ('env -> 'a -> 'r['b]) -> 'env -> 'a option -> 's['b]
+  method private virtual build_None: 'b . 'env -> 's['b]
+  method private virtual build_Some: 'b . 'env -> 'r['b] -> 's['b]
+end
+\end{lstlisting}
+\end{mdframed}
 
+This is not valid OCaml: we write \oc|'r[b]| for the type-level application of
+\oc|'r| to \oc|'b|. The type of each method is universally quantified in
+\oc|'b|, as desired. The type of \tyconvisitor{option} seems to have the
+desired generality. By instantiating both~\oc|'r| and~\oc|'s| with the
+type-level function \oc|fun 'b -> 'z|, we obtain the type of
+\tyconvisitor{option} in the class \reduce. By instantiating \oc|'r| and
+\oc|'s| with the type-level functions
+%
+\oc|fun 'b -> 'b| and \oc|fun 'b -> 'b option|, respectively, we obtain the
+type of \tyconvisitor{option} in the class \map.
+
+This suggests that higher kinds, type-level functions, and type-level
+$\beta$-reduction might be valuable features, not just in functional
+programming languages, but also in an object-oriented programming setting.
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
