@@ -1,7 +1,6 @@
 true: \
   debug, \
   safe_string, \
-  warn(A-44), \
   package(visitors.ppx), \
   package(visitors.runtime)
 
@@ -14,3 +13,9 @@ true: \
 
 <expr_import*>: \
   package(ppx_import)
+
+<map_from_fold.*>: \
+  warn(A-34)
+
+true: \
+  warn(A-44)
