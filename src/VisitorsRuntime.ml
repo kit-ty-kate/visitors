@@ -509,6 +509,18 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
+(* [mapreduce] *)
+
+class virtual ['self] mapreduce = object (_self)
+
+  inherit ['z] monoid
+
+  (* TEMPORARY *)
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
 (* [fold] *)
 
 class ['self] fold = object (_self)
@@ -850,5 +862,17 @@ end
 class ['self] fold2 = object (_self)
 
   (* See the comment in the class [fold] above. *)
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [mapreduce2] *)
+
+class virtual ['self] mapreduce2 = object (_self)
+
+  inherit ['z] monoid
+
+  (* TEMPORARY *)
 
 end
