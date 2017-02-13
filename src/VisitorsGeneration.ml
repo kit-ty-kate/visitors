@@ -159,6 +159,11 @@ let vblet1 (vb : value_binding) (e : expression) : expression =
 let let1 (x : variable) (e1 : expression) (e2 : expression) : expression =
   vblet1 (Vb.mk (pvar x) e1) e2
 
+(* [let1p x y e1 e2] constructs a single [let] binding of a pair. *)
+
+let let1p (x, y : variable * variable) (e1 : expression) (e2 : expression) : expression =
+  vblet1 (Vb.mk (ptuple [pvar x; pvar y]) e1) e2
+
 (* [vbletn vbs e] constructs a series of nested [let] bindings. *)
 
 let vbletn (vbs : value_binding list) (e : expression) : expression =
@@ -168,6 +173,11 @@ let vbletn (vbs : value_binding list) (e : expression) : expression =
 
 let letn (xs : variable list) (es : expression list) (e : expression) =
   List.fold_right2 let1 xs es e
+
+(* [letnp xs ys es e] constructs a series of nested [let] bindings of pairs. *)
+
+let letnp (xs : variable list) (ys : variable list) (es : expression list) (e : expression) =
+  List.fold_right2 let1p (List.combine xs ys) es e
 
 (* -------------------------------------------------------------------------- *)
 
