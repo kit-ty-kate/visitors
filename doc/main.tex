@@ -437,6 +437,28 @@ when it is applicable, for reasons of clarity and efficiency.
 
 % ------------------------------------------------------------------------------
 
+\begin{figure}[t]
+\orig{expr17}
+\vspace{-\baselineskip}
+\processed{expr17}
+\caption{A visitor of the \mapreduce variety}
+\label{fig:mapreduce}
+\end{figure}
+
+\subsection{\mapreduce visitors}
+\label{sec:intro:mapreduce}
+
+A \mapreduce visitor performs the tasks of a \map visitor and a \reduce
+visitor at once. An example appears in \fref{fig:mapreduce}. Every visitor
+method returns a pair of a transformed term and a summary. In other words,
+it returns a pair of the results that would be returned by a \map visitor
+method and by a \reduce visitor method.
+
+% TEMPORARY:
+% Étoffer. Donner un exemple d'utilisation?
+
+% ------------------------------------------------------------------------------
+
 \begin{figure}[p]
 \orig{expr00fold}
 \vspace{-\baselineskip}
@@ -1595,7 +1617,8 @@ The following \emph{virtual methods} are \emph{declared}:
         example:     & \fref{fig:expr_info}
       \end{tabular}
 
-\item if this is a \reduce visitor (\sref{sec:intro:reduce}),
+\item if this is a \reduce visitor (\sref{sec:intro:reduce})
+      or a \mapreduce visitor (\sref{sec:intro:mapreduce}),
       the monoid methods.
 
       \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
@@ -1681,6 +1704,9 @@ In an \mapendo visitor, they must be the same.}
 In a \reduce visitor, every method has result type \oc|'z|, if \oc|'z| is the
 monoid, that is, if the methods \oc|zero| and \oc|plus| respectively have type \oc|'z|
 and \oc|'z -> 'z -> 'z|.
+%
+In a \mapreduce visitor, the visitor method associated with the type \oc|foo|
+has result type \oc|??? foo * 'z|, if \oc|'z| is the monoid.
 %
 In a \fold visitor, it is up to the user to decide what the result types of
 the visitor methods should be (subject to certain consistency constraints,
