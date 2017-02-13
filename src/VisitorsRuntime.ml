@@ -511,9 +511,20 @@ end
 
 (* [mapreduce] *)
 
-class virtual ['self] mapreduce = object (_self)
+class virtual ['self] mapreduce = object (self : 'self)
 
   inherit ['z] monoid
+
+  method private visit_list: 'a 'b .
+    ('env -> 'a -> 'b * 'z) -> 'env -> 'a list -> 'b list * 'z
+  = fun f env xs ->
+      match xs with
+      | [] ->
+          [], self#zero
+      | x :: xs ->
+          let x, zx = f env x in
+          let xs, zxs = self # visit_list f env xs in
+          x :: xs, self#plus zx zxs
 
   (* TEMPORARY *)
 
