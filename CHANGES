@@ -1,3 +1,6 @@
+2017/02/13:
+Add a new variety of visitors, "mapreduce".
+
 2017/02/09:
 Documentation: a new subsection on OCaml objects,
 entitled "Where the expressiveness of OCaml's type system falls short".

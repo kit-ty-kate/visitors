@@ -2,6 +2,10 @@
 
 TODO (REALLY)
 
+Implement mapreduce in VisitorsRuntime.
+Implement and document endoreduce.
+  Sharing code with "Map endo" internally.
+
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
