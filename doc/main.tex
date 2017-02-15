@@ -317,7 +317,7 @@ method \dataconvisitor{EAdd} reconstructs an \oc|EAdd| expression.
 A \map visitor behaves (by default) as an identity function: it constructs a
 copy of the data structure that it visits. If the data structure is immutable,
 this is rather pointless: in order to obtain nontrivial behavior, at least one
-method should be overridden. In the data structure is mutable, though, even
+method should be overridden. If the data structure is mutable, though, even
 the default behavior is potentially of interest: it constructs a deep copy of
 its argument.
 
@@ -580,7 +580,7 @@ just a matter of performing a synchronous traversal of the two expressions and
 detecting a \oc|StructuralMismatch| exception: if this exception is raised,
 one must return \oc|false|, otherwise one must return \oc|true|. We rely on
 the fact that the method \tyconvisitor{int}, which is inherited from the class
-\runtime{iter2}, fails when when its two integer argument are
+\runtime{iter2}, fails when its two integer argument are
 unequal.
 
 The convenience functions \runtime{wrap} and
