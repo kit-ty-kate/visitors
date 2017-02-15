@@ -6,6 +6,8 @@ Implement mapreduce in VisitorsRuntime.
 Implement and document endoreduce.
   Sharing code with "Map endo" internally.
 
+Add a way of NOT inheriting [VisitorsRuntime].
+
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
