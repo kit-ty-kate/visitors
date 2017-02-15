@@ -1540,7 +1540,9 @@ parameter).
 The file \srcFile{Makefile.preprocess} offers a recipe that builds a file
 named \oc|%.processed.ml| out of the source file \oc|%.ml|. This file contains
 just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
-\oc|ocp-indent| to extract and beautify the code.
+\oc|ocp-indent| to extract and beautify the code. This file is installed
+with the \visitors package; it can be found at the computed path
+\verb+`ocamlfind query visitors`/Makefile.preprocess+.
 
 % ------------------------------------------------------------------------------
 
