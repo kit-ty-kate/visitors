@@ -85,3 +85,9 @@ Implement a way of deferring visitor generation.
 
 Do something about ~path?
   It seems connected to nested modules.
+
+Think about generating analyze_ methods
+  which perform a bottom-up computation (at most once; memoized)
+  based only on the type structure
+  so as to allow a static analysis of the type structure,
+  which could be exploited to optimize runtime traversals.
