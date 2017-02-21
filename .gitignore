@@ -8,3 +8,5 @@ _build
 
 # MacOS:
 .DS_Store
+
+doc/auto
