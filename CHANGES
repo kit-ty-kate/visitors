@@ -11,12 +11,6 @@ entitled "Where the expressiveness of OCaml's type system falls short".
 This section explains why "map" cannot be a subclass of "fold",
 even though it should be.
 
-2017/02/07:
-VisitorsRuntime: make every method monomorphic in 'env.
-In theory, this should be more flexible, as it allows overriding these methods
-with code that actually uses the environment. In practice, I don't have a
-compelling example where that would be necessary or useful.
-
 2017/01/31:
 Documentation: added an example of constructing a lexicographic ordering.
 Documentation: discussed generating visitors for existing types and ppx_import.
