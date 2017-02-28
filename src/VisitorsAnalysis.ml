@@ -63,6 +63,26 @@ let ld_ty (ld : label_declaration) : core_type =
 let ld_tys =
   List.map ld_ty
 
+(* [type_param_to_tyvar] expects a type parameter as found in the field
+   [ptype_params] of a type definition, and returns the underlying type
+   variable. *)
+
+let type_param_to_tyvar ((ty, _) : core_type * variance) : tyvar =
+  match ty.ptyp_desc with
+  | Ptyp_var tv ->
+      tv
+  | Ptyp_any ->
+      (* This error occurs if a formal type parameter is a wildcard [_].
+         We could support this form, but it makes life slightly simpler
+         to disallow it. It is usually used only in GADTs anyway. *)
+      raise_errorf ~loc:ty.ptyp_loc
+        "%s: every formal type parameter should be named." plugin
+  | _ ->
+      assert false
+
+let type_params_to_tyvars =
+  List.map type_param_to_tyvar
+
 (* [is_local decls tycon] tests whether the type constructor [tycon] is
    declared by the type declarations [decls]. If so, it returns the list
    of its formal type parameters. *)
@@ -73,21 +93,7 @@ let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list op
       None
   | decl :: decls ->
       if decl.ptype_name.txt = tycon then
-        let extract : core_type * variance -> tyvar =
-          fun (ty, _) ->
-            match ty.ptyp_desc with
-            | Ptyp_var tv ->
-                tv
-            | Ptyp_any ->
-                (* This error occurs if a formal type parameter is a wildcard [_].
-                   We could support this form, but it makes life slightly simpler
-                   to disallow it. It is usually used only in GADTs anyway. *)
-                raise_errorf ~loc:ty.ptyp_loc
-                  "%s: every formal type parameter should be named." plugin
-            | _ ->
-                assert false
-        in
-        Some (List.map extract decl.ptype_params)
+        Some (type_params_to_tyvars decl.ptype_params)
       else
         is_local decls tycon
 
