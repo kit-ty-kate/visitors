@@ -8,6 +8,9 @@ Implement and document endoreduce.
 
 Add a way of NOT inheriting [VisitorsRuntime].
 
+Investigate a way of generating (most of) the code in VisitorsRuntime.
+  This will require polymorphic type annotations.
+
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
