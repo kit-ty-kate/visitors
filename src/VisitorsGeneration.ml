@@ -10,12 +10,19 @@ open VisitorsList
 
 (* -------------------------------------------------------------------------- *)
 
+(* Type abbreviations. *)
+
 type variable = string
 type datacon = string
 type label = string
 type classe = string
 type methode = string
 type tyvar = string
+type tyvars = tyvar list
+
+(* A skeleton is a type with [n] holes. *)
+
+type skeleton = tyvar list -> core_type
 
 (* -------------------------------------------------------------------------- *)
 
