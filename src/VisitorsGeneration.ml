@@ -35,6 +35,16 @@ let pervasive (x : string) : Longident.t =
 
 (* -------------------------------------------------------------------------- *)
 
+(* Types. *)
+
+let ty_unit =
+  tconstr "unit" []
+
+let ty_arrow (a : core_type) (b : core_type) : core_type =
+  Typ.arrow Nolabel a b
+
+(* -------------------------------------------------------------------------- *)
+
 (* [unit] produces a unit constant. [tuple] produces a tuple. [record]
    produces a record. These functions already exist; we redefine them without
    any optional arguments so as avoid OCaml's warning 48 (implicit elimination
