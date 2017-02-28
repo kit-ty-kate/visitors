@@ -2,6 +2,15 @@
 
 TODO (REALLY)
 
+Implement mapreduce in VisitorsRuntime.
+Implement and document endoreduce.
+  Sharing code with "Map endo" internally.
+
+Add a way of NOT inheriting [VisitorsRuntime].
+
+Investigate a way of generating (most of) the code in VisitorsRuntime.
+  This will require polymorphic type annotations.
+
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
@@ -15,6 +24,7 @@ Revisit the treatment of type parameters and polymorphic visitor methods.
   that the visitor methods are polymorphic in that
   type parameter.
   Works for iter, map, etc., but not for fold.
+  Do not force all methods to have the same 'env.
 
 Once we have that, can we deal with GADTs?
 
@@ -47,10 +57,11 @@ Develop a real test suite, with expected output.
 Add [opaque] as an option, carrying a list of types.
   That would be lighter than writing [@opaque] at every occurrence.
 
-Include an option [except] to omit the definition of certain methods.
+Include an option [except t] to omit the definition of visitor methods for the type [t].
   That would allow the user to provide their own implementation,
   (possibly inherited / polymorphic),
   without having to satisfy the type constraints imposed by our implementation.
+  e.g. could generate a [map] visitor where one type (in a family) is rewritten to something completely different
 
 Detect and reject existential types and GADTs.
 
@@ -77,3 +88,9 @@ Implement a way of deferring visitor generation.
 
 Do something about ~path?
   It seems connected to nested modules.
+
+Think about generating analyze_ methods
+  which perform a bottom-up computation (at most once; memoized)
+  based only on the type structure
+  so as to allow a static analysis of the type structure,
+  which could be exploited to optimize runtime traversals.

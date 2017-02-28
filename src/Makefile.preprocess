@@ -14,21 +14,22 @@ REWRITE      := ocamlfind ppx_tools/rewriter -ppx '$(PPX)'
 SED          := $(shell if command -v gsed >/dev/null ; then echo gsed ; else echo sed ; fi)
 EXTRACT      := $(SED) -e '/VISITORS.BEGIN/,/VISITORS.END/!d;//d'
 
-# Use sed to fix some deficiencies of OCaml's code printer.
+# Fix some deficiencies of OCaml's code printer.
 # 0. Force a space after a comma.
 # 1. Replace multiple consecutive spaces with a single space.
-# This will destroy indentation; we restore it afterwards.
-# 2. Force a line break after [in].
-# 3. Force a line break after [->].
-# 4. (Ad hoc.) Force a line break between [= let],
-#    presumably at the beginning of a method definition.
-# 5. Remove the line break between [=] and [object].
+#    This destroys indentation; we restore it afterwards.
+# 2. Remove a space before a comma or closing parenthesis.
+# 3. Force a line break after [in], unless there is one already.
+# 4. Force a line break after [| ... ->] on a line by itself, unless there is one already.
+# 5. Force a line break after [method ... =], unless there is one already.
+# 6. Remove the line break between [=] and [object].
 BEAUTIFY     := \
               | $(SED) -e 's/,/, /g' \
               | $(SED) -e 's/  / /g' \
+              | $(SED) -e 's/ \([,)]\)/\1/g' \
               | $(SED) -e 's/ in / in\n/g' \
-              | $(SED) -e 's/ -> / ->\n/g' \
-              | $(SED) -e 's/= let /=\nlet /g' \
+              | $(SED) -e 's/^\( *|.* ->\) /\1\n/g' \
+              | $(SED) -e 's/\(method[^=]*=\) /\1\n/g' \
               | perl -0777 -pe 's/=\n *object/= object/gs' \
 
 # Use ocp-indent to beautify the generated code.

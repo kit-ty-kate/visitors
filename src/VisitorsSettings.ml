@@ -22,6 +22,7 @@ type scheme =
   | Map
   | Endo
   | Reduce
+  | MapReduce
   | Fold
 
 (* -------------------------------------------------------------------------- *)
@@ -73,16 +74,21 @@ end
 
 (* The supported varieties. *)
 
+(* Note that [mapreduce] must appear in this list before [map], as shorter
+   prefixes must be tested last. *)
+
 let supported = [
-    "iter", Iter;
+    "mapreduce", MapReduce;
     "map", Map;
+    "iter", Iter;
     "endo", Endo;
     "reduce", Reduce;
     "fold", Fold;
   ]
 
 let valid_varieties =
-  "iter, map, endo, reduce, fold, iter2, map2, reduce2, fold2"
+  "iter, map, endo, reduce, mapreduce, fold,\n\
+   iter2, map2, reduce2, mapreduce2, fold2"
 
 let invalid_variety loc =
   raise_errorf ~loc

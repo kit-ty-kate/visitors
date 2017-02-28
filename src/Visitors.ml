@@ -220,6 +220,37 @@ let result (i : int) : variable =
 let results (xs : _ list) : variable list =
   mapi (fun i _ -> result i) xs
 
+(* The variables [summary i] denote results of recursive calls.
+   When the scheme is [MapReduce], each recursive call produces
+   a pair; we use [result i] and [summary i] as the names of the
+   pair components. *)
+
+let summary (i : int) : variable =
+  sprintf "s%d" i
+
+let summaries (xs : _ list) : variable list =
+  mapi (fun i _ -> summary i) xs
+
+(* -------------------------------------------------------------------------- *)
+
+(* [bind rs ss] is a binding construct which, depending on the scheme, binds
+   either the variables [rs], or the variables [ss], or both, using pair
+   patterns. It is used to bind the results of recursive calls to visitor
+   methods. *)
+
+let bind (rs : variable list) (ss : variable list)
+  : expression list -> expression -> expression =
+  match X.scheme with
+  | Iter
+  | Map
+  | Endo
+  | Fold ->
+      letn rs
+  | Reduce ->
+      letn ss
+  | MapReduce ->
+      letnp rs ss
+
 (* -------------------------------------------------------------------------- *)
 
 (* Assuming [ess] is a matrix of width [arity] and assuming [arity] is [1],
@@ -249,22 +280,21 @@ let call (m : methode) (es : expression list) : expression =
 (* Access to the monoid operations. *)
 
 let monoid_unit () : expression =
-  assert (X.scheme = Reduce);
+  assert (X.scheme = Reduce || X.scheme = MapReduce);
   call zero []
 
 let monoid_law () : expression =
-  assert (X.scheme = Reduce);
+  assert (X.scheme = Reduce || X.scheme = MapReduce);
   call plus []
 
 (* -------------------------------------------------------------------------- *)
 
-(* [reduce es] is used when [scheme] is [Reduce]. It reduces the expressions
-   [es], that is, it combines them, using a monoid, which provides a unit and
-   a binary operation. The reduction is performed left-to-right. This could
-   be of importance if the monoid is not associative-commutative. *)
+(* [reduce es] reduces the expressions [es], that is, it combines them, using
+   a monoid, which provides a unit and a binary operation. The reduction is
+   performed left-to-right. This could be of importance if the monoid is not
+   associative-commutative. *)
 
 let reduce es =
-  assert (X.scheme = Reduce);
   let unit = monoid_unit()
   and law = monoid_law() in
   fold_left1 (fun e1 e2 -> app law [e1; e2]) unit es
@@ -391,18 +421,20 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
       (* See [constructor_declaration] for comments. *)
       let xss = componentss tys in
       let subjects = evarss xss in
-      let rs = results xss in
+      let rs = results xss
+      and ss = summaries xss in
       plambdas
         (alias this (ptuples (transpose arity (pvarss xss))))
-        (letn rs (visit_types tys subjects)
+        (bind rs ss (visit_types tys subjects)
           (let rec body scheme =
              match scheme with
-             | Iter   -> unit()
-             | Map    -> tuple (evars rs)
-             | Endo   -> ifeqphys subjects rs (evar this) (body Map)
-             | Reduce -> reduce (evars rs)
-             | Fold   -> (* Without loss of generality, re-build a tuple. *)
-                         body Map
+             | Iter      -> unit()
+             | Map       -> tuple (evars rs)
+             | Endo      -> ifeqphys subjects rs (evar this) (body Map)
+             | Reduce    -> reduce (evars ss)
+             | MapReduce -> tuple [ body Map; body Reduce ]
+             | Fold      -> (* Without loss of generality, re-build a tuple. *)
+                            body Map
            in body X.scheme
           )
         )
@@ -421,20 +453,23 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
       (* Construct a function that takes [arity] arguments. *)
       let xs = things in
       lambdas xs
-        (match X.scheme with
-         | Iter -> unit()           (* Do nothing. At arity > 1, no equality test takes place. *)
-         | Map  -> evar (hd xs)     (* At arity > 1, this is an ARBITRARY choice. *)
-         | Endo -> evar (hd xs)     (* Arity is 1, so this is fine. *)
-         | Reduce -> monoid_unit()  (* This is fine. *)
-         | Fold -> (* At arity 1, the best thing to do, without loss of
-                      generality, is to behave as the identity, that is,
-                      behave as in [map]. At arity > 1, it is debatable
-                      whether we should make an arbitrary choice (like
-                      [map] does) or invoke a virtual method whose
-                      parameters are [env :: xs]. The issue with the
-                      latter approach would be, how many distinct such
-                      methods do we need?, how do we name them?, etc. *)
-                   evar (hd xs)
+        (let rec body scheme =
+           match scheme with
+           | Iter      -> unit()        (* At arity > 1, NO EQUALITY TEST takes place. *)
+           | Map       -> evar (hd xs)  (* At arity > 1, this is an ARBITRARY choice. *)
+           | Endo      -> body Map      (* Arity is 1, so this is fine. *)
+           | Reduce    -> monoid_unit() (* This is fine. *)
+           | MapReduce -> tuple [ body Map; body Reduce ]
+           | Fold -> (* At arity 1, the best thing to do, without loss of
+                        generality, is to behave as the identity, that is,
+                        behave as in [map]. At arity > 1, it is debatable
+                        whether we should make an arbitrary choice (like
+                        [map] does) or invoke a virtual method whose
+                        parameters are [env :: xs]. The issue with the
+                        latter approach would be, how many distinct such
+                        methods do we need?, how do we name them?, etc. *)
+                     body Map
+         in body X.scheme
         )
 
   (* An unsupported construct. *)
@@ -527,7 +562,8 @@ let constructor_declaration (cd : constructor_declaration) : case =
   let datacon = cd.pcd_name.txt in
   (* Create new names [rs] for the results of the recursive calls of visitor
      methods. *)
-  let rs = results xss in
+  let rs = results xss
+  and ss = summaries xss in
 
   (* Construct a case for this data constructor in the visitor method
      associated with this sum type. This case analyzes a tuple of width
@@ -546,15 +582,16 @@ let constructor_declaration (cd : constructor_declaration) : case =
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
     (hook (datacon_descending_method datacon) (env :: transmit this (flatten xss))
-       (letn
-          rs (visit_types tys subjects)
+       (bind rs ss
+          (visit_types tys subjects)
           (let rec body scheme =
              match scheme with
-             | Iter   -> unit()
-             | Map    -> constr datacon (build rs)
-             | Endo   -> ifeqphys subjects rs (evar this) (body Map)
-             | Reduce -> reduce (evars rs)
-             | Fold   -> vhook (datacon_ascending_method datacon) (env :: rs)
+             | Iter      -> unit()
+             | Map       -> constr datacon (build rs)
+             | Endo      -> ifeqphys subjects rs (evar this) (body Map)
+             | Reduce    -> reduce (evars ss)
+             | MapReduce -> tuple [ body Map; body Reduce ]
+             | Fold      -> vhook (datacon_ascending_method datacon) (env :: rs)
            in body X.scheme
           )
        )
@@ -585,15 +622,17 @@ let visit_decl (decl : type_declaration) : expression =
       (* See [constructor_declaration] for comments. *)
       let subjects = accesses xs labels in
       lambdas xs (
-        let rs = results labels in
-        letn rs (visit_types tys subjects)
+        let rs = results labels
+        and ss = summaries labels in
+        bind rs ss (visit_types tys subjects)
           (let rec body scheme =
              match scheme with
-             | Iter   -> unit()
-             | Map    -> record (combine labels (evars rs))
-             | Endo   -> ifeqphys subjects rs (evar (hd xs)) (body Map)
-             | Reduce -> reduce (evars rs)
-             | Fold   -> vhook (tycon_ascending_method tycon) (env :: rs)
+             | Iter      -> unit()
+             | Map       -> record (combine labels (evars rs))
+             | Endo      -> ifeqphys subjects rs (evar (hd xs)) (body Map)
+             | Reduce    -> reduce (evars ss)
+             | MapReduce -> tuple [ body Map; body Reduce ]
+             | Fold      -> vhook (tycon_ascending_method tycon) (env :: rs)
            in body X.scheme
           )
       )

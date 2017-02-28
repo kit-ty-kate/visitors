@@ -11,15 +11,22 @@ PLUGIN := \
 RUNTIME := \
   VisitorsRuntime
 
+OCAMLBUILD := \
+  ocamlbuild \
+  -use-ocamlfind \
+  -classic-display \
+
+# The targets that should be built (using ocamlbuild).
 # Not sure whether all of the following files are really required.
 TARGET := \
   $(patsubst %,$(PLUGIN).%,a cma cmxa cmxs) \
   $(patsubst %,$(RUNTIME).%,a cma cmi cmo cmx cmxa o) \
 
-OCAMLBUILD := \
-  ocamlbuild \
-  -use-ocamlfind \
-  -classic-display \
+# The files that should be installed (using ocamlfind).
+FILES := \
+  META \
+  Makefile.preprocess \
+  $(patsubst %,_build/%,$(TARGET)) \
 
 # ------------------------------------------------------------------------------
 
@@ -35,7 +42,7 @@ clean:
 	$(OCAMLBUILD) -clean
 
 install: all
-	ocamlfind install $(PACKAGE) META $(patsubst %,_build/%,$(TARGET))
+	ocamlfind install $(PACKAGE) $(FILES)
 
 # [make uninstall] attempts to uninstall, but succeeds even if uninstallation
 # fails (probably because the package was not installed in the first place).
