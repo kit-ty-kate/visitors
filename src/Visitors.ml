@@ -231,6 +231,40 @@ let summary (i : int) : variable =
 let summaries (xs : _ list) : variable list =
   mapi (fun i _ -> summary i) xs
 
+(* Naming conventions for type variables in type annotations. If ['a]
+   is a base name chosen by the user, we use ['a_0], ['a_1], and so on. *)
+
+let variant (i : int) (tv : tyvar) : tyvar =
+  sprintf "%s_%d" tv i
+
+let variants i : tyvars -> tyvars =
+  map (variant i)
+
+(* -------------------------------------------------------------------------- *)
+
+(* Let a skeleton be a type with [n] holes, represented by a function of type
+   [tyvar list -> core_type], where the list is expected to have length [n].
+   If ['a, ...] is a list of type variables, let us write [skeleton('a, ...)]
+   for the application of the skeleton to this list. *)
+
+(* If [ty_env] is the type of the environment, and if [argument] and [result]
+   are [n]-hole skeletons, then the (monomorphic) type of a visitor function
+   has the following shape:
+
+     ty_env ->
+     argument('a_0, ...) -> ... -> argument('a_{arity-1}, ...) ->
+     result('a_{arity}, ...)
+
+   Indeed, a visitor function takes an environment, followed with [arity]
+   arguments, and produces a result. This type is constructed by the following
+   function, where [tvs] is the list ['a, ...]. *)
+
+let _visitor_type (ty_env : core_type) (tvs : tyvars)
+                 (argument : skeleton) (result : skeleton) : core_type =
+  let argument i = argument (variants i tvs)
+  and result = result (variants arity tvs) in
+  ty_arrows (ty_env :: init 0 arity argument) result
+
 (* -------------------------------------------------------------------------- *)
 
 (* [bind rs ss] is a binding construct which, depending on the scheme, binds
