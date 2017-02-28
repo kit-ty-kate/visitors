@@ -43,6 +43,9 @@ let ty_unit =
 let ty_arrow (a : core_type) (b : core_type) : core_type =
   Typ.arrow Nolabel a b
 
+let ty_arrows : core_type list -> core_type -> core_type =
+  List.fold_right ty_arrow
+
 (* -------------------------------------------------------------------------- *)
 
 (* [unit] produces a unit constant. [tuple] produces a tuple. [record]
