@@ -2,18 +2,19 @@
 
 TODO (REALLY)
 
-Implement mapreduce in VisitorsRuntime.
-Implement and document endoreduce.
-  Sharing code with "Map endo" internally.
-
 Add a way of NOT inheriting [VisitorsRuntime].
 
 Investigate a way of generating (most of) the code in VisitorsRuntime.
   This will require polymorphic type annotations.
 
+Implement mapreduce(2) in VisitorsRuntime.
+
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+Implement and document endoreduce?
+  Share code by using "Map endo" internally where endo : bool.
 
 Could define nontrivial [fold] and [fold2] in VisitorsRuntime.
 
