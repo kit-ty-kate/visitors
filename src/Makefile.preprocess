@@ -26,7 +26,7 @@ EXTRACT      := $(SED) -e '/VISITORS.BEGIN/,/VISITORS.END/!d;//d'
 # -- Remove the line break between [=] and [object].
 BEAUTIFY     := \
               | $(SED) -e 's/,/, /g' \
-              | $(SED) -e 's/\([a-zA-Z]\)=/\1 =/g' \
+              | $(SED) -e 's/\([a-zA-Z_)]\)=/\1 =/g' \
               | $(SED) -e 's/  / /g' \
               | $(SED) -e 's/ \([,)]\)/\1/g' \
               | $(SED) -e 's/ in / in\n/g' \
