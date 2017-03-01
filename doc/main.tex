@@ -437,12 +437,20 @@ when it is applicable, for reasons of clarity and efficiency.
 
 % ------------------------------------------------------------------------------
 
-\begin{figure}[t]
-\orig{expr17}
+\begin{figure}[p]
+\orig{expr_info_mapreduce}
+% TEMPORARY could remove @opaque after we implement VisitorsRuntime.mapreduce properly
 \vspace{-\baselineskip}
-\processed{expr17}
+\processed{expr_info_mapreduce}
 \caption{A visitor of the \mapreduce variety}
 \label{fig:mapreduce}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowup{mapreduce}
+\origfirstline{expr_info_mapreduce_use}{3}
+\caption{Decorating every subexpression with its size}
+\label{fig:expr_info_mapreduce_use}
 \end{figure}
 
 \subsection{\mapreduce visitors}
@@ -454,10 +462,27 @@ method returns a pair of a transformed term and a summary. In other words,
 it returns a pair of the results that would be returned by a \map visitor
 method and by a \reduce visitor method.
 
-% TEMPORARY:
-% Étoffer. Donner un exemple d'utilisation?
-% Peut-être annoter chaque lieur, dans un terme, par l'ensemble des noms
-%   libres du sous-terme?
+Like a \reduce visitor, a \mapreduce visitor performs a bottom-up computation.
+Like a \map visitor, it constructs a new tree. By default, these two tasks are
+independent of one another. However, by overriding one or more methods, it is
+easy to establish a connection between them: typically, one wishes to exploit
+the information that was computed about a subtree in the construction of the
+corresponding new subtree. As an example, \fref{fig:expr_info_mapreduce_use}
+shows how to transform an arithmetic expression into an arithmetic expression
+where every subexpression is annotated with its size. (This example uses a
+parameterized type of decorated expressions, which is explained in
+\sref{sec:intro:parameterized}. We suggest reading the explanations there
+first.) The transformation is carried out in one pass and in linear time. As
+in \fref{fig:reduce}, we use the addition monoid to compute integer sizes.
+This time, however, the visitor methods return not just a size, but a pair of
+a new expression and a size. The method \tyconvisitor{expr} is overridden so
+as to store the size of the subexpression, \oc|size|, in the \oc|info| field
+of the new expression. Because the overridden method \tyconvisitor{expr} does
+not call \tyconvisitor{'info}, the latter method is never called: we provide a
+dummy definition of it.
+
+Another application of a \mapreduce visitor, in the same style, would be to
+decorate every subterm of a $\lambda$-term with the set of its free variables.
 
 % ------------------------------------------------------------------------------
 
