@@ -233,85 +233,85 @@ let summaries (xs : _ list) : variable list =
   mapi (fun i _ -> summary i) xs
 
 (* Naming conventions for type variables in type annotations. If ['a]
-   is a base name chosen by the user, we use ['a_0], ['a_1], and so on. *)
+   is a type variable named by the user, we use ['a_i], where [i] is
+   in [0..arity]. *)
 
-let variant (i : int) (tv : tyvar) : tyvar =
-  sprintf "%s_%d" tv i
+let variant (i : int) (alpha : tyvar) : tyvar =
+  assert (0 <= i && i <= arity);
+  sprintf "%s_%d" alpha i
 
-let variants i : tyvars -> tyvars =
-  map (variant i)
+(* [ty_monoid] is the type of monoid elements. *)
 
-(* The type variable [ty_monoid] is used as the type of monoid elements. *)
+let ty_monoid =
+  ty_any
 
-let ty_monoid : core_type =
-  Typ.var "z"
+(* [ty_env] is the type of the environment. Note that different visitor methods
+   can have different types of environment. For now, we get away with using a
+   wildcard, which can mean different things in different places. *)
+
+(* TEMPORARY allow the type of the environment to be quantified *)
+
+let ty_env =
+  ty_any
 
 (* -------------------------------------------------------------------------- *)
 
 (* Construction of type annotations. *)
 
-(* Let a skeleton be a type with [n] holes, represented by a function of type
-   [core_types -> core_type], where the argument list is expected to have
-   length [n]. If ['a, ...] is a list of [n] type variables, let us write
-   [skeleton('a, ...)] for the application of the skeleton to this list. *)
-
-(* If [ty_env] is the type of the environment, and if [argument] and [result]
-   are [n]-hole skeletons, then the (monomorphic) type of a visitor function
-   has the following shape:
+(* A visitor function takes an environment, followed with [arity] arguments,
+   and produces a result. Thus, if [argument] and [result] are types, then the
+   type of a visitor function has the following shape:
 
      ty_env ->
-     argument('a_0, ...) -> ... -> argument('a_{arity-1}, ...) ->
-     result('a_{arity}, ...)
+     argument_0 -> ... -> argument_{arity-1} ->
+     result_{arity}
 
-   Indeed, a visitor function takes an environment, followed with [arity]
-   arguments, and produces a result. This type is constructed by the following
-   function, where [alphas] is the list ['a, ...]. *)
+   where [ty_{i}] denotes a copy of the type [ty] whose type variables have
+   been renamed by the renaming [variant i]. *)
 
-let visitor_fun_type (alphas : tyvars) (ty_env : core_type)
-                     (argument : skeleton) (result : skeleton) : core_type =
-  let argument i = argument (ty_vars (variants i alphas))
-  and result = result (ty_vars (variants arity alphas)) in
+let visitor_fun_type (argument : core_type) (result : core_type) : core_type =
+  let argument i = subst_core_type (variant i) argument
+  and result = subst_core_type (variant arity) result in
   ty_arrows (ty_env :: init 0 arity argument) result
 
-(* [result_skeleton scheme decl] is the result skeleton of a visitor method
-   associated with the type [decl]. *)
+(* [result_type scheme decl] is the result type of a visitor method associated
+   with the type [decl]. *)
 
-let rec result_skeleton scheme (decl : type_declaration) : skeleton =
+let rec result_type scheme (decl : type_declaration) : core_type =
   match scheme with
   | Iter ->
       (* An [iter] visitor method returns nothing. *)
-      constant_skeleton ty_unit
+      ty_unit
   | Map | Endo ->
       (* A [map] or [endo] visitor method for the type [_ foo] returns a
          value of type [_ foo]. Note that this is a non-constant skeleton. *)
-      decl_skeleton decl
+      decl_type decl
   | Reduce ->
       (* A [reduce] visitor method returns a monoid element. *)
-      constant_skeleton ty_monoid
+      ty_monoid
   | MapReduce ->
       (* A [mapreduce] visitor method returns a pair of the results produced
          by a [map] visitor method and by a [reduce] visitor method. *)
-      product_skeleton (result_skeleton Map decl) (result_skeleton Reduce decl)
+      Typ.tuple [ result_type Map decl; result_type Reduce decl ]
   | Fold ->
       (* This is where we have a problem. We would really like to allow the
          user to specify which skeleton should be used here, as we cannot
          guess it. We might allow it in the future. For now, we impose the
          monomorphic skeleton [_], which is not as general as we would like,
          since it requires the method to have monomorphic result type. *)
-      constant_skeleton ty_any
+      ty_any
 
-let result_skeleton =
-  result_skeleton X.scheme
+let result_type =
+  result_type X.scheme
 
 (* [visitor_method_type decl] is the type of the visitor method associated
    with the type [decl]. *)
 
 let visitor_method_type (decl : type_declaration) : core_type =
   (* For now, this is a monomorphic type annotation. *)
-  visitor_fun_type (decl_params decl)
-    ty_any
-    (decl_skeleton decl)
-    (result_skeleton decl)
+  visitor_fun_type
+    (decl_type decl)
+    (result_type decl)
 
 let visitor_method_type (decl : type_declaration) : core_type option =
   (* A type annotation is generated only if [polymorphic] is [true]. *)

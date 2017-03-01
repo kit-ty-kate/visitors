@@ -5,6 +5,7 @@ open Parsetree
 open Ast_helper
 open Ast_convenience
 open VisitorsList
+open VisitorsAnalysis
 
 (* This module offers helper functions for code generation. *)
 
@@ -20,10 +21,6 @@ type methode = string
 type tyvar = string
 type tyvars = tyvar list
 type core_types = core_type list
-
-(* A skeleton is a type with [n] holes. *)
-
-type skeleton = core_types -> core_type
 
 (* -------------------------------------------------------------------------- *)
 
@@ -63,28 +60,11 @@ let ty_arrow (a : core_type) (b : core_type) : core_type =
 let ty_arrows : core_type list -> core_type -> core_type =
   List.fold_right ty_arrow
 
-(* [decl_skeleton decl] turns a declaration of the type ['a foo] into a
-   skeleton for the type ['a foo]. This allows us to easily instantiate
-   the type parameter ['a]. *)
+(* [decl_type decl] turns a declaration of the type ['a foo] into a the type
+   ['a foo]. *)
 
-let decl_skeleton (decl : type_declaration) : skeleton =
-  let n = List.length decl.ptype_params in
-  fun tys ->
-    assert (List.length tys = n);
-    tconstr decl.ptype_name.txt tys
-
-(* [constant_skeleton] turns a type into a constant skeleton, that is,
-   one that ignores its arguments. *)
-
-let constant_skeleton (ty : core_type) : skeleton =
-  fun _ -> ty
-
-(* [product_skeleton] builds the product of two skeletons. That is, it returns
-   a skeleton with a [*] type constructor at the root. *)
-
-let product_skeleton sk1 sk2 : skeleton =
-  fun tys ->
-    Typ.tuple [ sk1 tys; sk2 tys ]
+let decl_type (decl : type_declaration) : core_type =
+  tconstr decl.ptype_name.txt (ty_vars (decl_params decl))
 
 (* -------------------------------------------------------------------------- *)
 
