@@ -51,6 +51,9 @@ let ty_var (alpha : tyvar) : core_type =
 let ty_vars (alphas : tyvars) : core_types =
   List.map ty_var alphas
 
+let ty_any =
+  Typ.any()
+
 let ty_unit =
   tconstr "unit" []
 
@@ -425,7 +428,7 @@ let oe2cfk (oe : expression option) (oty : core_type option) : class_field_kind 
   | None, Some ty ->
       Cf.virtual_ ty
   | None, None ->
-      Cf.virtual_ (Typ.any())
+      Cf.virtual_ ty_any
 
 let meth2cf (Meth (p, m, oe, oty)) : class_field =
   Cf.method_ (mknoloc m) p (oe2cfk oe oty)
@@ -553,7 +556,7 @@ end = struct
       (* [inherit] clauses. *)
       (* We ARBITRARILY assume that every ancestor class is parameterized
          with ONE type parameter. *)
-      List.map (fun c -> inherit_ c [ Typ.any() ]) ancestors @
+      List.map (fun c -> inherit_ c [ ty_any ]) ancestors @
       (* Hoisted expressions. *)
       List.flatten (List.map hoisted2cf (List.rev !hoisted)) @
       (* Methods. *)
