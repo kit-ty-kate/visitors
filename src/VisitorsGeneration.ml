@@ -73,6 +73,19 @@ let decl_skeleton (decl : type_declaration) : skeleton =
     assert (List.length tys = n);
     tconstr decl.ptype_name.txt tys
 
+(* [constant_skeleton] turns a type into a constant skeleton, that is,
+   one that ignores its arguments. *)
+
+let constant_skeleton (ty : core_type) : skeleton =
+  fun _ -> ty
+
+(* [product_skeleton] builds the product of two skeletons. That is, it returns
+   a skeleton with a [*] type constructor at the root. *)
+
+let product_skeleton sk1 sk2 : skeleton =
+  fun tys ->
+    Typ.tuple [ sk1 tys; sk2 tys ]
+
 (* -------------------------------------------------------------------------- *)
 
 (* [unit] produces a unit constant. [tuple] produces a tuple. [record]
