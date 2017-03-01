@@ -383,37 +383,41 @@ let inherit_ (c : Longident.t) (tys : core_type list) : class_field =
 
 (* An algebraic data type of the methods that we generate. These include
    concrete methods (with code) and virtual methods (without code). They may
-   be public or private. The method type is not given -- it is inferred by
-   OCaml. *)
+   be public or private. The method type is optional. If omitted, then
+   it is inferred by OCaml. If present, it can be a polymorphic type. *)
 
 type meth =
-  Meth of private_flag * methode * expression option
+  Meth of private_flag * methode * expression option * core_type option
 
-let concrete_method p m e =
-  Meth (p, m, Some e)
+let concrete_method p m e oty =
+  Meth (p, m, Some e, oty)
 
-let virtual_method p m =
-  Meth (p, m, None)
+let virtual_method p m oty =
+  Meth (p, m, None, oty)
 
 (* -------------------------------------------------------------------------- *)
 
 (* Converting a method description to OCaml abstract syntax. *)
 
-let oe2cfk (oe : expression option) : class_field_kind =
-  match oe with
-  | Some e ->
+let oe2cfk (oe : expression option) (oty : core_type option) : class_field_kind =
+  match oe, oty with
+  | Some e, Some _ ->
+      Cf.concrete Fresh (Exp.poly e oty)
+  | Some e, None ->
       Cf.concrete Fresh e
-  | None ->
+  | None, Some ty ->
+      Cf.virtual_ ty
+  | None, None ->
       Cf.virtual_ (Typ.any())
 
-let meth2cf (Meth (p, m, oe)) : class_field =
-  Cf.method_ (mknoloc m) p (oe2cfk oe)
+let meth2cf (Meth (p, m, oe, oty)) : class_field =
+  Cf.method_ (mknoloc m) p (oe2cfk oe oty)
 
 (* -------------------------------------------------------------------------- *)
 
 (* [method_name] extracts a method name out of a method description. *)
 
-let method_name (Meth (_, m, _)) : string =
+let method_name (Meth (_, m, _, _)) : string =
   m
 
 (* -------------------------------------------------------------------------- *)
@@ -421,7 +425,7 @@ let method_name (Meth (_, m, _)) : string =
 (* [is_virtual] tests whether a method description represents a virtual
    method. *)
 
-let is_virtual (Meth (_, _, oe)) : bool =
+let is_virtual (Meth (_, _, oe, _)) : bool =
   oe = None
 
 (* -------------------------------------------------------------------------- *)

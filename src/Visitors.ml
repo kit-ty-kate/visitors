@@ -38,10 +38,10 @@ let visibility m =
 include ClassFieldStore(struct end)
 
 let generate_concrete_method m e =
-  generate (concrete_method (visibility m) m e)
+  generate (concrete_method (visibility m) m e None)
 
 let generate_virtual_method m =
-  generate (virtual_method (visibility m) m)
+  generate (virtual_method (visibility m) m None)
 
 (* -------------------------------------------------------------------------- *)
 
