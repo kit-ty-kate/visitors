@@ -37,8 +37,8 @@ let visibility m =
 
 include ClassFieldStore(struct end)
 
-let generate_concrete_method m e =
-  generate (concrete_method (visibility m) m e None)
+let generate_concrete_method m e oty =
+  generate (concrete_method (visibility m) m e oty)
 
 let generate_virtual_method m =
   generate (virtual_method (visibility m) m None)
@@ -305,12 +305,16 @@ let result_skeleton =
 (* [visitor_method_type decl] is the type of the visitor method associated
    with the type [decl]. *)
 
-let _visitor_method_type (decl : type_declaration) : core_type =
+let visitor_method_type (decl : type_declaration) : core_type =
   (* For now, this is a monomorphic type annotation. *)
   visitor_fun_type (decl_params decl)
     ty_any
     (decl_skeleton decl)
     (result_skeleton decl)
+
+let visitor_method_type (decl : type_declaration) : core_type option =
+  (* A type annotation is generated only if [polymorphic] is [true]. *)
+  if X.polymorphic then Some (visitor_method_type decl) else None
 
 (* -------------------------------------------------------------------------- *)
 
@@ -423,7 +427,7 @@ let hook (m : methode) (xs : variable list) (e : expression) : expression =
   (* Generate a method. The formal parameters [xs] don't need a type
      annotation: because this method has a call site, its type can be
      inferred. *)
-  generate_concrete_method m (lambdas xs e);
+  generate_concrete_method m (lambdas xs e) None; (* TEMPORARY type annotation *)
   (* Construct a method call. *)
   call m (evars xs)
 
@@ -761,6 +765,7 @@ let type_decl (decl : type_declaration) : unit =
   generate_concrete_method
     (tycon_visitor_method (Lident decl.ptype_name.txt))
     (plambda (pvar env) (visit_decl decl))
+    (visitor_method_type decl)
 
 (* -------------------------------------------------------------------------- *)
 
