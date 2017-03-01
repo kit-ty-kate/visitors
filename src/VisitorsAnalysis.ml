@@ -10,6 +10,7 @@ open VisitorsPlugin
 
 type tycon = string
 type tyvar = string
+type tyvars = tyvar list
 
 (* -------------------------------------------------------------------------- *)
 
@@ -83,6 +84,11 @@ let type_param_to_tyvar ((ty, _) : core_type * variance) : tyvar =
 let type_params_to_tyvars =
   List.map type_param_to_tyvar
 
+(* [decl_params decl] returns the type parameters of the declaration [decl]. *)
+
+let decl_params (decl : type_declaration) : tyvars =
+  type_params_to_tyvars decl.ptype_params
+
 (* [is_local decls tycon] tests whether the type constructor [tycon] is
    declared by the type declarations [decls]. If so, it returns the list
    of its formal type parameters. *)
@@ -93,7 +99,7 @@ let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list op
       None
   | decl :: decls ->
       if decl.ptype_name.txt = tycon then
-        Some (type_params_to_tyvars decl.ptype_params)
+        Some (decl_params decl)
       else
         is_local decls tycon
 
