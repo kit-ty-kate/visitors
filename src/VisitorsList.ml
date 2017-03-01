@@ -55,6 +55,12 @@ let transpose (n : int) (xss : 'a list list) : 'a list list =
     )
   )
 
+(* [hextend xs n f] extends the vertical vector [xs] to a matrix of width [n].
+   A vector element [x] is turned into [f j x] in the [j]-th row. *)
+
+let hextend (xs : 'a list) (n : int) (f : int -> 'a -> 'a) : 'a list list =
+  map (fun x -> init 0 n (fun j -> f j x)) xs
+
 (* [uniq cmp xs] assumes that the list [xs] is sorted according to the
    ordering [cmp] and returns the list [xs] deprived of any duplicate
    elements. *)
