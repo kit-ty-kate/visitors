@@ -42,6 +42,7 @@ let generate_concrete_method m e oty =
 
 let generate_virtual_method m =
   generate (virtual_method (visibility m) m None)
+    (* TEMPORARY type annotation *)
 
 (* -------------------------------------------------------------------------- *)
 
