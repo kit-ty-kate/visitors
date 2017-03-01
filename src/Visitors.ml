@@ -236,9 +236,12 @@ let summaries (xs : _ list) : variable list =
    is a type variable named by the user, we use ['a_i], where [i] is
    in [0..arity]. *)
 
+(* If [scheme] is [Endo], then the argument and result must have the
+   same type, so we do not introduce a variation in the type variables. *)
+
 let variant (i : int) (alpha : tyvar) : tyvar =
   assert (0 <= i && i <= arity);
-  sprintf "%s_%d" alpha i
+  if X.scheme = Endo then alpha else sprintf "%s_%d" alpha i
 
 (* [ty_monoid] is the type of monoid elements. *)
 
