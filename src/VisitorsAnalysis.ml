@@ -179,3 +179,50 @@ let is_valid_class_longident (m : string) : bool =
       classify c = LIDENT
   | Lapply _ ->
       assert false (* this cannot happen *)
+
+(* -------------------------------------------------------------------------- *)
+
+(* [subst_core_type rho ty] applies [rho], a renaming of type variables,
+   to the type [ty]. *)
+
+(* We do not go down into [@opaque] types. We replace every opaque type with
+   a wildcard [_]. *)
+
+(* TEMPORARY this is too restrictive; we should replace an opaque type with
+   a fresh type variable *and* quantify this variable universally *)
+
+type renaming =
+  tyvar -> tyvar
+
+let rec subst_core_type (rho : renaming) (ty : core_type) : core_type =
+  { ty with ptyp_desc = subst_core_type_desc rho ty }
+
+and subst_core_types rho tys =
+  List.map (subst_core_type rho) tys
+
+and subst_core_type_desc rho ty =
+  match opacity ty.ptyp_attributes, ty.ptyp_desc with
+  | NonOpaque, Ptyp_any ->
+      Ptyp_any
+  | NonOpaque, Ptyp_var alpha ->
+      Ptyp_var (rho alpha)
+  | NonOpaque, Ptyp_tuple tys ->
+      Ptyp_tuple (subst_core_types rho tys)
+  | NonOpaque, Ptyp_constr (tycon, tys) ->
+      Ptyp_constr (tycon, subst_core_types rho tys)
+  | Opaque, _ ->
+      Ptyp_any
+  | NonOpaque, Ptyp_arrow _
+  | NonOpaque, Ptyp_object _
+  | NonOpaque, Ptyp_class _
+  | NonOpaque, Ptyp_alias _
+  | NonOpaque, Ptyp_variant _
+  | NonOpaque, Ptyp_poly _
+  | NonOpaque, Ptyp_package _
+  | NonOpaque, Ptyp_extension _ ->
+      let loc = ty.ptyp_loc in
+      raise_errorf ~loc
+        "%s: cannot deal with the type %s.\n\
+         Consider annotating it with [@opaque]."
+        plugin
+        (string_of_core_type ty)
