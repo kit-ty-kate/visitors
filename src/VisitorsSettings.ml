@@ -68,6 +68,10 @@ module type SETTINGS = sig
      the methods whose name appears in the list [public]. *)
   val public: string list option
 
+  (* If [polymorphic] is [true], then (possibly polymorphic) type annotations
+     for methods are generated. *)
+  val polymorphic: bool
+
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -160,6 +164,7 @@ end)
   let ancestors = ref []
   let concrete = ref false
   let irregular = ref false
+  let polymorphic = ref false
   let public = ref None
 
   (* Parse every option. *)
@@ -176,6 +181,8 @@ end)
           irregular := bool e
       | "name" ->
           name := Some (string e)
+      | "polymorphic" ->
+          polymorphic := bool e
       | "public" ->
           public := Some (strings e)
       | "variety" ->
@@ -204,6 +211,7 @@ end)
   let ancestors = !ancestors
   let concrete = !concrete
   let irregular = !irregular
+  let polymorphic = !polymorphic
   let public = !public
 
   (* Perform sanity checking. *)
