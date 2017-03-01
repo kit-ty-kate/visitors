@@ -243,9 +243,9 @@ let variants i : tyvars -> tyvars =
 (* -------------------------------------------------------------------------- *)
 
 (* Let a skeleton be a type with [n] holes, represented by a function of type
-   [tyvars -> core_type], where the list is expected to have length [n].
-   If ['a, ...] is a list of type variables, let us write [skeleton('a, ...)]
-   for the application of the skeleton to this list. *)
+   [core_types -> core_type], where the argument list is expected to have
+   length [n]. If ['a, ...] is a list of type variables, let us write
+   [skeleton('a, ...)] for the application of the skeleton to this list. *)
 
 (* If [ty_env] is the type of the environment, and if [argument] and [result]
    are [n]-hole skeletons, then the (monomorphic) type of a visitor function
@@ -261,8 +261,8 @@ let variants i : tyvars -> tyvars =
 
 let _visitor_type (ty_env : core_type) (tvs : tyvars)
                  (argument : skeleton) (result : skeleton) : core_type =
-  let argument i = argument (variants i tvs)
-  and result = result (variants arity tvs) in
+  let argument i = argument (ty_vars (variants i tvs))
+  and result = result (ty_vars (variants arity tvs)) in
   ty_arrows (ty_env :: init 0 arity argument) result
 
 (* -------------------------------------------------------------------------- *)

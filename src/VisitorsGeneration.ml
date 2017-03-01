@@ -19,10 +19,11 @@ type classe = string
 type methode = string
 type tyvar = string
 type tyvars = tyvar list
+type core_types = core_type list
 
 (* A skeleton is a type with [n] holes. *)
 
-type skeleton = tyvars -> core_type
+type skeleton = core_types -> core_type
 
 (* -------------------------------------------------------------------------- *)
 
@@ -44,6 +45,12 @@ let pervasive (x : string) : Longident.t =
 
 (* Types. *)
 
+let ty_var (alpha : tyvar) : core_type =
+  Typ.var alpha
+
+let ty_vars (alphas : tyvars) : core_types =
+  List.map ty_var alphas
+
 let ty_unit =
   tconstr "unit" []
 
@@ -52,6 +59,16 @@ let ty_arrow (a : core_type) (b : core_type) : core_type =
 
 let ty_arrows : core_type list -> core_type -> core_type =
   List.fold_right ty_arrow
+
+(* [decl_skeleton decl] turns a declaration of the type ['a foo] into a
+   skeleton for the type ['a foo]. This allows us to easily instantiate
+   the type parameter ['a]. *)
+
+let decl_skeleton (decl : type_declaration) : skeleton =
+  let n = List.length decl.ptype_params in
+  fun tys ->
+    assert (List.length tys = n);
+    tconstr decl.ptype_name.txt tys
 
 (* -------------------------------------------------------------------------- *)
 
