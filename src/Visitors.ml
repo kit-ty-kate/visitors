@@ -234,7 +234,9 @@ let summaries (xs : _ list) : variable list =
 
 (* Naming conventions for type variables in type annotations. If ['a]
    is a type variable named by the user, we use ['a_i], where [i] is
-   in [0..arity]. *)
+   in [0..arity]. Indices [i] in the interval [0..arity) are used for
+   the arguments of a visitor method. The index [arity] is used for
+   the result of a visitor method. *)
 
 (* If [scheme] is [Endo], then the argument and result must have the
    same type, so we do not introduce a variation in the type variables. *)
@@ -242,6 +244,9 @@ let summaries (xs : _ list) : variable list =
 let variant (i : int) (alpha : tyvar) : tyvar =
   assert (0 <= i && i <= arity);
   if X.scheme = Endo then alpha else sprintf "%s_%d" alpha i
+
+let variant (i : int) (ty : core_type) : core_type =
+  subst_core_type (variant i) ty
 
 (* [ty_monoid] is the type of monoid elements. *)
 
@@ -273,8 +278,8 @@ let ty_env =
    been renamed by the renaming [variant i]. *)
 
 let visitor_fun_type (argument : core_type) (result : core_type) : core_type =
-  let argument i = subst_core_type (variant i) argument
-  and result = subst_core_type (variant arity) result in
+  let argument i = variant i argument
+  and result = variant arity result in
   ty_arrows (ty_env :: init 0 arity argument) result
 
 (* [result_type scheme decl] is the result type of a visitor method associated
@@ -419,19 +424,18 @@ let transmit x xs =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [hook m xs e] constructs a call of the form [self#m xs], and (as a side
+(* [hook m xs oty e] constructs a call of the form [self#m xs], and (as a side
    effect) generates a method [method m xs = e]. The free variables of the
-   expression [e] must be (a subset of) [xs]. *)
+   expression [e] must be (a subset of) [xs]. The type [oty], if given, is
+   the type of the method. *)
 
 (* Thus, by default, the expression [hook m xs e] behaves in the same way
    as the expression [e]. But a hook, named [m], allows this default to be
    overridden. *)
 
-let hook (m : methode) (xs : variable list) (e : expression) : expression =
-  (* Generate a method. The formal parameters [xs] don't need a type
-     annotation: because this method has a call site, its type can be
-     inferred. *)
-  generate_concrete_method m (lambdas xs e) None; (* TEMPORARY type annotation *)
+let hook (m : methode) (xs : variable list) (oty : core_type option) (e : expression) : expression =
+  (* Generate a method. *)
+  generate_concrete_method m (lambdas xs e) oty;
   (* Construct a method call. *)
   call m (evars xs)
 
@@ -595,7 +599,7 @@ and visit_types tys (ess : expression list list) : expression list =
    type. At the same time, it generates several auxiliary method declarations
    and definitions. *)
 
-let constructor_declaration (cd : constructor_declaration) : case =
+let constructor_declaration decl (cd : constructor_declaration) : case =
 
   (* A technical warning. One should not write "A of int[@opaque]".
      Instead, one should write "A of (int[@opaque])".
@@ -654,6 +658,22 @@ let constructor_declaration (cd : constructor_declaration) : case =
   let rs = results xss
   and ss = summaries xss in
 
+  (* Prepare a call to [hook] which creates the visitor method associated
+     with this data constructor. We must compute the name [m] of the method,
+     the list [args] of its arguments, and the list [ty_args] of the types of
+     its arguments, from which we build the type [ty_method] of the method. *)
+
+  let tyss = hextend tys arity variant in (* [tyss] are the types of [xss] *)
+  let ty_this = decl_type decl in         (* the type of [this] *)
+
+  let m = datacon_descending_method datacon
+  and    args =    env :: transmit    this (flatten  xss)
+  and ty_args = ty_env :: transmit ty_this (flatten tyss)
+  and ty_result = variant arity (result_type decl) in
+  let ty_method = ty_arrows ty_args ty_result in
+
+  let hook = hook m args (Some ty_method) in
+
   (* Construct a case for this data constructor in the visitor method
      associated with this sum type. This case analyzes a tuple of width
      [arity]. After binding the components [xss], we call the descending
@@ -670,7 +690,7 @@ let constructor_declaration (cd : constructor_declaration) : case =
      otherwise a new block is allocated, as in [map]. *)
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
-    (hook (datacon_descending_method datacon) (env :: transmit this (flatten xss))
+    (hook
        (bind rs ss
           (visit_types tys subjects)
           (let rec body scheme =
@@ -737,7 +757,7 @@ let visit_decl (decl : type_declaration) : expression =
       let default() : case =
         Exp.case
           (ptuple (pvars xs))
-          (hook (failure_method tycon) (env :: xs)
+          (hook (failure_method tycon) (env :: xs) None
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
@@ -747,7 +767,7 @@ let visit_decl (decl : type_declaration) : expression =
       lambdas xs (
         Exp.match_
           (tuple (evars xs))
-          (complete (map constructor_declaration cds))
+          (complete (map (constructor_declaration decl) cds))
       )
 
   (* Unsupported constructs. *)
