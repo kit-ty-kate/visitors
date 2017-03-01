@@ -93,7 +93,7 @@ let decl_params (decl : type_declaration) : tyvars =
    declared by the type declarations [decls]. If so, it returns the list
    of its formal type parameters. *)
 
-let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list option =
+let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvars option =
   match decls with
   | [] ->
       None
@@ -103,7 +103,7 @@ let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvar list op
       else
         is_local decls tycon
 
-let is_local (decls : type_declaration list) (tycon : Longident.t) : tyvar list option =
+let is_local (decls : type_declaration list) (tycon : Longident.t) : tyvars option =
   match tycon with
   | Lident tycon ->
       is_local decls tycon

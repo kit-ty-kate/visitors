@@ -22,7 +22,7 @@ type tyvars = tyvar list
 
 (* A skeleton is a type with [n] holes. *)
 
-type skeleton = tyvar list -> core_type
+type skeleton = tyvars -> core_type
 
 (* -------------------------------------------------------------------------- *)
 

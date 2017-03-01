@@ -59,7 +59,7 @@ include WarningStore(struct end)
 (* To enforce this, we check that, in every use of a local type constructor,
    the actual type parameters coincide with the formal type parameters. *)
 
-let check_regularity loc tycon (formals : tyvar list) (actuals : core_type list) =
+let check_regularity loc tycon (formals : tyvars) (actuals : core_type list) =
   (* Check that the numbers of parameters match. *)
   if length formals <> length actuals then
     raise_errorf ~loc
@@ -243,7 +243,7 @@ let variants i : tyvars -> tyvars =
 (* -------------------------------------------------------------------------- *)
 
 (* Let a skeleton be a type with [n] holes, represented by a function of type
-   [tyvar list -> core_type], where the list is expected to have length [n].
+   [tyvars -> core_type], where the list is expected to have length [n].
    If ['a, ...] is a list of type variables, let us write [skeleton('a, ...)]
    for the application of the skeleton to this list. *)
 
