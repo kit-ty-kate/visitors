@@ -279,10 +279,14 @@ let ty_env =
    where [ty_{i}] denotes a copy of the type [ty] whose type variables have
    been renamed by the renaming [variant i]. *)
 
-let visitor_fun_type (argument : core_type) (result : core_type) : core_type =
-  let argument i = variant i argument
-  and result = variant arity result in
-  ty_arrows (ty_env :: init 0 arity argument) result
+(* We generalize the above definition to allow for multiple [arguments]. This
+   is used in the visitor methods associated with data constructors. Thus,
+   each argument in succession is extended to [arity] arguments. *)
+
+let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
+  ty_arrows
+    (ty_env :: flatten (hextend arguments arity variant))
+    (variant arity result)
 
 (* [result_type scheme decl] is the result type of a visitor method associated
    with the type [decl]. *)
@@ -320,7 +324,7 @@ let result_type =
 let visitor_method_type (decl : type_declaration) : core_type =
   (* For now, this is a monomorphic type annotation. *)
   visitor_fun_type
-    (decl_type decl)
+    [ decl_type decl ]
     (result_type decl)
 
 (* -------------------------------------------------------------------------- *)
