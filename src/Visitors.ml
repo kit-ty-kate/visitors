@@ -331,7 +331,7 @@ let visitor_method_type (decl : type_declaration) : core_type =
    methods. *)
 
 let bind (rs : variables) (ss : variables)
-  : expression list -> expression -> expression =
+  : expressions -> expression -> expression =
   match X.scheme with
   | Iter
   | Map
@@ -357,14 +357,14 @@ let column (ess : 'a list list) : 'a list =
    an [if/then/else] construct whose condition is the pointwise conjunction of
    physical equalities between [column ess] and [evars rs]. *)
 
-let ifeqphys (ess : expression list list) (rs : variables) e1 e2 =
+let ifeqphys (ess : expressions list) (rs : variables) e1 e2 =
   Exp.ifthenelse (eqphys (column ess) (evars rs)) e1 (Some e2)
 
 (* -------------------------------------------------------------------------- *)
 
 (* [call m es] emits a method call of the form [self#m es]. *)
 
-let call (m : methode) (es : expression list) : expression =
+let call (m : methode) (es : expressions) : expression =
   send self m es
 
 (* -------------------------------------------------------------------------- *)
@@ -581,7 +581,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
         plugin
         (string_of_core_type ty)
 
-and visit_types tys (ess : expression list list) : expression list =
+and visit_types tys (ess : expressions list) : expressions =
   (* The matrix [ess] is indexed first by component, then by index [j].
      Thus, to each type [ty], corresponds a row [es] of expressions,
      whose length is [arity]. *)
@@ -630,7 +630,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
      [build]    the expressions that rebuild a data constructor, on the way up.
   *)
 
-  let xss, tys, pss, (build : variables -> expression list) =
+  let xss, tys, pss, (build : variables -> expressions) =
   match cd.pcd_args with
     (* A traditional data constructor. *)
     | Pcstr_tuple tys ->

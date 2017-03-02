@@ -24,6 +24,7 @@ type variables = variable list
 type tyvars = tyvar list
 type core_types = core_type list
 type patterns = pattern list
+type expressions = expression list
 
 (* -------------------------------------------------------------------------- *)
 
@@ -114,7 +115,7 @@ let pvars (xs : variables) : patterns =
 
 (* [evars] converts a list of variables to a list of expressions. *)
 
-let evars (xs : variables) : expression list =
+let evars (xs : variables) : expressions =
   List.map (fun x -> evar x) xs
 
 (* [pvarss] converts a matrix of variables to a matrix of patterns. *)
@@ -124,7 +125,7 @@ let pvarss (xss : variables list) : patterns list =
 
 (* [evarss] converts a matrix of variables to a matrix of expressions. *)
 
-let evarss (xss : variables list) : expression list list =
+let evarss (xss : variables list) : expressions list =
   List.map evars xss
 
 (* -------------------------------------------------------------------------- *)
@@ -163,7 +164,7 @@ let lambdas (xs : variables) (e : expression) : expression =
    instead into a single application [f x y]. The difference is probably just
    cosmetic. *)
 
-let app (e : expression) (es2 : expression list) : expression =
+let app (e : expression) (es2 : expressions) : expression =
   match e.pexp_desc with
   | Pexp_apply (e1, les1) ->
       let les2 = List.map (fun e -> Label.nolabel, e) es2 in
@@ -175,7 +176,7 @@ let app (e : expression) (es2 : expression list) : expression =
 
 (* [sequence es] constructs a sequence of the expressions [es]. *)
 
-let sequence (es : expression list) : expression =
+let sequence (es : expressions) : expression =
   (* Using [fold_right1] instead of [List.fold_right] allows us to get
      rid of a final [()] constant at the end of the sequence. Cosmetic. *)
   fold_right1
@@ -207,12 +208,12 @@ let vbletn (vbs : value_binding list) (e : expression) : expression =
 
 (* [letn xs es e] constructs a series of nested [let] bindings. *)
 
-let letn (xs : variables) (es : expression list) (e : expression) =
+let letn (xs : variables) (es : expressions) (e : expression) =
   List.fold_right2 let1 xs es e
 
 (* [letnp xs ys es e] constructs a series of nested [let] bindings of pairs. *)
 
-let letnp (xs : variables) (ys : variables) (es : expression list) (e : expression) =
+let letnp (xs : variables) (ys : variables) (es : expressions) (e : expression) =
   List.fold_right2 let1p (List.combine xs ys) es e
 
 (* -------------------------------------------------------------------------- *)
@@ -226,7 +227,7 @@ let access (x : variable) (label : label) : expression =
    the form [x.label]. There is a row for every [label] and a column for every
    [x]. *)
 
-let accesses (xs : variables) (labels : label list) : expression list list =
+let accesses (xs : variables) (labels : label list) : expressions list =
   List.map (fun label -> List.map (fun x -> access x label) xs) labels
 
 (* -------------------------------------------------------------------------- *)
@@ -261,7 +262,7 @@ let conjunction : expression =
 let conjunction e1 e2 =
   app conjunction [e1; e2]
 
-let conjunction (es : expression list) : expression =
+let conjunction (es : expressions) : expression =
   fold_right1 conjunction es etrue
 
 (* -------------------------------------------------------------------------- *)
@@ -294,7 +295,7 @@ let eqphy (e1 : expression) (e2 : expression) : expression =
 
 (* [eqphys es1 es2] is the conjunction of the expressions [e1 == e2]. *)
 
-let eqphys (es1 : expression list) (es2 : expression list) : expression =
+let eqphys (es1 : expressions) (es2 : expressions) : expression =
   assert (List.length es1 = List.length es2);
   conjunction (List.map2 eqphy es1 es2)
 
@@ -448,7 +449,7 @@ let is_virtual (Meth (_, _, oe, _)) : bool =
 
 (* [send o m es] produces a call to the method [o#m] with arguments [es]. *)
 
-let send (o : variable) (m : methode) (es : expression list) : expression =
+let send (o : variable) (m : methode) (es : expressions) : expression =
   app (Exp.send (evar o) m) es
 
 (* -------------------------------------------------------------------------- *)
