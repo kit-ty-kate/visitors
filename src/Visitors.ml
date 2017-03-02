@@ -62,7 +62,7 @@ include WarningStore(struct end)
 (* To enforce this, we check that, in every use of a local type constructor,
    the actual type parameters coincide with the formal type parameters. *)
 
-let check_regularity loc tycon (formals : tyvars) (actuals : core_type list) =
+let check_regularity loc tycon (formals : tyvars) (actuals : core_types) =
   (* Check that the numbers of parameters match. *)
   if length formals <> length actuals then
     raise_errorf ~loc

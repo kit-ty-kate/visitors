@@ -22,7 +22,7 @@ type tyvar = string
 
 type variables = variable list
 type tyvars = tyvar list
-type core_types = core_type list
+type core_types = core_types
 
 (* -------------------------------------------------------------------------- *)
 
@@ -59,7 +59,7 @@ let ty_unit =
 let ty_arrow (a : core_type) (b : core_type) : core_type =
   Typ.arrow Nolabel a b
 
-let ty_arrows : core_type list -> core_type -> core_type =
+let ty_arrows : core_types -> core_type -> core_type =
   List.fold_right ty_arrow
 
 (* [decl_type decl] turns a declaration of the type ['a foo] into a the type
@@ -391,7 +391,7 @@ let class1
 (* [inherit_ c tys] builds an [inherit] clause, where the superclass is [c]
    and its actual type parameters are [tys]. No [super] identifier is bound. *)
 
-let inherit_ (c : Longident.t) (tys : core_type list) : class_field =
+let inherit_ (c : Longident.t) (tys : core_types) : class_field =
   Cf.inherit_ Fresh (Cl.constr (mknoloc c) tys) None
 
 (* -------------------------------------------------------------------------- *)
