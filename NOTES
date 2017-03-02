@@ -21,78 +21,38 @@ On type variables
 Can we deal with parameterized type declarations? Yes, we can, but we should
 distinguish two approaches.
 
-The less ambitious approach assumes (requires) that a parameterized type is
-always applied to the same actual arguments. So, it is just as if we have a
+The "monomorphic" approach assumes (requires) that a local parameterized type
+is always applied to the same actual arguments. So, it is just as if we have a
 type \Lambda at the top level and, under that, we are dealing with ordinary
 unparameterized types. This approach naturally leads to generated code where
 every method has a monomorphic type, but our class declarations are
 parameterized (they have a type \Lambda at the top level). In fact, the
 quantification over 'self is probably sufficient to take care of this aspect;
-no extra type parameters are required.
+no extra type parameters are required. In this approach, a type variable 'a is
+traversed by invoking a virtual method, [visit_'a].
 
-The more ambitious approach allows a type constructor (which could be local,
+The "polymorphic" approach allows a type constructor (which could be local,
 say 'a term, or nonlocal, say 'a list) to be instantiated in multiple sites
 with distinct (vectors of) actual arguments. This approach requires
-polymorphic methods. In the subclass [iter], for example, a visitor method
-could have type ['a. 'env -> 'a term -> unit]. In the subclass [map], a
-visitor method could have type ['a 'b. 'env -> 'a term -> 'b term]. A
-difficulty with this approach is that the type of a visitor method in the
-base class [visitor] seems difficult to express, as we should abstract over
-the method's return type, while still allowing it to depend on a quantified
-type variable (see [unit] versus ['b term] above). This seems to require the
-expressive power of F_\omega, which we do not have.
+polymorphic methods. In the subclass [iter], for example, the visitor method
+[visit_list] could have type:
 
-We adopt the less ambitious approach, for the time being at least.
+  'env 'a0. ('env -> 'a0 -> unit) -> 'env -> 'a0 list -> unit
 
-We note that, for nonlocal parameterized type constructors like "option" and
-"list", the less ambitious approach is restrictive: it prevents the user from
-using lists of apples and lists of oranges in a single group of type
-declarations. One could work around this problem by virtually duplicating
-these type constructors; that would lead to generating several virtual
-methods, like list_apple and list_orange, each of which would receive a
-monomorphic type. That might be somewhat unpleasant for the final user, but
-would be workable. (It would require defining a naming scheme, which would be
-slightly unpleasant for us.) This approach is not applicable to local type
-constructors, as it would lead to an infinite amount of duplication.
+In the subclass [map], it could have type:
 
-In the less ambitious approach, what needs to be done?
+  'env 'a0 'a1. ('env -> 'a0 -> 'a1) -> 'env -> 'a0 term -> 'a1 term
 
-* when hitting a type constructor, test if it is local
-  - if it is local, then treat it as if it were *not* parameterized,
-    i.e. do *not* apply the visitor function to visitor functions
-    for the type parameters
-  - if it is nonlocal, then treat it as parameterized
+In this approach, a type variable 'a is traversed by invoking a visitor
+function which has been received as an argument.
 
-* when hitting a type variable, declare and invoke a virtual visitor
-  method for it
+In the first release of visitors, only the monomorphic approach was supported.
+However, the hand-written classes in VisitorsRuntime follow the polymorphic
+approach, for greater generality.
 
-------------------------------------------------------------------------------
-
-More on parameterized type declarations
-
-The Frama-C AST uses lists and options extensively. Also, when dealing with
-names and binders, I need to define a type 'a binder once and for all, and to
-use several instances of it in a single type definition. So, I need to allow
-multiple distinct instances of a (built-in or nonlocal) parameterized type.
-
-Duplicating methods and inventing names, like list_apple and list_orange,
-sounds unpleasant. (I note that one could avoid inventing names by requiring
-the user to provide a name in an attribute declaration, but that seems heavy,
-too.) Furthermore, in the subclasses [iter] and [map], each of the duplicate
-virtual methods needs to be manually overridden, it seems. This is not
-tolerable.
-
-In the case of ['a list], in the subclasses [iter] and [map], we can get away
-by not creating a method and directly invoking the polymorphic functions
-[List.iter] and [List.map]. Similarly for options. Similarly for a
-user-defined nonlocal type, such as ['a binder], provided we have a user
-annotation (or a uniform naming scheme) that gives us access to polymorphic
-functions [Binder.iter] and [Binder.map]. Unfortunately, I am not sure what to
-do about the base class, [visitor]. I could use the same trick that I imagined
-for tuples and just use [Binder.map] directly -- thus imposing that folding on
-a binder must reconstruct a binder. That might work but would be somewhat
-inefficient and unpleasant. I feel there is something that I still do not
-understand here...
+It should be noted that the polymorphic approach is not always preferable to
+the monomorphic approach. Indeed, assigning to a method a more general type
+makes this method easier to *use*, but more difficult to *override*.
 
 ------------------------------------------------------------------------------
 
@@ -113,19 +73,3 @@ A different approach is to generate [iter] and [map] directly, without a base
 class. In the case of nonlocal types, we allow the user to provide (possibly
 polymorphic) code. This solves the problem. (Furthermore, we probably gain
 some speed by saving a few virtual method calls.)
-
-------------------------------------------------------------------------------
-
-On multiple sorts of names.
-
-We can deal with mutiple sorts of names, provided the user does the work of
-manually duplicating the code that handles names and binders at each sort.
-This can be done without duplicating the actual code, just with some plumbing.
-It is not really recommended, though.
-
-Another idea would be to use a single smart abstraction.map function, which
-dynamically decides whether to descend or not to descend into a sub-term,
-based on the current environment. If the current environment (which
-represents, say, a substitution) acts only at a certain sort (say, term
-variables) then it is not necessary to descend into subterms that do not
-contain names of that sort (say, types).
