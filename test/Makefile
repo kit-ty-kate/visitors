@@ -16,12 +16,18 @@ OCAMLBUILD := \
   -use-ocamlfind \
   -classic-display \
 
-.PHONY: test bench mli processed clean
+.PHONY: test bench mli processed clean adhoc
 
 test:
 	@ make -C ../src reinstall
 	@ $(OCAMLBUILD) $(TARGETS)
 #	@ for i in $(TARGET) ; do echo "Running $$i..." && ./$$i ; done
+
+%.native: clean
+	@ echo Re-installing...
+	@ make -C ../src reinstall >/dev/null 2>/dev/null
+	@ echo Re-compiling...
+	@ $(OCAMLBUILD) $@
 
 bench:
 	@ make -C ../src reinstall
@@ -40,3 +46,6 @@ clean:
 	@ rm -f *~
 	@ rm -f *.processed.ml
 	@ $(OCAMLBUILD) -clean
+
+adhoc: expr_info_polymorphic.native
+	@ make expr_info_polymorphic.processed.ml
