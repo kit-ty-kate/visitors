@@ -37,14 +37,15 @@ let visibility m =
 
 include ClassFieldStore(struct end)
 
-let generate_concrete_method m e ty =
+let annotation (ty : core_type) : core_type option =
   (* A type annotation is generated only in [polymorphic] mode. *)
-  let oty = if X.polymorphic then Some ty else None in
-  generate (concrete_method (visibility m) m e oty)
+  if X.polymorphic then Some ty else None
 
-let generate_virtual_method m =
-  generate (virtual_method (visibility m) m None)
-    (* TEMPORARY type annotation *)
+let generate_concrete_method m e ty =
+  generate (concrete_method (visibility m) m e (annotation ty))
+
+let generate_virtual_method m ty =
+  generate (virtual_method (visibility m) m (annotation ty))
 
 (* -------------------------------------------------------------------------- *)
 
@@ -429,7 +430,7 @@ let transmit x xs =
 (* [hook m xs ty e] constructs a call of the form [self#m xs], and (as a side
    effect) generates a method [method m xs = e]. The free variables of the
    expression [e] must be (a subset of) [xs]. The type [ty] is the type of
-   the method. We always compute internally, but the type annotation is
+   the method. It is always computed internally, but the type annotation is
    actually printed only in [polymorphic] mode. *)
 
 (* Thus, by default, the expression [hook m xs ty e] behaves in the same way
@@ -444,11 +445,13 @@ let hook (m : methode) (xs : variables) (ty : core_type) (e : expression) : expr
 
 (* -------------------------------------------------------------------------- *)
 
-(* [vhook m xs] constructs a call of the form [self#m xs], and (as a side
-   effect) generates a virtual method [method m: _]. *)
+(* [vhook m xs ty] constructs a call of the form [self#m xs], and (as a side
+   effect) generates a virtual method [method m: ty]. The type [ty] is the type
+   of the method. It is always computed internally, but the type annotation is
+   actually printed only in [polymorphic] mode. *)
 
-let vhook (m : methode) (xs : variables) : expression =
-  generate_virtual_method m;
+let vhook (m : methode) (xs : variables) (ty : core_type) : expression =
+  generate_virtual_method m ty;
   call m (evars xs)
 
 (* -------------------------------------------------------------------------- *)
@@ -502,11 +505,12 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
             (map (visit_type false) tys)
       end
 
-  (* A type variable [tv] is handled by a virtual visitor method. *)
+  (* A type variable [tv] is handled by a virtual visitor method.
+     This method always has monomorphic type. We let OCaml infer it. *)
   | false,
     NonOpaque,
     Ptyp_var tv ->
-      vhook (tyvar_visitor_method tv) []
+      vhook (tyvar_visitor_method tv) [] ty_any
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)
@@ -691,7 +695,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
            | Endo      -> ifeqphys subjects rs (evar this) (body Map)
            | Reduce    -> reduce (evars ss)
            | MapReduce -> tuple [ body Map; body Reduce ]
-           | Fold      -> vhook (datacon_ascending_method datacon) (env :: rs)
+           | Fold      -> vhook (datacon_ascending_method datacon) (env :: rs) ty_any (* TEMPORARY *)
          in body X.scheme
         )
       )
@@ -732,7 +736,7 @@ let visit_decl (decl : type_declaration) : expression =
              | Endo      -> ifeqphys subjects rs (evar (hd xs)) (body Map)
              | Reduce    -> reduce (evars ss)
              | MapReduce -> tuple [ body Map; body Reduce ]
-             | Fold      -> vhook (tycon_ascending_method tycon) (env :: rs)
+             | Fold      -> vhook (tycon_ascending_method tycon) (env :: rs) ty_any (* TEMPORARY *)
            in body X.scheme
           )
       )
