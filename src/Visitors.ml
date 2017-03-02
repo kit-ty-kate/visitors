@@ -37,7 +37,9 @@ let visibility m =
 
 include ClassFieldStore(struct end)
 
-let generate_concrete_method m e oty =
+let generate_concrete_method m e ty =
+  (* A type annotation is generated only in [polymorphic] mode. *)
+  let oty = if X.polymorphic then Some ty else None in
   generate (concrete_method (visibility m) m e oty)
 
 let generate_virtual_method m =
@@ -321,10 +323,6 @@ let visitor_method_type (decl : type_declaration) : core_type =
     (decl_type decl)
     (result_type decl)
 
-let visitor_method_type (decl : type_declaration) : core_type option =
-  (* A type annotation is generated only if [polymorphic] is [true]. *)
-  if X.polymorphic then Some (visitor_method_type decl) else None
-
 (* -------------------------------------------------------------------------- *)
 
 (* [bind rs ss] is a binding construct which, depending on the scheme, binds
@@ -424,18 +422,19 @@ let transmit x xs =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [hook m xs oty e] constructs a call of the form [self#m xs], and (as a side
+(* [hook m xs ty e] constructs a call of the form [self#m xs], and (as a side
    effect) generates a method [method m xs = e]. The free variables of the
-   expression [e] must be (a subset of) [xs]. The type [oty], if given, is
-   the type of the method. *)
+   expression [e] must be (a subset of) [xs]. The type [ty] is the type of
+   the method. We always compute internally, but the type annotation is
+   actually printed only in [polymorphic] mode. *)
 
-(* Thus, by default, the expression [hook m xs e] behaves in the same way
+(* Thus, by default, the expression [hook m xs ty e] behaves in the same way
    as the expression [e]. But a hook, named [m], allows this default to be
    overridden. *)
 
-let hook (m : methode) (xs : variable list) (oty : core_type option) (e : expression) : expression =
+let hook (m : methode) (xs : variable list) (ty : core_type) (e : expression) : expression =
   (* Generate a method. *)
-  generate_concrete_method m (lambdas xs e) oty;
+  generate_concrete_method m (lambdas xs e) ty;
   (* Construct a method call. *)
   call m (evars xs)
 
@@ -672,7 +671,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   and ty_result = variant arity (result_type decl) in
   let ty_method = ty_arrows ty_args ty_result in
 
-  let hook = hook m args (Some ty_method) in
+  let hook = hook m args ty_method in
 
   (* Construct a case for this data constructor in the visitor method
      associated with this sum type. This case analyzes a tuple of width
@@ -761,7 +760,7 @@ let visit_decl (decl : type_declaration) : expression =
           hook
             (failure_method tycon)
             (env :: xs)
-            (Some (ty_arrows (ty_env :: ty_xs) ty_result))
+            (ty_arrows (ty_env :: ty_xs) ty_result)
         in
         Exp.case
           (ptuple (pvars xs))
