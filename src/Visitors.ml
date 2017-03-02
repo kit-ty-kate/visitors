@@ -185,10 +185,10 @@ let copy (j : int) (x : string) : string =
 let component (i : int) (j : int) : variable =
   copy j (sprintf "c%d" i)
 
-let components (i : int) : variable list =
+let components (i : int) : variables =
   map (component i) (interval 0 arity)
 
-let componentss (xs : _ list) : variable list list =
+let componentss (xs : _ list) : variables list =
   mapi (fun i _ -> components i) xs
 
 (* The variable [thing j] denotes an input value. *)
@@ -196,7 +196,7 @@ let componentss (xs : _ list) : variable list list =
 let thing (j : int) : variable =
   copy j "this"
 
-let things : variable list =
+let things : variables =
   map thing (interval 0 arity)
 
 (* The variable [this] is used only in the generation of [endo] visitors. *)
@@ -209,10 +209,10 @@ let this =
 let field (label : label) (j : int) : variable =
   copy j (sprintf "f%s" label)
 
-let fields (label : label) : variable list =
+let fields (label : label) : variables =
   map (field label) (interval 0 arity)
 
-let fieldss (labels : label list) : variable list list =
+let fieldss (labels : label list) : variables list =
   map fields labels
 
 (* The variables [result i] denote results of recursive calls. *)
@@ -220,7 +220,7 @@ let fieldss (labels : label list) : variable list list =
 let result (i : int) : variable =
   sprintf "r%d" i
 
-let results (xs : _ list) : variable list =
+let results (xs : _ list) : variables =
   mapi (fun i _ -> result i) xs
 
 (* The variables [summary i] denote results of recursive calls.
@@ -231,7 +231,7 @@ let results (xs : _ list) : variable list =
 let summary (i : int) : variable =
   sprintf "s%d" i
 
-let summaries (xs : _ list) : variable list =
+let summaries (xs : _ list) : variables =
   mapi (fun i _ -> summary i) xs
 
 (* Naming conventions for type variables in type annotations. If ['a]
@@ -330,7 +330,7 @@ let visitor_method_type (decl : type_declaration) : core_type =
    patterns. It is used to bind the results of recursive calls to visitor
    methods. *)
 
-let bind (rs : variable list) (ss : variable list)
+let bind (rs : variables) (ss : variables)
   : expression list -> expression -> expression =
   match X.scheme with
   | Iter
@@ -357,7 +357,7 @@ let column (ess : 'a list list) : 'a list =
    an [if/then/else] construct whose condition is the pointwise conjunction of
    physical equalities between [column ess] and [evars rs]. *)
 
-let ifeqphys (ess : expression list list) (rs : variable list) e1 e2 =
+let ifeqphys (ess : expression list list) (rs : variables) e1 e2 =
   Exp.ifthenelse (eqphys (column ess) (evars rs)) e1 (Some e2)
 
 (* -------------------------------------------------------------------------- *)
@@ -432,7 +432,7 @@ let transmit x xs =
    as the expression [e]. But a hook, named [m], allows this default to be
    overridden. *)
 
-let hook (m : methode) (xs : variable list) (ty : core_type) (e : expression) : expression =
+let hook (m : methode) (xs : variables) (ty : core_type) (e : expression) : expression =
   (* Generate a method. *)
   generate_concrete_method m (lambdas xs e) ty;
   (* Construct a method call. *)
@@ -443,7 +443,7 @@ let hook (m : methode) (xs : variable list) (ty : core_type) (e : expression) : 
 (* [vhook m xs] constructs a call of the form [self#m xs], and (as a side
    effect) generates a virtual method [method m: _]. *)
 
-let vhook (m : methode) (xs : variable list) : expression =
+let vhook (m : methode) (xs : variables) : expression =
   generate_virtual_method m;
   call m (evars xs)
 
@@ -630,7 +630,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
      [build]    the expressions that rebuild a data constructor, on the way up.
   *)
 
-  let xss, tys, pss, (build : variable list -> expression list) =
+  let xss, tys, pss, (build : variables -> expression list) =
   match cd.pcd_args with
     (* A traditional data constructor. *)
     | Pcstr_tuple tys ->

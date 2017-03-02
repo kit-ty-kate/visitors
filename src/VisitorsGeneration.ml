@@ -19,6 +19,8 @@ type label = string
 type classe = string
 type methode = string
 type tyvar = string
+
+type variables = variable list
 type tyvars = tyvar list
 type core_types = core_type list
 
@@ -106,22 +108,22 @@ let eident (id : Longident.t) : expression =
 
 (* [pvars] converts a list of variables to a list of patterns. *)
 
-let pvars (xs : variable list) : pattern list =
+let pvars (xs : variables) : pattern list =
   List.map (fun x -> pvar x) xs
 
 (* [evars] converts a list of variables to a list of expressions. *)
 
-let evars (xs : variable list) : expression list =
+let evars (xs : variables) : expression list =
   List.map (fun x -> evar x) xs
 
 (* [pvarss] converts a matrix of variables to a matrix of patterns. *)
 
-let pvarss (xss : variable list list) : pattern list list =
+let pvarss (xss : variables list) : pattern list list =
   List.map pvars xss
 
 (* [evarss] converts a matrix of variables to a matrix of expressions. *)
 
-let evarss (xss : variable list list) : expression list list =
+let evarss (xss : variables list) : expression list list =
   List.map evars xss
 
 (* -------------------------------------------------------------------------- *)
@@ -150,7 +152,7 @@ let plambdas (ps : pattern list) (e : expression) : expression =
 
 (* [lambdas xs e] constructs a multi-argument function [fun xs -> e]. *)
 
-let lambdas (xs : variable list) (e : expression) : expression =
+let lambdas (xs : variables) (e : expression) : expression =
   List.fold_right lambda xs e
 
 (* -------------------------------------------------------------------------- *)
@@ -204,12 +206,12 @@ let vbletn (vbs : value_binding list) (e : expression) : expression =
 
 (* [letn xs es e] constructs a series of nested [let] bindings. *)
 
-let letn (xs : variable list) (es : expression list) (e : expression) =
+let letn (xs : variables) (es : expression list) (e : expression) =
   List.fold_right2 let1 xs es e
 
 (* [letnp xs ys es e] constructs a series of nested [let] bindings of pairs. *)
 
-let letnp (xs : variable list) (ys : variable list) (es : expression list) (e : expression) =
+let letnp (xs : variables) (ys : variables) (es : expression list) (e : expression) =
   List.fold_right2 let1p (List.combine xs ys) es e
 
 (* -------------------------------------------------------------------------- *)
@@ -223,7 +225,7 @@ let access (x : variable) (label : label) : expression =
    the form [x.label]. There is a row for every [label] and a column for every
    [x]. *)
 
-let accesses (xs : variable list) (labels : label list) : expression list list =
+let accesses (xs : variables) (labels : label list) : expression list list =
   List.map (fun label -> List.map (fun x -> access x label) xs) labels
 
 (* -------------------------------------------------------------------------- *)
