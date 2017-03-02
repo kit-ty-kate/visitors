@@ -1,5 +1,5 @@
 type 'info expr_node =
-  | EConst of int
+  | EConst of (int[@opaque])
   | EAdd of 'info expr * 'info expr
 
 and 'info expr =
