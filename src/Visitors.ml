@@ -249,7 +249,7 @@ let variant (i : int) (alpha : tyvar) : tyvar =
   if X.scheme = Endo then alpha else sprintf "%s_%d" alpha i
 
 let variant (i : int) (ty : core_type) : core_type =
-  subst_core_type (variant i) ty
+  rename_type (variant i) ty
 
 (* [ty_monoid] is the type of monoid elements. *)
 

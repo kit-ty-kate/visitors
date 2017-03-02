@@ -1,6 +1,7 @@
 open Longident
 open Asttypes
 open Parsetree
+open Ast_helper
 open Ppx_deriving
 open VisitorsPlugin
 
@@ -182,8 +183,11 @@ let is_valid_class_longident (m : string) : bool =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [subst_core_type rho ty] applies [rho], a renaming of type variables,
-   to the type [ty]. *)
+(* [subst_type sigma ty] applies [sigma], a substitution of types for type
+   variables, to the type [ty].
+
+   [rename_type rho ty] applies [rho], a renaming of type variables, to the
+   type [ty]. *)
 
 (* We do not go down into [@opaque] types. We replace every opaque type with
    a wildcard [_]. *)
@@ -191,27 +195,24 @@ let is_valid_class_longident (m : string) : bool =
 (* TEMPORARY this is too restrictive; we should replace an opaque type with
    a fresh type variable *and* quantify this variable universally *)
 
+type substitution =
+  tyvar -> core_type
+
 type renaming =
   tyvar -> tyvar
 
-let rec subst_core_type (rho : renaming) (ty : core_type) : core_type =
-  { ty with ptyp_desc = subst_core_type_desc rho ty }
-
-and subst_core_types rho tys =
-  List.map (subst_core_type rho) tys
-
-and subst_core_type_desc rho ty =
+let rec subst_type (sigma : substitution) (ty : core_type) : core_type =
   match opacity ty.ptyp_attributes, ty.ptyp_desc with
   | NonOpaque, Ptyp_any ->
-      Ptyp_any
+      ty
   | NonOpaque, Ptyp_var alpha ->
-      Ptyp_var (rho alpha)
+      sigma alpha
   | NonOpaque, Ptyp_tuple tys ->
-      Ptyp_tuple (subst_core_types rho tys)
+      { ty with ptyp_desc = Ptyp_tuple (subst_types sigma tys) }
   | NonOpaque, Ptyp_constr (tycon, tys) ->
-      Ptyp_constr (tycon, subst_core_types rho tys)
+      { ty with ptyp_desc = Ptyp_constr (tycon, subst_types sigma tys) }
   | Opaque, _ ->
-      Ptyp_any
+      Typ.any()
   | NonOpaque, Ptyp_arrow _
   | NonOpaque, Ptyp_object _
   | NonOpaque, Ptyp_class _
@@ -226,3 +227,9 @@ and subst_core_type_desc rho ty =
          Consider annotating it with [@opaque]."
         plugin
         (string_of_core_type ty)
+
+and subst_types sigma tys =
+  List.map (subst_type sigma) tys
+
+let rename_type (rho : renaming) (ty : core_type) : core_type =
+  subst_type (fun alpha -> Typ.var (rho alpha)) ty
