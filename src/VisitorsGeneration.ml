@@ -22,7 +22,7 @@ type tyvar = string
 
 type variables = variable list
 type tyvars = tyvar list
-type core_types = core_types
+type core_types = core_type list
 
 (* -------------------------------------------------------------------------- *)
 
