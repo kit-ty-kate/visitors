@@ -661,52 +661,40 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   let rs = results xss
   and ss = summaries xss in
 
-  (* Prepare a call to [hook] which creates the visitor method associated
-     with this data constructor. We must compute the name [m] of the method,
-     the list [args] of its arguments, and the list [ty_args] of the types of
-     its arguments, from which we build the type [ty_method] of the method. *)
+  (* Construct a case for this data constructor in the visitor method associated
+     with this sum type. This case analyzes a tuple of width [arity]. After
+     binding the components [xss], we call the descending method associated with
+     this data constructor, with arguments [env], [this] (see below) and [xss].
+     This method binds the variables [rs] to the results of the recursive calls
+     to visitor methods, then (if the variety is [iter]) returns a unit value or
+     (if the variety is [map]) reconstructs a tree node. *)
 
-  let tyss = hextend tys arity variant in (* [tyss] are the types of [xss] *)
-  let ty_this = decl_type decl in         (* the type of [this] *)
+  (* If the variety is [endo] (which implies that [arity] is 1), then we bind
+     the variable [this] to the whole memory block. This variable is transmitted
+     to the descending method. When the time comes to allocate a new memory
+     block, if the components of the new block are physically equal to the
+     components of the existing block, then the address of the existing block is
+     returned; otherwise a new block is allocated, as in [map]. *)
 
-  let m = datacon_descending_method datacon
-  and    args =    env :: transmit    this (flatten  xss)
-  and ty_args = ty_env :: transmit ty_this (flatten tyss)
-  and ty_result = variant arity (result_type decl) in
-  let ty_method = ty_arrows ty_args ty_result in
-
-  let hook = hook m args ty_method in
-
-  (* Construct a case for this data constructor in the visitor method
-     associated with this sum type. This case analyzes a tuple of width
-     [arity]. After binding the components [xss], we call the descending
-     method associated with this data constructor, with arguments [env] and
-     [xss]. This method binds the variables [rs] to the results of the
-     recursive calls to visitor methods, then (if the variety is [iter])
-     returns a unit value or (if the variety is [map]) reconstructs a tree
-     node. *)
-  (* If the scheme is [endo], then we additionally bind the variable [this] to
-     the whole memory block. This variable is transmitted to the descending
-     method. When the time comes to allocate a new memory block, if the
-     components of the new block are physically equal to the components of the
-     existing block, then the address of the existing block is returned;
-     otherwise a new block is allocated, as in [map]. *)
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
     (hook
-       (bind rs ss
-          (visit_types tys subjects)
-          (let rec body scheme =
-             match scheme with
-             | Iter      -> unit()
-             | Map       -> constr datacon (build rs)
-             | Endo      -> ifeqphys subjects rs (evar this) (body Map)
-             | Reduce    -> reduce (evars ss)
-             | MapReduce -> tuple [ body Map; body Reduce ]
-             | Fold      -> vhook (datacon_ascending_method datacon) (env :: rs)
-           in body X.scheme
-          )
-       )
+      (datacon_descending_method datacon)
+      (env :: transmit this (flatten xss))
+      (visitor_fun_type (transmit (decl_type decl) tys) (result_type decl))
+      (bind rs ss
+        (visit_types tys subjects)
+        (let rec body scheme =
+           match scheme with
+           | Iter      -> unit()
+           | Map       -> constr datacon (build rs)
+           | Endo      -> ifeqphys subjects rs (evar this) (body Map)
+           | Reduce    -> reduce (evars ss)
+           | MapReduce -> tuple [ body Map; body Reduce ]
+           | Fold      -> vhook (datacon_ascending_method datacon) (env :: rs)
+         in body X.scheme
+        )
+      )
     )
 
 (* -------------------------------------------------------------------------- *)
@@ -758,17 +746,14 @@ let visit_decl (decl : type_declaration) : expression =
          case, invoke the failure method, which raises an exception. The
          failure method receives [env] and [xs] as arguments. *)
       let default() : case =
-        let ty_xs = init 0 arity (fun i -> variant i (decl_type decl)) in
-        let ty_result = variant arity (result_type decl) in
         let hook =
-          hook
-            (failure_method tycon)
-            (env :: xs)
-            (ty_arrows (ty_env :: ty_xs) ty_result)
         in
         Exp.case
           (ptuple (pvars xs))
           (hook
+            (failure_method tycon)
+            (env :: xs)
+            (visitor_fun_type [ decl_type decl ] (result_type decl))
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
