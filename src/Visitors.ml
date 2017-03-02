@@ -746,8 +746,6 @@ let visit_decl (decl : type_declaration) : expression =
          case, invoke the failure method, which raises an exception. The
          failure method receives [env] and [xs] as arguments. *)
       let default() : case =
-        let hook =
-        in
         Exp.case
           (ptuple (pvars xs))
           (hook
