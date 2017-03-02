@@ -289,25 +289,25 @@ let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
     (ty_env :: flatten (hextend arguments arity variant))
     (variant arity result)
 
-(* [result_type scheme decl] is the result type of a visitor method associated
-   with the type [decl]. *)
+(* [result_type scheme ty] is the result type of a visitor method associated
+   with the type [ty]. *)
 
-let rec result_type scheme (decl : type_declaration) : core_type =
+let rec result_type scheme (ty : core_type) : core_type =
   match scheme with
   | Iter ->
       (* An [iter] visitor method returns nothing. *)
       ty_unit
   | Map | Endo ->
-      (* A [map] or [endo] visitor method for the type [_ foo] returns a
-         value of type [_ foo]. Note that this is a non-constant skeleton. *)
-      decl_type decl
+      (* A [map] or [endo] visitor method for the type [ty] returns a
+         value of type [ty]. Note that [ty] can contain type variables. *)
+      ty
   | Reduce ->
       (* A [reduce] visitor method returns a monoid element. *)
       ty_monoid
   | MapReduce ->
       (* A [mapreduce] visitor method returns a pair of the results produced
          by a [map] visitor method and by a [reduce] visitor method. *)
-      Typ.tuple [ result_type Map decl; result_type Reduce decl ]
+      Typ.tuple [ result_type Map ty; result_type Reduce ty ]
   | Fold ->
       (* This is where we have a problem. We would really like to allow the
          user to specify which skeleton should be used here, as we cannot
@@ -319,6 +319,12 @@ let rec result_type scheme (decl : type_declaration) : core_type =
 let result_type =
   result_type X.scheme
 
+(* [decl_result_type decl] is the result type of a visitor method associated
+   with the type declaration [decl]. *)
+
+let decl_result_type decl =
+  result_type (decl_type decl)
+
 (* [visitor_method_type decl] is the type of the visitor method associated
    with the type [decl]. *)
 
@@ -326,7 +332,7 @@ let visitor_method_type (decl : type_declaration) : core_type =
   (* For now, this is a monomorphic type annotation. *)
   visitor_fun_type
     [ decl_type decl ]
-    (result_type decl)
+    (decl_result_type decl)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -685,7 +691,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
     (hook
       (datacon_descending_method datacon)
       (env :: transmit this (flatten xss))
-      (visitor_fun_type (transmit (decl_type decl) tys) (result_type decl))
+      (visitor_fun_type (transmit (decl_type decl) tys) (decl_result_type decl))
       (bind rs ss
         (visit_types tys subjects)
         (let rec body scheme =
@@ -755,7 +761,7 @@ let visit_decl (decl : type_declaration) : expression =
           (hook
             (failure_method tycon)
             (env :: xs)
-            (visitor_fun_type [ decl_type decl ] (result_type decl))
+            (visitor_fun_type [ decl_type decl ] (decl_result_type decl))
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
