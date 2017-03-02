@@ -755,9 +755,17 @@ let visit_decl (decl : type_declaration) : expression =
          case, invoke the failure method, which raises an exception. The
          failure method receives [env] and [xs] as arguments. *)
       let default() : case =
+        let ty_xs = init 0 arity (fun i -> variant i (decl_type decl)) in
+        let ty_result = variant arity (result_type decl) in
+        let hook =
+          hook
+            (failure_method tycon)
+            (env :: xs)
+            (Some (ty_arrows (ty_env :: ty_xs) ty_result))
+        in
         Exp.case
           (ptuple (pvars xs))
-          (hook (failure_method tycon) (env :: xs) None
+          (hook
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
