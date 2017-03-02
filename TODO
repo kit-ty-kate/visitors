@@ -9,9 +9,15 @@ Investigate a way of generating (most of) the code in VisitorsRuntime.
 
 Implement mapreduce(2) in VisitorsRuntime.
 
+Finish and document the implementation of [polymorphic].
+
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+Think about enabling [polymorphic] and [fold] together.
+That would require letting the user specify the result type
+  associated with each type constructor.
 
 Implement and document endoreduce?
   Share code by using "Map endo" internally where endo : bool.
@@ -38,12 +44,6 @@ Then, one should also have the ability of parameterizing
 This could be used to define visit_hash_consed once and for all,
   in a clean way, as a base class that could be inherited,
   taking the memoization table as an argument.
-
-If [iter] and [reduce] inherited from [fold],
-  with implementations of the [build_] methods,
-  then it would be possible to override one of these methods
-  to obtain custom behavior.
-  Unfortunately, in the case of [map], this seems impossible.
 
 In [fold],
   the build_ methods could take not only the results of the recursive calls,
