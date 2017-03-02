@@ -10,9 +10,7 @@ and 'info expr =
             visitors { variety = "endo"; polymorphic = true },
             visitors { variety = "reduce"; polymorphic = true },
             visitors { variety = "mapreduce"; polymorphic = true },
-            visitors { variety = "fold"; polymorphic = true },
             visitors { variety = "iter2"; polymorphic = true },
             visitors { variety = "map2"; polymorphic = true },
             visitors { variety = "reduce2"; polymorphic = true },
-            visitors { variety = "mapreduce2"; polymorphic = true },
-            visitors { variety = "fold2"; polymorphic = true }]
+            visitors { variety = "mapreduce2"; polymorphic = true }]

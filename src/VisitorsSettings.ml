@@ -250,4 +250,14 @@ end)
   let ancestors =
     map Longident.parse (("VisitorsRuntime." ^ variety) :: ancestors)
 
+  (* If [scheme] is [Fold], then [polymorphic] must be [false]. Indeed,
+     we currently cannot generate polymorphic type annotations in that
+     case, as we cannot guess the return types of the visitor methods. *)
+  let () =
+    if scheme = Fold && polymorphic then
+      raise_errorf ~loc
+        "%s: cannot generate polymorphic\n\
+         type annotations for fold visitors."
+        plugin
+
 end

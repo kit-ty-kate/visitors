@@ -341,8 +341,11 @@ let visitor_method_type (decl : type_declaration) : core_type =
 (* [fold_result_type ty] is the result type of the visitor code generated
    by [visit_type ... ty], when [scheme] is [Fold]. *)
 
-let fold_result_type ty =
-  ty_any (* TEMPORARY *)
+let fold_result_type _ty =
+  (* This function is currently unimplemented and unused, because we
+     do not allow [polymorphic] to be [true] when [scheme] is [Fold].
+     Thus, we do not generate any type annotations for ascending methods. *)
+  ty_any
 
 (* -------------------------------------------------------------------------- *)
 
