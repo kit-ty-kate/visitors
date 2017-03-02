@@ -292,6 +292,10 @@ let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
 (* [result_type scheme ty] is the result type of a visitor method associated
    with the type [ty]. *)
 
+(* If [ty] is of the form [decl_type decl] -- that is, if [ty] is a local type
+   constructor -- then this is the result type of the visitor method associated
+   with [ty]. *)
+
 let rec result_type scheme (ty : core_type) : core_type =
   match scheme with
   | Iter ->
@@ -333,6 +337,12 @@ let visitor_method_type (decl : type_declaration) : core_type =
   visitor_fun_type
     [ decl_type decl ]
     (decl_result_type decl)
+
+(* [fold_result_type ty] is the result type of the visitor code generated
+   by [visit_type ... ty], when [scheme] is [Fold]. *)
+
+let fold_result_type ty =
+  ty_any (* TEMPORARY *)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -701,7 +711,10 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
            | Endo      -> ifeqphys subjects rs (evar this) (body Map)
            | Reduce    -> reduce (evars ss)
            | MapReduce -> tuple [ body Map; body Reduce ]
-           | Fold      -> vhook (datacon_ascending_method datacon) (env :: rs) ty_any (* TEMPORARY *)
+           | Fold      -> vhook
+                            (datacon_ascending_method datacon)
+                            (env :: rs)
+                            (ty_arrows (ty_env :: map fold_result_type tys) (decl_result_type decl))
          in body X.scheme
         )
       )
@@ -742,7 +755,10 @@ let visit_decl (decl : type_declaration) : expression =
              | Endo      -> ifeqphys subjects rs (evar (hd xs)) (body Map)
              | Reduce    -> reduce (evars ss)
              | MapReduce -> tuple [ body Map; body Reduce ]
-             | Fold      -> vhook (tycon_ascending_method tycon) (env :: rs) ty_any (* TEMPORARY *)
+             | Fold      -> vhook
+                              (tycon_ascending_method tycon)
+                              (env :: rs)
+                              (ty_arrows (ty_env :: map fold_result_type tys) (decl_result_type decl))
            in body X.scheme
           )
       )
