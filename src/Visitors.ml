@@ -399,7 +399,7 @@ let reduce es =
    pattern. The result is again packaged as a pattern list of length [arity].
    If scheme is not [Endo], then [alias x ps] is just [ps]. *)
 
-let alias (x : variable) (ps : pattern list) : pattern list =
+let alias (x : variable) (ps : patterns) : patterns =
   assert (length ps = arity);
   match X.scheme with
   | Endo ->

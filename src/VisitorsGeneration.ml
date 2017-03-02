@@ -23,6 +23,7 @@ type tyvar = string
 type variables = variable list
 type tyvars = tyvar list
 type core_types = core_type list
+type patterns = pattern list
 
 (* -------------------------------------------------------------------------- *)
 
@@ -108,7 +109,7 @@ let eident (id : Longident.t) : expression =
 
 (* [pvars] converts a list of variables to a list of patterns. *)
 
-let pvars (xs : variables) : pattern list =
+let pvars (xs : variables) : patterns =
   List.map (fun x -> pvar x) xs
 
 (* [evars] converts a list of variables to a list of expressions. *)
@@ -118,7 +119,7 @@ let evars (xs : variables) : expression list =
 
 (* [pvarss] converts a matrix of variables to a matrix of patterns. *)
 
-let pvarss (xss : variables list) : pattern list list =
+let pvarss (xss : variables list) : patterns list =
   List.map pvars xss
 
 (* [evarss] converts a matrix of variables to a matrix of expressions. *)
@@ -147,7 +148,7 @@ let lambda (x : variable) (e : expression) : expression =
 
 (* [plambdas ps e] constructs a multi-argument function [fun ps -> e]. *)
 
-let plambdas (ps : pattern list) (e : expression) : expression =
+let plambdas (ps : patterns) (e : expression) : expression =
   List.fold_right plambda ps e
 
 (* [lambdas xs e] constructs a multi-argument function [fun xs -> e]. *)
@@ -232,12 +233,12 @@ let accesses (xs : variables) (labels : label list) : expression list list =
 
 (* [ptuple] is [Ast_convenience.ptuple], deprived of its optional arguments. *)
 
-let ptuple (ps : pattern list) : pattern =
+let ptuple (ps : patterns) : pattern =
   ptuple ps
 
 (* [ptuples] is [map ptuple]. *)
 
-let ptuples (pss : pattern list list) : pattern list =
+let ptuples (pss : patterns list) : patterns =
   List.map ptuple pss
 
 (* -------------------------------------------------------------------------- *)
