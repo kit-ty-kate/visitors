@@ -1,6 +1,12 @@
 type ('a, 'b) data =
   | DataNil
   | DataCons of 'a * 'b * ('a, 'b) data
+
+and 'a seq =
+| Nil
+| Zero of     ('a * 'a) seq
+| One of 'a * ('a * 'a) seq
+
 [@@deriving visitors { variety = "iter"; polymorphic = ["a"] },
             visitors { variety = "map"; polymorphic = ["a"] },
             visitors { variety = "endo"; polymorphic = ["a"] },
