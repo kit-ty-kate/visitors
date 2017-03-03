@@ -258,7 +258,7 @@ let variant (i : int) (alpha : tyvar) : tyvar =
   assert (0 <= i && i <= arity);
   if X.scheme = Endo then alpha else sprintf "%s_%d" alpha i
 
-let variant (i : int) (ty : core_type) : core_type =
+let vary_type (i : int) (ty : core_type) : core_type =
   rename_type (variant i) ty
 
 (* [ty_monoid] is the type of monoid elements. *)
@@ -297,8 +297,8 @@ let ty_env =
 
 let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
   ty_arrows
-    (ty_env :: flatten (hextend arguments arity variant))
-    (variant arity result)
+    (ty_env :: flatten (hextend arguments arity vary_type))
+    (vary_type arity result)
 
 (* [result_type scheme ty] is the result type of a visitor method associated
    with the type [ty]. *)
