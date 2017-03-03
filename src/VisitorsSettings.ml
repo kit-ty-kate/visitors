@@ -49,7 +49,9 @@ module type SETTINGS = sig
      the string provided by the user. *)
   val variety: string
 
-  (* The classes that the visitor should inherit. *)
+  (* The classes that the visitor should inherit. If [nude] is [false], the
+     class [VisitorsRuntime.<scheme>] is implicitly prepended to this list.
+     If [nude] is [true], it is not. *)
   val ancestors: Longident.t list
 
   (* [concrete] controls whether the generated class should be concrete or
@@ -177,6 +179,7 @@ end)
   let concrete = ref false
   let data = ref true
   let irregular = ref false
+  let nude = ref false
   let polymorphic = ref false
   let poly = ref (fun _ -> false)
   let public = ref None
@@ -197,6 +200,8 @@ end)
           irregular := bool e
       | "name" ->
           name := Some (string e)
+      | "nude" ->
+          nude := bool e
       | "polymorphic" ->
           (* The [polymorphic] parameter can be a Boolean constant or a list
              of type variable names. If [true], then all type variables are
@@ -244,6 +249,7 @@ end)
   let concrete = !concrete
   let data = !data
   let irregular = !irregular
+  let nude = !nude
   let polymorphic = !polymorphic
   let poly = !poly
   let public = !public
@@ -282,7 +288,9 @@ end)
   (* When the variety is [iter], the class [VisitorsRuntime.iter] is an
      implicit ancestor, and similarly for every variety. *)
   let ancestors =
-    map Longident.parse (("VisitorsRuntime." ^ variety) :: ancestors)
+    if nude then ancestors else ("VisitorsRuntime." ^ variety) :: ancestors
+  let ancestors =
+    map Longident.parse ancestors
 
   (* If [scheme] is [Fold], then [polymorphic] must be [false]. Indeed,
      we currently cannot generate polymorphic type annotations in that
