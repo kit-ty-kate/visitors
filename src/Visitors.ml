@@ -245,6 +245,16 @@ let summary (i : int) : variable =
 let summaries (xs : _ list) : variables =
   mapi (fun i _ -> summary i) xs
 
+(* Reserved names of type variables. We forbid the user from using these
+   names, and do not let them be renamed by the function [variant] below. *)
+
+let reserved : tyvars =
+  [ "s"; "env" ]
+
+let reserved_ty_var (alpha : tyvar) : core_type =
+  assert (mem alpha reserved);
+  ty_var alpha
+
 (* Naming conventions for type variables in type annotations. If ['a]
    is a type variable named by the user, we use ['a_i], where [i] is
    in [0..arity]. Indices [i] in the interval [0..arity) are used for
@@ -256,7 +266,10 @@ let summaries (xs : _ list) : variables =
 
 let variant (i : int) (alpha : tyvar) : tyvar =
   assert (0 <= i && i <= arity);
-  if X.scheme = Endo then alpha else sprintf "%s_%d" alpha i
+  if X.scheme = Endo || mem alpha reserved then
+    alpha
+  else
+    sprintf "%s_%d" alpha i
 
 let vary_type (i : int) (ty : core_type) : core_type =
   rename_type (variant i) ty
@@ -264,17 +277,14 @@ let vary_type (i : int) (ty : core_type) : core_type =
 (* [ty_monoid] is the type of monoid elements. *)
 
 let ty_monoid =
-  ty_any
-    (* We use a wildcard because it cannot clash with user names and because
-       it is not renamed by [variant]. We could use a named type variable ['z]
-       but we would have to ensure absence of collision and no renaming. *)
+  reserved_ty_var "s"
 
 (* [ty_env] is the type of the environment. Note that different visitor methods
    can have different types of environment. For now, we get away with using a
    wildcard, which can mean different things in different places. *)
 
 let ty_env =
-  ty_var "env"
+  reserved_ty_var "env"
 
 (* -------------------------------------------------------------------------- *)
 
@@ -822,6 +832,14 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
    the body of the visitor method associated with [decl]. *)
 
 let visit_decl (decl : type_declaration) : expression =
+
+  (* Check that the user does not use a reserved type variable name. *)
+  decl_params decl |> iter (fun alpha ->
+    if mem alpha reserved then
+      let loc = decl.ptype_loc in
+      raise_errorf ~loc "%s: the type variable name '%s is reserved."
+                   plugin alpha
+  );
 
   (* Bind the values to a vector of variables [xs]. *)
   let tycon = decl.ptype_name.txt in
