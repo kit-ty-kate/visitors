@@ -15,3 +15,13 @@ let remainder s1 s2 =
   let n1 = length s1 in
   let n2 = length s2 in
   sub s2 n1 (n2 - n1)
+
+(* [unquote alpha] removes a leading quote in the string [alpha], if
+   there is one. *)
+
+let unquote alpha =
+  let n = String.length alpha in
+  if n > 0 && alpha.[0] = '\'' then
+    String.sub alpha 1 (n-1)
+  else
+    alpha

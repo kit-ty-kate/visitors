@@ -81,18 +81,6 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* [unquote alpha] removes a leading quote in the string [alpha], it there is
-   one. *)
-
-let unquote alpha =
-  let n = String.length alpha in
-  if n > 0 && alpha.[0] = '\'' then
-    String.sub alpha 1 (n-1)
-  else
-    alpha
-
-(* -------------------------------------------------------------------------- *)
-
 (* The supported varieties. *)
 
 (* Note that [mapreduce] must appear in this list before [map], as shorter
