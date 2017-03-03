@@ -182,7 +182,7 @@ end)
   let concrete = ref false
   let irregular = ref false
   let polymorphic = ref false
-  let poly = ref (fun _ -> true)
+  let poly = ref (fun _ -> false)
   let public = ref None
 
   (* Parse every option. *)
@@ -206,7 +206,8 @@ end)
              the variables in the list are considered polymorphic. *)
           begin match Arg.bool e, Arg.list Arg.string e with
           | Ok b, Error _ ->
-              polymorphic := b
+              polymorphic := b;
+              poly := (fun _ -> b)
           | Error _, Ok alphas ->
               let alphas = List.map unquote alphas in
               polymorphic := true;
