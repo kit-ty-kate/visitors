@@ -63,6 +63,12 @@ include WarningStore(struct end)
 (* To enforce this, we check that, in every use of a local type constructor,
    the actual type parameters coincide with the formal type parameters. *)
 
+(* This check is imposed only on [mono] type variables. For [poly] type
+   variables, irregularity is allowed. *)
+
+(* The purpose of this check is to avoid an incomprehensible type error in
+   the generated code. *)
+
 let check_regularity loc tycon (formals : tyvars) (actuals : core_types) =
   (* Check that the numbers of parameters match. *)
   if length formals <> length actuals then
@@ -75,7 +81,7 @@ let check_regularity loc tycon (formals : tyvars) (actuals : core_types) =
   (* Check that the parameters match. *)
   if not X.irregular && not (
     fold_left2 (fun ok formal actual ->
-      ok && actual.ptyp_desc = Ptyp_var formal
+      ok && (X.poly formal || actual.ptyp_desc = Ptyp_var formal)
     ) true formals actuals
   ) then
     raise_errorf ~loc "%s: the type constructor %s is irregular." plugin tycon
