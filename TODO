@@ -2,11 +2,6 @@
 
 TODO (REALLY)
 
-Add a way of NOT inheriting [VisitorsRuntime].
-
-Investigate a way of generating (most of) the code in VisitorsRuntime.
-  This will require polymorphic type annotations.
-
 Implement mapreduce(2) in VisitorsRuntime.
 
 Ideally, a datacon method should be parameterized with visit_'a
@@ -23,6 +18,7 @@ Document [polymorphic].
   Document that one can control whether the methods should be polymorphic in 'env.
 
 Document [data].
+Document [nude].
 
 ------------------------------------------------------------------------------
 
