@@ -540,6 +540,19 @@ class virtual ['self] mapreduce = object (self : 'self)
 
   inherit ['s] monoid
 
+  method private visit_array: 'env 'a 'b .
+    ('env -> 'a -> 'b * 's) -> 'env -> 'a array -> 'b array * 's
+  = fun f env xs ->
+      let s = ref self#zero in
+      let xs =
+        Array.map (fun x ->
+          let x, sx = f env x in
+          s := self#plus !s sx;
+          x
+        ) xs
+      in
+      xs, !s
+
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b * 's) -> 'env -> 'a list -> 'b list * 's
   = fun f env xs ->
