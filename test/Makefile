@@ -47,5 +47,5 @@ clean:
 	@ rm -f *.processed.ml
 	@ $(OCAMLBUILD) -clean
 
-adhoc: expr_info_polymorphic.native
-	@ make expr_info_polymorphic.processed.ml
+adhoc: expr_info_polymorphic.native monopoly.native
+	@ make expr_info_polymorphic.processed.ml monopoly.processed.ml
