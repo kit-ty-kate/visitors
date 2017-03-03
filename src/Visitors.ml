@@ -279,12 +279,33 @@ let vary_type (i : int) (ty : core_type) : core_type =
 let ty_monoid =
   reserved_ty_var "s"
 
-(* [ty_env] is the type of the environment. Note that different visitor methods
-   can have different types of environment. For now, we get away with using a
-   wildcard, which can mean different things in different places. *)
+(* [ty_env] is the type of the environment. *)
+
+(* What IS the type of the environment? This is a tricky question. Two
+   possibilities arise:
+
+   1. One might wish for every visitor method to be polymorphic in the type
+   ['env] of the environment. This makes the method more widely applicable,
+   but means that the environment effectively cannot be used by the method
+   (except by passing it on to its callees). Thus, the method cannot be
+   overridden by a custom implementation that actually uses the environment.
+
+   2. One might wish for the environment to have monomorphic type. In that
+   case, one should note that there is a priori no reason why the type of
+   the environment should be the same in every method. So, we must be
+   careful not to use a single type variable ['env]. We must use a distinct
+   type variable every time, or (easier but equivalent) use a wildcard.
+
+   How do we let the user specify which behavior is desired? And with what
+   granularity? We choose a simple approach: we treat ['env] as polymorphic
+   if and only if this (reserved) type variable is declared polymorphic by
+   the user. *)
 
 let ty_env =
-  reserved_ty_var "env"
+  if X.poly "env" then
+    reserved_ty_var "env"
+  else
+    ty_any
 
 (* -------------------------------------------------------------------------- *)
 
@@ -713,6 +734,14 @@ let quantify (decl : type_declaration) (ty : core_type) : core_type =
         (* Polymorphism currently not supported with [Fold]. *)
         []
   in
+  (* Then, decide whether ['env] should be universally quantified. *)
+  let alphas =
+    if X.poly "env" then
+      "env" :: alphas
+    else
+      alphas
+  in
+  (* Done. *)
   Typ.poly alphas ty
 
 (* -------------------------------------------------------------------------- *)
