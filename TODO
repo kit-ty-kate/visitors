@@ -9,6 +9,13 @@ Investigate a way of generating (most of) the code in VisitorsRuntime.
 
 Implement mapreduce(2) in VisitorsRuntime.
 
+Ideally, a datacon method should be parameterized with visit_'a
+  only if 'a appears in the type of some component.
+
+Understand what [subst_type] should do about @opaque types.
+
+Check for TEMPORARYs.
+
 Document the implementation of [polymorphic].
   Show expr_info_polymorphic.
   Show ['a seq] -- polymorphic recursion.
