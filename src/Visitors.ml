@@ -513,6 +513,12 @@ let hook (m : methode) (xs : variables) (ty : core_type) (e : expression) : expr
   (* Construct a method call. *)
   call m (evars xs)
 
+(* The additional parameter [b] makes hook insertion optional. If [b] is [true],
+   a hook is created; otherwise, no hook is created. *)
+
+let hook b m xs ty e =
+  if b then hook m xs ty e else e
+
 (* -------------------------------------------------------------------------- *)
 
 (* [vhook m xs ty] constructs a call of the form [self#m xs], and (as a side
@@ -832,7 +838,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
 
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
-    (hook
+    (hook X.data
       (datacon_descending_method datacon)
       (visitor_params decl @ env :: transmit this (flatten xss))
       (quantify decl (ty_arrows (visitor_param_types decl) (visitor_fun_type (transmit (decl_type decl) tys) (decl_result_type decl))))
@@ -916,7 +922,7 @@ let visit_decl (decl : type_declaration) : expression =
       let default() : case =
         Exp.case
           (ptuple (pvars xs))
-          (hook
+          (hook true
             (failure_method tycon)
             (env :: xs)
             (quantify decl (visitor_fun_type [ decl_type decl ] (decl_result_type decl)))

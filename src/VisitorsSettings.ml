@@ -77,6 +77,13 @@ module type SETTINGS = sig
   val polymorphic: bool
   val poly: tyvar -> bool
 
+  (* If [data] is [true], then descending visitor methods for data constructors
+     are generated. This allows the user to request per-data-constructor custom
+     behavior by overriding these methods. If [data] is [false], then these
+     methods are not generated. This yields simpler and faster code with
+     fewer customization opportunities. *)
+  val data: bool
+
 end
 
 (* -------------------------------------------------------------------------- *)
@@ -168,6 +175,7 @@ end)
   let variety = ref None
   let ancestors = ref []
   let concrete = ref false
+  let data = ref true
   let irregular = ref false
   let polymorphic = ref false
   let poly = ref (fun _ -> false)
@@ -183,6 +191,8 @@ end)
            ancestors := strings e
       | "concrete" ->
            concrete := bool e
+      | "data" ->
+           data := bool e
       | "irregular" ->
           irregular := bool e
       | "name" ->
@@ -232,6 +242,7 @@ end)
   let scheme = !scheme
   let ancestors = !ancestors
   let concrete = !concrete
+  let data = !data
   let irregular = !irregular
   let polymorphic = !polymorphic
   let poly = !poly
