@@ -1,12 +1,20 @@
+2017/03/03:
+A new option [data = false] allows suppressing the generation of visitor
+methods for data constructors. This makes the generated visitor slightly
+simpler and faster, but less customizable.
+
 2017/02/15:
-Install Makefile.preprocess with the package, so users can rely on it
+Makefile.preprocess is now installed with the package, so users can rely on it
 without needing to copy it.
 
 2017/02/13:
-Add a new variety of visitors, "mapreduce".
+Added a new variety of visitors, "mapreduce". This visitor computes a pair of a
+data structure (like a "map" visitor) and a summary (like a "reduce" visitor).
+This can be used to annotate every tree node with information about the
+subtree that lies below it. See the documentation for an example.
 
 2017/02/09:
-Documentation: a new subsection on OCaml objects,
+Documentation: added a new subsection on OCaml objects,
 entitled "Where the expressiveness of OCaml's type system falls short".
 This section explains why "map" cannot be a subclass of "fold",
 even though it should be.
