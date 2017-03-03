@@ -2,12 +2,14 @@
 
 TODO (REALLY)
 
-Implement mapreduce(2) in VisitorsRuntime.
+Implement mapreduce and mapreduce2 in VisitorsRuntime.
 
 Ideally, a datacon method should be parameterized with visit_'a
   only if 'a appears in the type of some component.
 
 Understand what [subst_type] should do about @opaque types.
+
+Test polymorphic mode on CIL.
 
 Check for TEMPORARYs.
 
