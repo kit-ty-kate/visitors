@@ -83,7 +83,9 @@ end
    these methods polymorphic.
 
    We could give the user a choice by providing multiple base classes, but that
-   would messy. *)
+   would messy. Note that, when using [@@deriving visitors { ... }], the user
+   does have a choice whether the generated methods should be polymorphic in
+   ['env]. *)
 
 (* -------------------------------------------------------------------------- *)
 
