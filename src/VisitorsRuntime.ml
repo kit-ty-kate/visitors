@@ -42,23 +42,23 @@ let wrap2 f t1 t2 =
 
 (* A virtual base class for monoids. *)
 
-class virtual ['z] monoid = object
-  method private virtual zero: 'z
-  method private virtual plus: 'z -> 'z -> 'z
+class virtual ['s] monoid = object
+  method private virtual zero: 's
+  method private virtual plus: 's -> 's -> 's
 end
 
 (* -------------------------------------------------------------------------- *)
 
 (* Common monoids. *)
 
-class ['z] addition_monoid = object
-  inherit ['z] monoid
+class ['s] addition_monoid = object
+  inherit ['s] monoid
   method private zero = 0
   method private plus = (+)
 end
 
-class ['z] unit_monoid = object
-  inherit ['z] monoid
+class ['s] unit_monoid = object
+  inherit ['s] monoid
   method private zero = ()
   method private plus () () = ()
 end
@@ -415,76 +415,76 @@ end
 
 class virtual ['self] reduce = object (self : 'self)
 
-  inherit ['z] monoid
+  inherit ['s] monoid
 
   method private visit_array: 'env 'a .
-    ('env -> 'a -> 'z) -> 'env -> 'a array -> 'z
+    ('env -> 'a -> 's) -> 'env -> 'a array -> 's
   = fun f env xs ->
-      Array.fold_left (fun z x -> self#plus z (f env x)) self#zero xs
+      Array.fold_left (fun s x -> self#plus s (f env x)) self#zero xs
       (* We might wish to inline [Array.fold_left] and save a closure
          allocation. That said, in flambda mode, the compiler might be
          able to do that automatically. *)
 
   method private visit_bool: 'env .
-    'env -> bool -> 'z
+    'env -> bool -> 's
   = fun _env _ -> self#zero
 
   method private visit_bytes: 'env .
-    'env -> bytes -> 'z
+    'env -> bytes -> 's
   = fun _env _ -> self#zero
 
   method private visit_char: 'env .
-    'env -> char -> 'z
+    'env -> char -> 's
   = fun _env _ -> self#zero
 
   method private visit_float: 'env .
-    'env -> float -> 'z
+    'env -> float -> 's
   = fun _env _ -> self#zero
 
   method private visit_int: 'env .
-    'env -> int -> 'z
+    'env -> int -> 's
   = fun _env _ -> self#zero
 
   method private visit_int32: 'env .
-    'env -> int32 -> 'z
+    'env -> int32 -> 's
   = fun _env _ -> self#zero
 
   method private visit_int64: 'env .
-    'env -> int64 -> 'z
+    'env -> int64 -> 's
   = fun _env _ -> self#zero
 
   method private visit_lazy_t: 'env 'a .
-    ('env -> 'a -> 'z) -> 'env -> 'a Lazy.t -> 'z
+    ('env -> 'a -> 's) -> 'env -> 'a Lazy.t -> 's
   = fun f env (lazy x) ->
       f env x
 
   method private visit_list: 'env 'a .
-    ('env -> 'a -> 'z) -> 'env -> 'a list -> 'z
+    ('env -> 'a -> 's) -> 'env -> 'a list -> 's
   = fun f env xs ->
       self # list_fold_left f env self#zero xs
       (* The above line is equivalent to the following: *)
-      (* List.fold_left (fun z x -> self#plus z (f env x)) self#zero xs *)
+      (* List.fold_left (fun s x -> self#plus s (f env x)) self#zero xs *)
       (* By using the auxiliary method [list_fold_left] instead of calling
          the library function [List.fold_left], we save a closure allocation,
          at least in non-flambda mode. A micro-benchmark shows no performance
          impact, either way. *)
 
   method private list_fold_left: 'env 'a .
-    ('env -> 'a -> 'z) -> 'env -> 'z -> 'a list -> 'z
-  = fun f env z xs ->
+    ('env -> 'a -> 's) -> 'env -> 's -> 'a list -> 's
+  = fun f env s xs ->
     match xs with
     | [] ->
-        z
+        s
     | x :: xs ->
-        let z = self#plus z (f env x) in
-        self # list_fold_left f env z xs
+        let s = self#plus s (f env x) in
+        self # list_fold_left f env s xs
 
   method private visit_nativeint: 'env .
-    'env -> nativeint -> 'z
+    'env -> nativeint -> 's
   = fun _env _ -> self#zero
 
   method private visit_option: 'env 'a .
-    ('env -> 'a -> 'z) -> 'env -> 'a option -> 'z
+    ('env -> 'a -> 's) -> 'env -> 'a option -> 's
   = fun f env ox ->
       match ox with
       | Some x ->
@@ -493,14 +493,14 @@ class virtual ['self] reduce = object (self : 'self)
           self#zero
 
   method private visit_ref: 'env 'a .
-    ('env -> 'a -> 'z) -> 'env -> 'a ref -> 'z
+    ('env -> 'a -> 's) -> 'env -> 'a ref -> 's
   = fun f env rx ->
       f env !rx
 
   method private visit_result: 'env 'a 'e .
-    ('env -> 'a -> 'z) ->
-    ('env -> 'e -> 'z) ->
-     'env -> ('a, 'e) result -> 'z
+    ('env -> 'a -> 's) ->
+    ('env -> 'e -> 's) ->
+     'env -> ('a, 'e) result -> 's
   = fun f g env r ->
       match r with
       | Ok a ->
@@ -509,11 +509,11 @@ class virtual ['self] reduce = object (self : 'self)
           g env b
 
   method private visit_string: 'env .
-    'env -> string -> 'z
+    'env -> string -> 's
   = fun _env _ -> self#zero
 
   method private visit_unit: 'env .
-    'env -> unit -> 'z
+    'env -> unit -> 's
   = fun _env _ -> self#zero
 
 end
@@ -524,18 +524,18 @@ end
 
 class virtual ['self] mapreduce = object (self : 'self)
 
-  inherit ['z] monoid
+  inherit ['s] monoid
 
   method private visit_list: 'env 'a 'b .
-    ('env -> 'a -> 'b * 'z) -> 'env -> 'a list -> 'b list * 'z
+    ('env -> 'a -> 'b * 's) -> 'env -> 'a list -> 'b list * 's
   = fun f env xs ->
       match xs with
       | [] ->
           [], self#zero
       | x :: xs ->
-          let x, zx = f env x in
-          let xs, zxs = self # visit_list f env xs in
-          x :: xs, self#plus zx zxs
+          let x, sx = f env x in
+          let xs, sxs = self # visit_list f env xs in
+          x :: xs, self#plus sx sxs
 
   (* TEMPORARY *)
 
@@ -763,79 +763,79 @@ end
 
 class virtual ['self] reduce2 = object (self : 'self)
 
-  inherit ['z] monoid
+  inherit ['s] monoid
 
   method private visit_array: 'env 'a 'b .
-    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a array -> 'b array -> 'z
+    ('env -> 'a -> 'b -> 's) -> 'env -> 'a array -> 'b array -> 's
   = fun f env xs1 xs2 ->
       (* OCaml does not offer [Array.fold_left2], so we use [Array.iter2],
          which we inline. *)
       if Array.length xs1 = Array.length xs2 then
-        let z = ref self#zero in
+        let s = ref self#zero in
         for i = 0 to Array.length xs1 - 1 do
           let x1 = Array.unsafe_get xs1 i
           and x2 = Array.unsafe_get xs2 i in
-          z := self#plus !z (f env x1 x2)
+          s := self#plus !s (f env x1 x2)
         done;
-        !z
+        !s
       else
         fail()
 
   method private visit_bool: 'env .
-    'env -> bool -> bool -> 'z
+    'env -> bool -> bool -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_bytes: 'env .
-    'env -> bytes -> bytes -> 'z
+    'env -> bytes -> bytes -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_char: 'env .
-    'env -> char -> char -> 'z
+    'env -> char -> char -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_float: 'env .
-    'env -> float -> float -> 'z
+    'env -> float -> float -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_int: 'env .
-    'env -> int -> int -> 'z
+    'env -> int -> int -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_int32: 'env .
-    'env -> int32 -> int32 -> 'z
+    'env -> int32 -> int32 -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_int64: 'env .
-    'env -> int64 -> int64 -> 'z
+    'env -> int64 -> int64 -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_lazy_t: 'env 'a 'b .
-    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 'z
+    ('env -> 'a -> 'b -> 's) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 's
   = fun f env (lazy x1) (lazy x2) ->
       f env x1 x2
 
   method private visit_list: 'env 'a 'b .
-    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a list -> 'b list -> 'z
+    ('env -> 'a -> 'b -> 's) -> 'env -> 'a list -> 'b list -> 's
   = fun f env xs1 xs2 ->
       if List.length xs1 = List.length xs2 then
-        List.fold_left2 (fun z x1 x2 -> self#plus z (f env x1 x2)) self#zero xs1 xs2
+        List.fold_left2 (fun s x1 x2 -> self#plus s (f env x1 x2)) self#zero xs1 xs2
       else
         fail()
 
   method private visit_nativeint: 'env .
-    'env -> nativeint -> nativeint -> 'z
+    'env -> nativeint -> nativeint -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_option: 'env 'a 'b .
-    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a option -> 'b option -> 'z
+    ('env -> 'a -> 'b -> 's) -> 'env -> 'a option -> 'b option -> 's
   = fun f env ox1 ox2 ->
       match ox1, ox2 with
       | Some x1, Some x2 ->
@@ -847,14 +847,14 @@ class virtual ['self] reduce2 = object (self : 'self)
           fail()
 
   method private visit_ref: 'env 'a 'b .
-    ('env -> 'a -> 'b -> 'z) -> 'env -> 'a ref -> 'b ref -> 'z
+    ('env -> 'a -> 'b -> 's) -> 'env -> 'a ref -> 'b ref -> 's
   = fun f env rx1 rx2 ->
       f env !rx1 !rx2
 
   method private visit_result: 'env 'a 'b 'e 'f .
-    ('env -> 'a -> 'b -> 'z) ->
-    ('env -> 'e -> 'f -> 'z) ->
-     'env -> ('a, 'e) result -> ('b, 'f) result -> 'z
+    ('env -> 'a -> 'b -> 's) ->
+    ('env -> 'e -> 'f -> 's) ->
+     'env -> ('a, 'e) result -> ('b, 'f) result -> 's
   = fun f g env r1 r2 ->
       match r1, r2 with
       | Ok a1, Ok a2 ->
@@ -866,12 +866,12 @@ class virtual ['self] reduce2 = object (self : 'self)
           fail()
 
   method private visit_string: 'env .
-    'env -> string -> string -> 'z
+    'env -> string -> string -> 's
   = fun _env x1 x2 ->
       if x1 = x2 then self#zero else fail()
 
   method private visit_unit: 'env .
-    'env -> unit -> unit -> 'z
+    'env -> unit -> unit -> 's
   = fun _env () () ->
       self#zero
 
@@ -893,7 +893,7 @@ end
 
 class virtual ['self] mapreduce2 = object (_self)
 
-  inherit ['z] monoid
+  inherit ['s] monoid
 
   (* TEMPORARY *)
 
