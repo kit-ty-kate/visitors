@@ -9,7 +9,11 @@ Investigate a way of generating (most of) the code in VisitorsRuntime.
 
 Implement mapreduce(2) in VisitorsRuntime.
 
-Finish and document the implementation of [polymorphic].
+Document the implementation of [polymorphic].
+  Show expr_info_polymorphic.
+  Show ['a seq] -- polymorphic recursion.
+  Document that 's and 'env are reserved.
+  Document that one can control whether the methods should be polymorphic in 'env.
 
 ------------------------------------------------------------------------------
 
@@ -23,15 +27,6 @@ Implement and document endoreduce?
   Share code by using "Map endo" internally where endo : bool.
 
 Could define nontrivial [fold] and [fold2] in VisitorsRuntime.
-
-Revisit the treatment of type parameters and polymorphic visitor methods.
-  (Following Reuben Rowe.)
-  Allow marking a type parameter as "generalized",
-  and in that case, generate type annotations, so
-  that the visitor methods are polymorphic in that
-  type parameter.
-  Works for iter, map, etc., but not for fold.
-  Do not force all methods to have the same 'env.
 
 Once we have that, can we deal with GADTs?
 
