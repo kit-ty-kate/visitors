@@ -673,6 +673,38 @@ let visitor_params (decl : type_declaration) : variables =
 let visitor_param_types (decl : type_declaration) : core_types =
   map visitor_param_type (poly_params decl)
 
+(* [quantify decl ty] quantifies an appropriate set of type variables in the
+   method type [ty]. *)
+
+let quantify (decl : type_declaration) (ty : core_type) : core_type =
+  (* Find out which type variables among the formal parameters of [decl] are
+     marked [poly]. *)
+  let alphas = poly_params decl in
+  (* Then, find out which variants of these type variables we should quantify
+     over. For the arguments, we need to quantify over the variants in the
+     interval [0..arity). For the result, we may need to quantify over the
+     variant [arity]. We try and avoid superfluous quantifiers, as that would
+     decrease readability. *)
+  let alphas =
+    match X.scheme with
+    | Iter
+    | Reduce ->
+        (* Just the arguments. The result contains no type variables. *)
+        flatten (hextend alphas arity variant)
+    | Map
+    | MapReduce ->
+        (* Arguments and result. *)
+        flatten (hextend alphas (arity+1) variant)
+    | Endo ->
+        (* In this special case, there is just one variant, as the argument
+           and result must have the same type. *)
+        alphas
+    | Fold ->
+        (* Polymorphism currently not supported with [Fold]. *)
+        []
+  in
+  Typ.poly alphas ty
+
 (* -------------------------------------------------------------------------- *)
 
 (* [constructor_declaration] turns a constructor declaration (as found in a
@@ -764,7 +796,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
     (hook
       (datacon_descending_method datacon)
       (visitor_params decl @ env :: transmit this (flatten xss))
-      (ty_arrows (visitor_param_types decl) (visitor_fun_type (transmit (decl_type decl) tys) (decl_result_type decl)))
+      (quantify decl (ty_arrows (visitor_param_types decl) (visitor_fun_type (transmit (decl_type decl) tys) (decl_result_type decl))))
       (bind rs ss
         (visit_types tys subjects)
         (let rec body scheme =
@@ -840,7 +872,7 @@ let visit_decl (decl : type_declaration) : expression =
           (hook
             (failure_method tycon)
             (env :: xs)
-            (visitor_fun_type [ decl_type decl ] (decl_result_type decl))
+            (quantify decl (visitor_fun_type [ decl_type decl ] (decl_result_type decl)))
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
@@ -872,7 +904,7 @@ let type_decl (decl : type_declaration) : unit =
   generate_concrete_method
     (tycon_visitor_method (Lident decl.ptype_name.txt))
     (lambdas (visitor_params decl @ [env]) (visit_decl decl))
-    (ty_arrows (visitor_param_types decl) (visitor_method_type decl))
+    (quantify decl (ty_arrows (visitor_param_types decl) (visitor_method_type decl)))
 
 (* -------------------------------------------------------------------------- *)
 
