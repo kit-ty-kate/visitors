@@ -116,3 +116,10 @@ let fold_left1 f accu xs =
       (* We can ignore [accu] and use [x] as the initial accumulator in
          our left-to-right sweep of the list. *)
       List.fold_left f x xs
+
+(* [filter2 f xs ys] returns the list of elements [y] in [ys] such that
+   the corresponding element [x] in [xs] satisfies [f]. *)
+
+let filter2 f xs ys =
+  assert (length xs = length ys);
+  map snd (filter (fun (x, _y) -> f x) (combine xs ys))
