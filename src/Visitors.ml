@@ -653,19 +653,25 @@ and visit_types tys (ess : expressions list) : expressions =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [poly_params decl] is the subset of the formal type parameters of [decl]
+   which are marked [poly]. *)
+
+let poly_params (decl : type_declaration) : tyvars =
+  filter X.poly (decl_params decl)
+
 (* [visitor_params decl] is the list of visitor functions that a visitor method
    associated with the declaration [decl] must take as arguments. There one such
    visitor function for every [poly] type variable in the formal type parameters
    of [decl]. *)
 
 let visitor_params (decl : type_declaration) : variables =
-  map tyvar_visitor_function (filter X.poly (decl_params decl))
+  map tyvar_visitor_function (poly_params decl)
 
 (* [visitor_param_types decl] is the list of the types of the visitor functions
    [visitor_params decl]. *)
 
 let visitor_param_types (decl : type_declaration) : core_types =
-  map visitor_param_type (filter X.poly (decl_params decl))
+  map visitor_param_type (poly_params decl)
 
 (* -------------------------------------------------------------------------- *)
 
