@@ -69,10 +69,27 @@ module type SETTINGS = sig
   val public: string list option
 
   (* If [polymorphic] is [true], then (possibly polymorphic) type annotations
-     for methods are generated. *)
+     for methods are generated. The function [poly], applied to the name of a
+     type variable (without its quote), tells whether this type variable
+     should receive monomorphic or polymorphic treatment. In the former case,
+     this type variable is dealt with via a visitor method; in the latter
+     case, it is dealt with via a visitor function. *)
   val polymorphic: bool
+  val poly: tyvar -> bool
 
 end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [unquote alpha] removes a leading quote in the string [alpha], it there is
+   one. *)
+
+let unquote alpha =
+  let n = String.length alpha in
+  if n > 0 && alpha.[0] = '\'' then
+    String.sub alpha 1 (n-1)
+  else
+    alpha
 
 (* -------------------------------------------------------------------------- *)
 
@@ -165,6 +182,7 @@ end)
   let concrete = ref false
   let irregular = ref false
   let polymorphic = ref false
+  let poly = ref (fun _ -> true)
   let public = ref None
 
   (* Parse every option. *)
@@ -182,7 +200,22 @@ end)
       | "name" ->
           name := Some (string e)
       | "polymorphic" ->
-          polymorphic := bool e
+          (* The [polymorphic] parameter can be a Boolean constant or a list
+             of type variable names. If [true], then all type variables are
+             considered polymorphic. If a list of type variables, then only
+             the variables in the list are considered polymorphic. *)
+          begin match Arg.bool e, Arg.list Arg.string e with
+          | Ok b, Error _ ->
+              polymorphic := b
+          | Error _, Ok alphas ->
+              let alphas = List.map unquote alphas in
+              polymorphic := true;
+              poly := (fun alpha -> List.mem alpha alphas)
+          | Error _, Error _ ->
+              raise_errorf ~loc:e.pexp_loc "%s: Boolean or string list expected" plugin
+          | Ok _, Ok _ ->
+              assert false
+          end
       | "public" ->
           public := Some (strings e)
       | "variety" ->
@@ -212,6 +245,7 @@ end)
   let concrete = !concrete
   let irregular = !irregular
   let polymorphic = !polymorphic
+  let poly = !poly
   let public = !public
 
   (* Perform sanity checking. *)
