@@ -16,11 +16,13 @@ Understand what [subst_type] should do about @opaque types.
 
 Check for TEMPORARYs.
 
-Document the implementation of [polymorphic].
+Document [polymorphic].
   Show expr_info_polymorphic.
   Show ['a seq] -- polymorphic recursion.
   Document that 's and 'env are reserved.
   Document that one can control whether the methods should be polymorphic in 'env.
+
+Document [data].
 
 ------------------------------------------------------------------------------
 
