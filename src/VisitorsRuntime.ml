@@ -625,8 +625,8 @@ class virtual ['self] mapreduce = object (self : 'self)
     ('env -> 'a_0 -> 'a_1 * 's) ->
     'env -> 'a_0 ref -> 'a_1 ref * 's
   = fun visit_'a env this ->
-      let r0, s0 = visit_'a env this.contents in
-      { contents = r0 }, s0
+      let r0, s0 = visit_'a env !this in
+      ref r0, s0
 
   method private visit_result: 'env 'a_0 'a_1 'b_0 'b_1 .
     ('env -> 'a_0 -> 'a_1 * 's) ->
@@ -1058,6 +1058,65 @@ class virtual ['self] mapreduce2 = object (self)
       let y, s = f env x1 x2 in
       lazy y, s
 
-  (* TEMPORARY *)
+  method private visit_list: 'env 'a_0 'a_1 'a_2 .
+    ('env -> 'a_0 -> 'a_1 -> 'a_2 * 's) ->
+    'env -> 'a_0 list -> 'a_1 list -> 'a_2 list * 's
+  = fun visit_'a env this_0 this_1 ->
+      match this_0, this_1 with
+      | [], [] ->
+          [], self#zero
+      | c0_0 :: c1_0, c0_1 :: c1_1 ->
+          let r0, s0 = visit_'a env c0_0 c0_1 in
+          let r1, s1 = self#visit_list visit_'a env c1_0 c1_1 in
+          r0 :: r1, self#plus s0 s1
+      | _, _ ->
+          fail()
+
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint -> nativeint * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_option: 'env 'a_0 'a_1 'a_2 .
+    ('env -> 'a_0 -> 'a_1 -> 'a_2 * 's) ->
+    'env -> 'a_0 option -> 'a_1 option -> 'a_2 option * 's
+  = fun visit_'a env this_0 this_1 ->
+      match this_0, this_1 with
+      | None, None ->
+          None, self#zero
+      | Some c0_0, Some c0_1 ->
+          let r0, s0 = visit_'a env c0_0 c0_1 in
+          Some r0, s0
+      | _, _ ->
+          fail()
+
+  method private visit_ref: 'env 'a_0 'a_1 'a_2 .
+    ('env -> 'a_0 -> 'a_1 -> 'a_2 * 's) ->
+    'env -> 'a_0 ref -> 'a_1 ref -> 'a_2 ref * 's
+  = fun visit_'a env this_0 this_1 ->
+      let r0, s0 = visit_'a env !this_0 !this_1 in
+      ref r0, s0
+
+  method private visit_result: 'env 'a_0 'a_1 'a_2 'b_0 'b_1 'b_2 .
+    ('env -> 'a_0 -> 'a_1 -> 'a_2 * 's) ->
+    ('env -> 'b_0 -> 'b_1 -> 'b_2 * 's) ->
+    'env -> ('a_0, 'b_0) result -> ('a_1, 'b_1) result -> ('a_2, 'b_2) result * 's
+  = fun visit_'a visit_'b env this_0 this_1 ->
+      match this_0, this_1 with
+      | Ok c0_0, Ok c0_1 ->
+          let r0, s0 = visit_'a env c0_0 c0_1 in
+          Ok r0, s0
+      | Error c0_0, Error c0_1 ->
+          let r0, s0 = visit_'b env c0_0 c0_1 in
+          Error r0, s0
+      | _, _ ->
+          fail()
+
+  method private visit_string: 'env .
+    'env -> string -> string -> string * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_unit: 'env .
+    'env -> unit -> unit -> unit * 's
+  = fun _ () () -> (), self#zero
 
 end
