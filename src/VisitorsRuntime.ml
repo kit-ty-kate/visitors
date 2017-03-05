@@ -1023,6 +1023,41 @@ class virtual ['self] mapreduce2 = object (self)
       else
         fail()
 
+  method private visit_bool: 'env .
+    'env -> bool -> bool -> bool * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes -> bytes * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_char: 'env .
+    'env -> char -> char -> char * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_float: 'env .
+    'env -> float -> float -> float * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_int: 'env .
+    'env -> int -> int -> int * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_int32: 'env .
+    'env -> int32 -> int32 -> int32 * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_int64: 'env .
+    'env -> int64 -> int64 -> int64 * 's
+  = fun _ x1 x2 -> if x1 = x2 then x1, self#zero else fail()
+
+  method private visit_lazy_t: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c * 's) -> 'env -> 'a Lazy.t -> 'b Lazy.t -> 'c Lazy.t * 's
+  = fun f env (lazy x1) (lazy x2) ->
+      (* As in [mapreduce]. *)
+      let y, s = f env x1 x2 in
+      lazy y, s
+
   (* TEMPORARY *)
 
 end
