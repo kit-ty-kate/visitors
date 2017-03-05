@@ -553,6 +553,43 @@ class virtual ['self] mapreduce = object (self : 'self)
       in
       xs, !s
 
+  method private visit_bool: 'env .
+    'env -> bool -> bool * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_bytes: 'env .
+    'env -> bytes -> bytes * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_char: 'env .
+    'env -> char -> char * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_float: 'env .
+    'env -> float -> float * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_int: 'env .
+    'env -> int -> int * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_int32: 'env .
+    'env -> int32 -> int32 * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_int64: 'env .
+    'env -> int64 -> int64 * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_lazy_t: 'env 'a 'b .
+    ('env -> 'a -> 'b * 's) -> 'env -> 'a Lazy.t -> 'b Lazy.t * 's
+  = fun f env (lazy x) ->
+      (* Because we must compute a summary now, it seems that we have to
+         force the suspension now. One should be aware that this is not
+         the same behavior as the one we chose in the class [map]. *)
+      let y, s = f env x in
+      lazy y, s
+
   method private visit_list: 'env 'a 'b .
     ('env -> 'a -> 'b * 's) -> 'env -> 'a list -> 'b list * 's
   = fun f env xs ->
@@ -563,6 +600,15 @@ class virtual ['self] mapreduce = object (self : 'self)
           let x, sx = f env x in
           let xs, sxs = self # visit_list f env xs in
           x :: xs, self#plus sx sxs
+      (* This is not the same strategy as in the class [reduce], where we
+         used an accumulator and a tail-recursive left fold. Here, we are
+         using a right fold. The order in which list elements are visited
+         is left-to-right in both cases, but the tree of [self#plus] ops
+         is not balanced the same way. *)
+
+  method private visit_nativeint: 'env .
+    'env -> nativeint -> nativeint * 's
+  = fun _ x -> x, self#zero
 
   method private visit_option: 'env 'a_0 'a_1 .
     ('env -> 'a_0 -> 'a_1 * 's) ->
@@ -595,7 +641,13 @@ class virtual ['self] mapreduce = object (self : 'self)
           let r0, s0 = visit_'b env c0 in
           Error r0, s0
 
-  (* TEMPORARY *)
+  method private visit_string: 'env .
+    'env -> string -> string * 's
+  = fun _ x -> x, self#zero
+
+  method private visit_unit: 'env .
+    'env -> unit -> unit * 's
+  = fun _ x -> x, self#zero
 
 end
 
