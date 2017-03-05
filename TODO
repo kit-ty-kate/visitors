@@ -40,7 +40,8 @@ That would require letting the user specify the result type
 Implement and document endoreduce?
   Share code by using "Map endo" internally where endo : bool.
 
-Could define nontrivial [fold] and [fold2] in VisitorsRuntime.
+Maybe [fold] and [fold2] in VisitorsRuntime should just be aliases
+  for [map] and [map2]. The user can use [nude] if that it is not appropriate.
 
 Once we have that, can we deal with GADTs?
 
