@@ -26,6 +26,13 @@ Document [nude].
 
 TODO (PERHAPS)
 
+It would be good if a type parameter ['a] could be declared never-visited,
+  so the method or function [visit_'a] would be unneeded.
+  Could be useful for phantom type parameters, GADTs, 'bn, etc.
+  The problem is, when a nonlocal type constructor is applied,
+  we cannot know which parameters are phantom.
+  Unless we find a way of declaring that, too?
+
 Think about enabling [polymorphic] and [fold] together.
 That would require letting the user specify the result type
   associated with each type constructor.
