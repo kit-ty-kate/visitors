@@ -659,7 +659,7 @@ class ['self] fold = object (_self)
 
   (* No methods are provided, as we do not wish to fix the types of these
      methods. It is up to the user to inherit from a class that defines
-     appropriate methods. Note that [RuntimeVisitors.map] is likely to be
+     appropriate methods. Note that [VisitorsRuntime.map] is likely to be
      appropriate in many situations. *)
 
 end
