@@ -2,8 +2,6 @@
 
 TODO (REALLY)
 
-Implement mapreduce and mapreduce2 in VisitorsRuntime.
-
 Ideally, a datacon method should be parameterized with visit_'a
   only if 'a appears in the type of some component.
 
