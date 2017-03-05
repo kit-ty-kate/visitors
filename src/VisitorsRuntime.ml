@@ -1001,9 +1001,27 @@ end
 
 (* [mapreduce2] *)
 
-class virtual ['self] mapreduce2 = object (_self)
+class virtual ['self] mapreduce2 = object (self)
 
   inherit ['s] monoid
+
+  method private visit_array: 'env 'a 'b 'c .
+    ('env -> 'a -> 'b -> 'c * 's) -> 'env -> 'a array -> 'b array -> 'c array * 's
+  = fun f env xs1 xs2 ->
+      let n1 = Array.length xs1
+      and n2 = Array.length xs2 in
+      if n1 = n2 then
+        let s = ref self#zero in
+        let xs = Array.init n1 (fun i ->
+          let x1 = Array.unsafe_get xs1 i
+          and x2 = Array.unsafe_get xs2 i in
+          let x, sx = f env x1 x2 in
+          s := self#plus !s sx;
+          x
+        ) in
+        xs, !s
+      else
+        fail()
 
   (* TEMPORARY *)
 
