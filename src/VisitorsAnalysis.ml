@@ -187,7 +187,10 @@ let is_valid_class_longident (m : string) : bool =
    variables, to the type [ty].
 
    [rename_type rho ty] applies [rho], a renaming of type variables, to the
-   type [ty]. *)
+   type [ty].
+
+   [occurs_type alpha ty] tests whether the type variable [alpha] occurs in
+   the type [ty]. *)
 
 (* We do not go down into [@opaque] types. We replace every opaque type with
    a wildcard [_]. *)
@@ -233,3 +236,13 @@ and subst_types sigma tys =
 
 let rename_type (rho : renaming) (ty : core_type) : core_type =
   subst_type (fun alpha -> Typ.var (rho alpha)) ty
+
+exception Occurs
+
+let occurs_type (alpha : tyvar) (ty : core_type) : bool =
+  let rho beta = if alpha = beta then raise Occurs else beta in
+  try
+    let (_ : core_type) = rename_type rho ty in
+    false
+  with Occurs ->
+    true
