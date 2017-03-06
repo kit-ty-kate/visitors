@@ -374,22 +374,25 @@ let visitor_fun_type (arguments : core_types) (ty : core_type) : core_type =
     (ty_env :: flatten (hextend arguments arity vary_type))
     (vary_type arity (result_type ty))
 
+(* This special case of [visitor_fun_type] is the normal form of a visitor
+   function type: there is one argument of type [ty] (extended to [arity])
+   and one result of type [result_type ty]. *)
+
+let simple_visitor_fun_type (ty : core_type) : core_type =
+  visitor_fun_type [ty] ty
+
 (* [visitor_method_type decl] is the type of the visitor method associated
-   with the type [decl]. *)
+   with the type [decl]. This does not account for the visitor parameters
+   in charge of dealing with type variables. *)
 
 let visitor_method_type (decl : type_declaration) : core_type =
-  visitor_fun_type
-    [decl_type decl]
-    (decl_type decl)
+  simple_visitor_fun_type (decl_type decl)
 
 (* [visitor_param_type alpha] is the type of the visitor function associated
    with the type variable [alpha]. *)
 
 let visitor_param_type (alpha : tyvar) : core_type =
-  visitor_fun_type
-    [ty_var alpha]
-    (ty_var alpha)
-(* TEMPORARY share code with above? *)
+  simple_visitor_fun_type (ty_var alpha)
 
 (* [fold_result_type ty] is the result type of the visitor code generated
    by [visit_type ... ty], when [scheme] is [Fold]. *)
@@ -927,7 +930,7 @@ let visit_decl (decl : type_declaration) : expression =
           (hook true
             (failure_method tycon)
             (env :: xs)
-            (quantify decl (visitor_fun_type [ decl_type decl ] (decl_type decl)))
+            (quantify decl (visitor_method_type decl))
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
