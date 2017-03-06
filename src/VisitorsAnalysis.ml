@@ -183,14 +183,75 @@ let is_valid_class_longident (m : string) : bool =
 
 (* -------------------------------------------------------------------------- *)
 
+(* [occurs_type alpha ty] tests whether the type variable [alpha] occurs in
+   the type [ty]. This function goes down into all OCaml types, even those
+   that are not supported by [visitors]. *)
+
+let rec occurs_type (alpha : tyvar) (ty : core_type) : bool =
+  match ty.ptyp_desc with
+  | Ptyp_any ->
+      false
+  | Ptyp_var beta ->
+      alpha = beta
+  | Ptyp_alias (ty, _) ->
+      (* This is not a binder; just go down into it. *)
+      occurs_type alpha ty
+  | Ptyp_arrow (_, ty1, ty2) ->
+      occurs_types alpha [ ty1; ty2 ]
+  | Ptyp_tuple tys
+  | Ptyp_constr (_, tys)
+  | Ptyp_class (_, tys) ->
+      occurs_types alpha tys
+  | Ptyp_object (methods, _) ->
+      List.exists (fun (_, _, ty) -> occurs_type alpha ty) methods
+  | Ptyp_variant (fields, _, _) ->
+      List.exists (occurs_row_field alpha) fields
+  | Ptyp_poly (_qs, ty) ->
+      (* The type variables in [qs] are bound. *)
+      (* Unfortunately, the type of [qs] has changed from [string list]
+         to [string loc list] between OCaml 4.04 and 4.05.
+         See commit b0e880c448c78ed0cedff28356fcaf88f1436eef.
+         I do not want to do conditional compilation,
+         nor do I want to require 4.05 (yet).
+         So, for now, I just assume that [alpha] does not appear in [qs].
+         This means that [occurs] can (on rare occasions) return [true]
+         when it should return [false]. *)
+      (* not (occurs_quantifiers alpha qs) && *) occurs_type alpha ty
+  | Ptyp_package (_, ltys) ->
+      List.exists (fun (_, ty) -> occurs_type alpha ty) ltys
+  | Ptyp_extension (_, payload) ->
+      occurs_payload alpha payload
+
+and occurs_types alpha tys =
+  List.exists (occurs_type alpha) tys
+
+and occurs_row_field alpha field =
+  match field with
+  | Rtag (_, _, _, tys) ->
+      occurs_types alpha tys
+  | Rinherit ty ->
+      occurs_type alpha ty
+
+and occurs_quantifiers alpha qs =
+  List.exists (fun q -> alpha = q.txt) qs
+
+and occurs_payload alpha = function
+  | PTyp ty ->
+      occurs_type alpha ty
+  | PStr _
+  | PSig _
+  | PPat _ ->
+      (* We assume that these cases won't arise or won't have any free type
+         variables in them. *)
+      false
+
+(* -------------------------------------------------------------------------- *)
+
 (* [subst_type sigma ty] applies [sigma], a substitution of types for type
    variables, to the type [ty].
 
    [rename_type rho ty] applies [rho], a renaming of type variables, to the
-   type [ty].
-
-   [occurs_type alpha ty] tests whether the type variable [alpha] occurs in
-   the type [ty]. *)
+   type [ty]. *)
 
 (* We do not go down into [@opaque] types. We replace every opaque type with
    a wildcard [_]. *)
@@ -236,13 +297,3 @@ and subst_types sigma tys =
 
 let rename_type (rho : renaming) (ty : core_type) : core_type =
   subst_type (fun alpha -> Typ.var (rho alpha)) ty
-
-exception Occurs
-
-let occurs_type (alpha : tyvar) (ty : core_type) : bool =
-  let rho beta = if alpha = beta then raise Occurs else beta in
-  try
-    let (_ : core_type) = rename_type rho ty in
-    false
-  with Occurs ->
-    true
