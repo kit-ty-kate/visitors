@@ -2,10 +2,7 @@
 
 TODO (REALLY)
 
-Ideally, a datacon method should be parameterized with visit_'a
-  only if 'a appears in the type of some component.
-
-Understand what [subst_type] should do about @opaque types.
+Forbid a [poly] variable under @opaque.
 
 Test polymorphic mode on CIL.
 
@@ -16,6 +13,9 @@ Document [polymorphic].
   Show ['a seq] -- polymorphic recursion.
   Document that 's and 'env are reserved.
   Document that one can control whether the methods should be polymorphic in 'env.
+  Document that a [poly] variable under @opaque is forbidden.
+  Document that, in [polymorphic] mode, any methods inherited from ancestors should have the fully polymorphic expected type -- otherwise the generated code will be ill-typed.
+    Can be illustrated with a hand-written visitor method for ['a opaque].
 
 Document [data].
 Document [nude].
@@ -24,6 +24,8 @@ Document [nude].
 
 TODO (PERHAPS)
 
+Ideally, a visitor method should be parameterized with visit_'a
+  only if 'a appears in the type of some component.
 It would be good if a type parameter ['a] could be declared never-visited,
   so the method or function [visit_'a] would be unneeded.
   Could be useful for phantom type parameters, GADTs, 'bn, etc.
