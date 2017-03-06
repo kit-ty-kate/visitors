@@ -1703,28 +1703,16 @@ and custom_tree = CustomDummy
   | CustomLexpr of lexpr
   | CustomOther of string * (custom_tree list)
 *)
-[@@deriving visitors { variety = "iter"; polymorphic = true },
-            visitors { variety = "map"; polymorphic = true },
-            visitors { variety = "endo"; polymorphic = true },
-            visitors { variety = "reduce"; polymorphic = true },
-            visitors { variety = "mapreduce"; polymorphic = true },
-            visitors { variety = "iter2"; polymorphic = true },
-            visitors { variety = "map2"; polymorphic = true },
-            visitors { variety = "reduce2"; polymorphic = true },
-            visitors { variety = "mapreduce2"; polymorphic = true }
+[@@deriving visitors { variety = "iter"; polymorphic = true; concrete = true },
+            visitors { variety = "map"; polymorphic = true; concrete = true },
+            visitors { variety = "endo"; polymorphic = true; concrete = true },
+            visitors { variety = "reduce"; polymorphic = true; concrete = true; ancestors = ["VisitorsRuntime.addition_monoid"] },
+            visitors { variety = "mapreduce"; polymorphic = true; concrete = true; ancestors = ["VisitorsRuntime.addition_monoid"] },
+            visitors { variety = "iter2"; polymorphic = true; concrete = true },
+            visitors { variety = "map2"; polymorphic = true; concrete = true },
+            visitors { variety = "reduce2"; polymorphic = true; concrete = true; ancestors = ["VisitorsRuntime.addition_monoid"] },
+            visitors { variety = "mapreduce2"; polymorphic = true; concrete = true; ancestors = ["VisitorsRuntime.addition_monoid"] }
 ]
-
-(* Provide the missing methods so as to obtain concrete classes. *)
-class ['self] iter_ = object (self : 'self)
-  inherit [_] iter
-  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
-  method visit_'term env (t : term) = self#visit_term env t
-end
-class ['self] map_ = object (self : 'self)
-  inherit [_] map
-  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
-  method visit_'term env (t : term) = self#visit_term env t
-end
 
 type kinstr =
   | Kstmt of stmt
