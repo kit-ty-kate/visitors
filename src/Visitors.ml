@@ -795,6 +795,15 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   assert (length pss = arity);
   let subjects = evarss xss in
 
+  (* Find out which type variables [alphas] are formal parameters of this
+     declaration and are marked [poly]. We have to universally quantify over
+     (variants of) these type variables in the type of the hook, below.
+     Furthermore, we forbid these type variables from appearing under [@opaque],
+     as that would cause us to generate code whose actual type is less general
+     than its expected type. *)
+  let alphas = poly_params decl in
+  check_poly_under_opaque alphas tys;
+
   (* Get the name of this data constructor. *)
   let datacon = cd.pcd_name.txt in
   (* Create new names [rs] for the results of the recursive calls of visitor
@@ -820,8 +829,6 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
      block, if the components of the new block are physically equal to the
      components of the existing block, then the address of the existing block is
      returned; otherwise a new block is allocated, as in [map]. *)
-
-  let alphas = poly_params decl in
 
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
@@ -880,6 +887,7 @@ let visit_decl (decl : type_declaration) : expression =
   | Ptype_record (lds : label_declaration list), _ ->
       let labels, tys = ld_labels lds, ld_tys (fix lds) in
       (* See [constructor_declaration] for comments. *)
+      check_poly_under_opaque (poly_params decl) tys;
       let subjects = accesses xs labels in
       lambdas xs (
         let rs = results labels

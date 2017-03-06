@@ -2,8 +2,6 @@
 
 TODO (REALLY)
 
-Forbid a [poly] variable under @opaque.
-
 Test polymorphic mode on CIL.
 
 Check for TEMPORARYs.
