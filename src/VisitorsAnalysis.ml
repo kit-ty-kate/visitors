@@ -187,12 +187,15 @@ let is_valid_class_longident (m : string) : bool =
    the type [ty]. This function goes down into all OCaml types, even those
    that are not supported by [visitors]. *)
 
-let rec occurs_type (alpha : tyvar) (ty : core_type) : bool =
+exception Occurs of loc
+
+let rec occurs_type (alpha : tyvar) (ty : core_type) : unit =
   match ty.ptyp_desc with
   | Ptyp_any ->
-      false
+      ()
   | Ptyp_var beta ->
-      alpha = beta
+      if alpha = beta then
+        raise (Occurs ty.ptyp_loc)
   | Ptyp_alias (ty, _) ->
       (* This is not a binder; just go down into it. *)
       occurs_type alpha ty
@@ -203,9 +206,9 @@ let rec occurs_type (alpha : tyvar) (ty : core_type) : bool =
   | Ptyp_class (_, tys) ->
       occurs_types alpha tys
   | Ptyp_object (methods, _) ->
-      List.exists (fun (_, _, ty) -> occurs_type alpha ty) methods
+      List.iter (fun (_, _, ty) -> occurs_type alpha ty) methods
   | Ptyp_variant (fields, _, _) ->
-      List.exists (occurs_row_field alpha) fields
+      List.iter (occurs_row_field alpha) fields
   | Ptyp_poly (_qs, ty) ->
       (* The type variables in [qs] are bound. *)
       (* Unfortunately, the type of [qs] has changed from [string list]
@@ -216,14 +219,14 @@ let rec occurs_type (alpha : tyvar) (ty : core_type) : bool =
          So, for now, I just assume that [alpha] does not appear in [qs].
          This means that [occurs] can (on rare occasions) return [true]
          when it should return [false]. *)
-      (* not (occurs_quantifiers alpha qs) && *) occurs_type alpha ty
+      (* if not (occurs_quantifiers alpha qs) then *) occurs_type alpha ty
   | Ptyp_package (_, ltys) ->
-      List.exists (fun (_, ty) -> occurs_type alpha ty) ltys
+      List.iter (fun (_, ty) -> occurs_type alpha ty) ltys
   | Ptyp_extension (_, payload) ->
       occurs_payload alpha payload
 
 and occurs_types alpha tys =
-  List.exists (occurs_type alpha) tys
+  List.iter (occurs_type alpha) tys
 
 and occurs_row_field alpha field =
   match field with
@@ -243,7 +246,7 @@ and occurs_payload alpha = function
   | PPat _ ->
       (* We assume that these cases won't arise or won't have any free type
          variables in them. *)
-      false
+      ()
 
 (* -------------------------------------------------------------------------- *)
 
