@@ -1707,9 +1707,11 @@ and custom_tree = CustomDummy
             visitors { variety = "map"; irregular = true },
             visitors { variety = "endo"; irregular = true },
             visitors { variety = "reduce"; irregular = true },
+            visitors { variety = "mapreduce"; irregular = true },
             visitors { variety = "iter2"; irregular = true },
             visitors { variety = "map2"; irregular = true },
-            visitors { variety = "reduce2"; irregular = true }
+            visitors { variety = "reduce2"; irregular = true },
+            visitors { variety = "mapreduce2"; irregular = true }
 ]
 
 (* Provide the missing methods so as to obtain concrete classes. *)
