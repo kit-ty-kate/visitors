@@ -2,10 +2,6 @@
 
 TODO (REALLY)
 
-Test polymorphic mode on CIL.
-
-Check for TEMPORARYs.
-
 Document [polymorphic].
   Show expr_info_polymorphic.
   Show ['a seq] -- polymorphic recursion.
