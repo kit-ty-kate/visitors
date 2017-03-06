@@ -826,12 +826,16 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
      components of the existing block, then the address of the existing block is
      returned; otherwise a new block is allocated, as in [map]. *)
 
+  let alphas = poly_params decl in
+
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
     (hook X.data
       (datacon_descending_method datacon)
-      (map tyvar_visitor_function (poly_params decl) @ env :: transmit this (flatten xss))
-      (quantify (poly_params decl) (ty_arrows (map visitor_param_type (poly_params decl)) (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
+      (map tyvar_visitor_function alphas @ env :: transmit this (flatten xss))
+      (quantify alphas (ty_arrows
+        (map visitor_param_type alphas)
+        (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
       (bind rs ss
         (visit_types tys subjects)
         (let rec body scheme =
@@ -944,10 +948,11 @@ let visit_decl (decl : type_declaration) : expression =
    no result. *)
 
 let type_decl (decl : type_declaration) : unit =
+  let alphas = poly_params decl in
   generate_concrete_method
     (tycon_visitor_method (Lident decl.ptype_name.txt))
-    (lambdas (map tyvar_visitor_function (poly_params decl) @ [env]) (visit_decl decl))
-    (quantify (poly_params decl) (ty_arrows (map visitor_param_type (poly_params decl)) (visitor_method_type decl)))
+    (lambdas (map tyvar_visitor_function alphas @ [env]) (visit_decl decl))
+    (quantify alphas (ty_arrows (map visitor_param_type alphas) (visitor_method_type decl)))
 
 (* -------------------------------------------------------------------------- *)
 
