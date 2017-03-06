@@ -1727,6 +1727,23 @@ class ['self] map_ = object (self : 'self)
   method visit_'locs env (t : identified_term) = self#visit_identified_term env t
   method visit_'term env (t : term) = self#visit_term env t
 end
+class ['self] endo_ = object (self : 'self)
+  inherit [_] endo
+  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
+  method visit_'term env (t : term) = self#visit_term env t
+end
+class ['self] reduce_ = object (self : 'self)
+  inherit [_] VisitorsRuntime.addition_monoid
+  inherit [_] reduce
+  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
+  method visit_'term env (t : term) = self#visit_term env t
+end
+class ['self] mapreduce_ = object (self : 'self)
+  inherit [_] VisitorsRuntime.addition_monoid
+  inherit [_] mapreduce
+  method visit_'locs env (t : identified_term) = self#visit_identified_term env t
+  method visit_'term env (t : term) = self#visit_term env t
+end
 
 type kinstr =
   | Kstmt of stmt
