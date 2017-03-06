@@ -403,6 +403,54 @@ let fold_result_type _ty =
      Thus, we do not generate any type annotations for ascending methods. *)
   ty_any
 
+(* [poly_params decl] is the subset of the formal type parameters of [decl]
+   which are marked [poly]. For each of these parameters, a visitor function
+   should be passed. *)
+
+let poly_params (decl : type_declaration) : tyvars =
+  filter X.poly (decl_params decl)
+
+(* [quantify alphas ty] quantifies an appropriate set of type variables in the
+   method type [ty]. The parameter [alphas] is usually [poly_params decl],
+   although it could in principle be a subset of it, if we can prove that
+   some visitor functions are unneeded. We introduce universal quantifiers
+   on (suitable variants of) the type variables [alphas] and also possibly
+   on the type variable ['env]. *)
+
+let quantify (alphas : tyvars) (ty : core_type) : core_type =
+  (* Find out which variants of the type variables [alphas] we should quantify
+     over. For the arguments, we need to quantify over the variants in the
+     interval [0..arity). For the result, we may need to quantify over the
+     variant [arity]. We try and avoid superfluous quantifiers, as that would
+     decrease readability. *)
+  let alphas =
+    match X.scheme with
+    | Iter
+    | Reduce ->
+        (* Just the arguments. The result contains no type variables. *)
+        flatten (hextend alphas arity variant)
+    | Map
+    | MapReduce ->
+        (* Arguments and result. *)
+        flatten (hextend alphas (arity+1) variant)
+    | Endo ->
+        (* In this special case, there is just one variant, as the argument
+           and result must have the same type. *)
+        alphas
+    | Fold ->
+        (* Polymorphism currently not supported with [Fold]. *)
+        []
+  in
+  (* Then, decide whether ['env] should be universally quantified. *)
+  let alphas =
+    if X.poly "env" then
+      "env" :: alphas
+    else
+      alphas
+  in
+  (* Done. *)
+  Typ.poly alphas ty
+
 (* -------------------------------------------------------------------------- *)
 
 (* [bind rs ss] is a binding construct which, depending on the scheme, binds
@@ -687,53 +735,6 @@ and visit_types tys (ess : expressions list) : expressions =
   map2 (fun ty es ->
     app (visit_type true ty) es
   ) tys ess
-
-(* -------------------------------------------------------------------------- *)
-
-(* TEMPORARY move elsewhere *)
-
-(* [poly_params decl] is the subset of the formal type parameters of [decl]
-   which are marked [poly]. *)
-
-let poly_params (decl : type_declaration) : tyvars =
-  filter X.poly (decl_params decl)
-
-(* [quantify alphas ty] quantifies an appropriate set of type variables in the
-   method type [ty]. TEMPORARY comment [alphas] are a subset of [poly_params decl] *)
-
-let quantify (alphas : tyvars) (ty : core_type) : core_type =
-  (* Find out which variants of the type variables [alphas] we should quantify
-     over. For the arguments, we need to quantify over the variants in the
-     interval [0..arity). For the result, we may need to quantify over the
-     variant [arity]. We try and avoid superfluous quantifiers, as that would
-     decrease readability. *)
-  let alphas =
-    match X.scheme with
-    | Iter
-    | Reduce ->
-        (* Just the arguments. The result contains no type variables. *)
-        flatten (hextend alphas arity variant)
-    | Map
-    | MapReduce ->
-        (* Arguments and result. *)
-        flatten (hextend alphas (arity+1) variant)
-    | Endo ->
-        (* In this special case, there is just one variant, as the argument
-           and result must have the same type. *)
-        alphas
-    | Fold ->
-        (* Polymorphism currently not supported with [Fold]. *)
-        []
-  in
-  (* Then, decide whether ['env] should be universally quantified. *)
-  let alphas =
-    if X.poly "env" then
-      "env" :: alphas
-    else
-      alphas
-  in
-  (* Done. *)
-  Typ.poly alphas ty
 
 (* -------------------------------------------------------------------------- *)
 
