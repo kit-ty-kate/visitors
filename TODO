@@ -22,6 +22,11 @@ Document [nude].
 
 TODO (PERHAPS)
 
+In [polymorphic] mode, we could annotate every invocation
+  of an external visitor method with its expected (polymorphic) type,
+  so as to get better type error messages if this method does not have
+  the expected type.
+
 Ideally, a visitor method should be parameterized with visit_'a
   only if 'a appears in the type of some component.
 It would be good if a type parameter ['a] could be declared never-visited,
