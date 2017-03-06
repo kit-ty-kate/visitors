@@ -677,12 +677,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
   | _, _, Ptyp_poly _
   | _, _, Ptyp_package _
   | _, _, Ptyp_extension _ ->
-      let loc = ty.ptyp_loc in
-      raise_errorf ~loc
-        "%s: cannot deal with the type %s.\n\
-         Consider annotating it with [@opaque]."
-        plugin
-        (string_of_core_type ty)
+      unsupported ty
 
 and visit_types tys (ess : expressions list) : expressions =
   (* The matrix [ess] is indexed first by component, then by index [j].
