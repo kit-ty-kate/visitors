@@ -695,34 +695,19 @@ and visit_types tys (ess : expressions list) : expressions =
 
 (* -------------------------------------------------------------------------- *)
 
+(* TEMPORARY move elsewhere *)
+
 (* [poly_params decl] is the subset of the formal type parameters of [decl]
    which are marked [poly]. *)
 
 let poly_params (decl : type_declaration) : tyvars =
   filter X.poly (decl_params decl)
 
-(* [visitor_params decl] is the list of visitor functions that a visitor method
-   associated with the declaration [decl] must take as arguments. There one such
-   visitor function for every [poly] type variable in the formal type parameters
-   of [decl]. *)
+(* [quantify alphas ty] quantifies an appropriate set of type variables in the
+   method type [ty]. TEMPORARY comment [alphas] are a subset of [poly_params decl] *)
 
-let visitor_params (decl : type_declaration) : variables =
-  map tyvar_visitor_function (poly_params decl)
-
-(* [visitor_param_types decl] is the list of the types of the visitor functions
-   [visitor_params decl]. *)
-
-let visitor_param_types (decl : type_declaration) : core_types =
-  map visitor_param_type (poly_params decl)
-
-(* [quantify decl ty] quantifies an appropriate set of type variables in the
-   method type [ty]. *)
-
-let quantify (decl : type_declaration) (ty : core_type) : core_type =
-  (* Find out which type variables among the formal parameters of [decl] are
-     marked [poly]. *)
-  let alphas = poly_params decl in
-  (* Then, find out which variants of these type variables we should quantify
+let quantify (alphas : tyvars) (ty : core_type) : core_type =
+  (* Find out which variants of the type variables [alphas] we should quantify
      over. For the arguments, we need to quantify over the variants in the
      interval [0..arity). For the result, we may need to quantify over the
      variant [arity]. We try and avoid superfluous quantifiers, as that would
@@ -845,8 +830,8 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
     (ptuple (alias this (map (pconstr datacon) pss)))
     (hook X.data
       (datacon_descending_method datacon)
-      (visitor_params decl @ env :: transmit this (flatten xss))
-      (quantify decl (ty_arrows (visitor_param_types decl) (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
+      (map tyvar_visitor_function (poly_params decl) @ env :: transmit this (flatten xss))
+      (quantify (poly_params decl) (ty_arrows (map visitor_param_type (poly_params decl)) (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
       (bind rs ss
         (visit_types tys subjects)
         (let rec body scheme =
@@ -930,7 +915,7 @@ let visit_decl (decl : type_declaration) : expression =
           (hook true
             (failure_method tycon)
             (env :: xs)
-            (quantify decl (visitor_method_type decl))
+            (quantify (poly_params decl) (visitor_method_type decl))
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
@@ -961,8 +946,8 @@ let visit_decl (decl : type_declaration) : expression =
 let type_decl (decl : type_declaration) : unit =
   generate_concrete_method
     (tycon_visitor_method (Lident decl.ptype_name.txt))
-    (lambdas (visitor_params decl @ [env]) (visit_decl decl))
-    (quantify decl (ty_arrows (visitor_param_types decl) (visitor_method_type decl)))
+    (lambdas (map tyvar_visitor_function (poly_params decl) @ [env]) (visit_decl decl))
+    (quantify (poly_params decl) (ty_arrows (map visitor_param_type (poly_params decl)) (visitor_method_type decl)))
 
 (* -------------------------------------------------------------------------- *)
 
