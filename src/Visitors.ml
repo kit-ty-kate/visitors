@@ -311,26 +311,6 @@ let ty_env =
 
 (* Construction of type annotations. *)
 
-(* A visitor function takes an environment, followed with [arity] arguments,
-   and produces a result. Thus, if [argument] and [result] are types, then the
-   type of a visitor function has the following shape:
-
-     ty_env ->
-     argument_0 -> ... -> argument_{arity-1} ->
-     result_{arity}
-
-   where [ty_{i}] denotes a copy of the type [ty] whose type variables have
-   been renamed by the renaming [variant i]. *)
-
-(* We generalize the above definition to allow for multiple [arguments]. This
-   is used in the visitor methods associated with data constructors. Thus,
-   each argument in succession is extended to [arity] arguments. *)
-
-let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
-  ty_arrows
-    (ty_env :: flatten (hextend arguments arity vary_type))
-    (vary_type arity result)
-
 (* [result_type scheme ty] is the result type of a visitor method associated
    with the type [ty]. *)
 
@@ -371,11 +351,30 @@ let result_type =
 let decl_result_type decl =
   result_type (decl_type decl)
 
+(* A visitor function takes an environment, followed with [arity] arguments,
+   and produces a result. Thus, if [argument] and [result] are types, then the
+   type of a visitor function has the following shape:
+
+     ty_env ->
+     argument_0 -> ... -> argument_{arity-1} ->
+     result_{arity}
+
+   where [ty_{i}] denotes a copy of the type [ty] whose type variables have
+   been renamed by the renaming [variant i]. *)
+
+(* We generalize the above definition to allow for multiple [arguments]. This
+   is used in the visitor methods associated with data constructors. Thus,
+   each argument in succession is extended to [arity] arguments. *)
+
+let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
+  ty_arrows
+    (ty_env :: flatten (hextend arguments arity vary_type))
+    (vary_type arity result)
+
 (* [visitor_method_type decl] is the type of the visitor method associated
    with the type [decl]. *)
 
 let visitor_method_type (decl : type_declaration) : core_type =
-  (* For now, this is a monomorphic type annotation. *)
   visitor_fun_type
     [decl_type decl]
     (result_type (decl_type decl))
