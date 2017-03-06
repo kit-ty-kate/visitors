@@ -366,10 +366,13 @@ let decl_result_type decl =
    is used in the visitor methods associated with data constructors. Thus,
    each argument in succession is extended to [arity] arguments. *)
 
-let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
+(* We specialize the above definition to the case where the result type
+   is [result_type ty]. *)
+
+let visitor_fun_type (arguments : core_types) (ty : core_type) : core_type =
   ty_arrows
     (ty_env :: flatten (hextend arguments arity vary_type))
-    (vary_type arity result)
+    (vary_type arity (result_type ty))
 
 (* [visitor_method_type decl] is the type of the visitor method associated
    with the type [decl]. *)
@@ -377,7 +380,7 @@ let visitor_fun_type (arguments : core_types) (result : core_type) : core_type =
 let visitor_method_type (decl : type_declaration) : core_type =
   visitor_fun_type
     [decl_type decl]
-    (result_type (decl_type decl))
+    (decl_type decl)
 
 (* [visitor_param_type alpha] is the type of the visitor function associated
    with the type variable [alpha]. *)
@@ -385,7 +388,7 @@ let visitor_method_type (decl : type_declaration) : core_type =
 let visitor_param_type (alpha : tyvar) : core_type =
   visitor_fun_type
     [ty_var alpha]
-    (result_type (ty_var alpha))
+    (ty_var alpha)
 (* TEMPORARY share code with above? *)
 
 (* [fold_result_type ty] is the result type of the visitor code generated
@@ -840,7 +843,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
     (hook X.data
       (datacon_descending_method datacon)
       (visitor_params decl @ env :: transmit this (flatten xss))
-      (quantify decl (ty_arrows (visitor_param_types decl) (visitor_fun_type (transmit (decl_type decl) tys) (decl_result_type decl))))
+      (quantify decl (ty_arrows (visitor_param_types decl) (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
       (bind rs ss
         (visit_types tys subjects)
         (let rec body scheme =
@@ -924,7 +927,7 @@ let visit_decl (decl : type_declaration) : expression =
           (hook true
             (failure_method tycon)
             (env :: xs)
-            (quantify decl (visitor_fun_type [ decl_type decl ] (decl_result_type decl)))
+            (quantify decl (visitor_fun_type [ decl_type decl ] (decl_type decl)))
             (efail (tycon_visitor_method (Lident tycon)))
           )
       in
