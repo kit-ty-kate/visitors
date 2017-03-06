@@ -16,26 +16,24 @@ OCAMLBUILD := \
   -use-ocamlfind \
   -classic-display \
 
-.PHONY: test bench mli processed clean
+.PHONY: test bench mli processed clean reinstall
 
-test:
-	@ make -C ../src reinstall
+test: reinstall
+	@ echo Re-compiling...
 	@ $(OCAMLBUILD) $(TARGETS)
-#	@ for i in $(TARGET) ; do echo "Running $$i..." && ./$$i ; done
 
-%.native: clean
-	@ echo Re-installing...
-	@ make -C ../src reinstall >/dev/null 2>/dev/null
+%.native: reinstall
 	@ echo Re-compiling...
 	@ $(OCAMLBUILD) $@
 
-bench:
-	@ make -C ../src reinstall
+bench: reinstall
+	@ echo Re-compiling...
 	@ $(OCAMLBUILD) bench.native
+	@ echo Running...
 	@ ./bench.native
 
-mli:
-	@ make -C ../src reinstall
+mli: reinstall
+	@ echo Re-compiling...
 	@ $(OCAMLBUILD) $(MLI)
 
 include ../src/Makefile.preprocess
@@ -46,3 +44,7 @@ clean:
 	@ rm -f *~
 	@ rm -f *.processed.ml
 	@ $(OCAMLBUILD) -clean
+
+reinstall:
+	@ echo Re-installing...
+	@ make -C ../src reinstall >/dev/null 2>/dev/null
