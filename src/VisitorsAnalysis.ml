@@ -250,17 +250,73 @@ and occurs_payload alpha = function
 
 (* -------------------------------------------------------------------------- *)
 
+(* An error message about an unsupported type. *)
+
+let unsupported ty =
+  let loc = ty.ptyp_loc in
+  raise_errorf ~loc
+    "%s: cannot deal with the type %s.\n\
+     Consider annotating it with [@opaque]."
+    plugin
+    (string_of_core_type ty)
+
+(* -------------------------------------------------------------------------- *)
+
+(* [at_opaque f ty] applies the function [f] to every [@opaque] component of
+   the type [ty]. *)
+
+let rec at_opaque (f : core_type -> unit) (ty : core_type) : unit =
+  match opacity ty.ptyp_attributes, ty.ptyp_desc with
+  | NonOpaque, Ptyp_any
+  | NonOpaque, Ptyp_var _ ->
+      ()
+  | NonOpaque, Ptyp_tuple tys
+  | NonOpaque, Ptyp_constr (_, tys) ->
+      List.iter (at_opaque f) tys
+  | Opaque, _ ->
+      f ty
+  | NonOpaque, Ptyp_arrow _
+  | NonOpaque, Ptyp_object _
+  | NonOpaque, Ptyp_class _
+  | NonOpaque, Ptyp_alias _
+  | NonOpaque, Ptyp_variant _
+  | NonOpaque, Ptyp_poly _
+  | NonOpaque, Ptyp_package _
+  | NonOpaque, Ptyp_extension _ ->
+      unsupported ty
+
+(* -------------------------------------------------------------------------- *)
+
+(* [check_poly_under_opaque alphas tys] checks that none of the type variables
+   [alphas] appears under [@opaque] in the types [tys]. *)
+
+let check_poly_under_opaque alphas tys =
+  List.iter (fun alpha ->
+    List.iter (fun ty ->
+      at_opaque (fun ty ->
+        try
+          occurs_type alpha ty
+        with Occurs loc ->
+          raise_errorf ~loc
+            "%s: a [polymorphic] type variable must not appear under @opaque."
+            plugin
+      ) ty
+    ) tys
+  ) alphas
+
+(* -------------------------------------------------------------------------- *)
+
 (* [subst_type sigma ty] applies [sigma], a substitution of types for type
    variables, to the type [ty].
 
    [rename_type rho ty] applies [rho], a renaming of type variables, to the
    type [ty]. *)
 
-(* We do not go down into [@opaque] types. We replace every opaque type with
-   a wildcard [_]. *)
-
-(* TEMPORARY this is too restrictive; we should replace an opaque type with
-   a fresh type variable *and* quantify this variable universally *)
+(* We do not go down into [@opaque] types. We replace every opaque type with a
+   wildcard [_]. Because we have checked that [poly] variables do not appear
+   under [@opaque], this is good enough: there is never a need for an
+   explicitly named/quantified type variable to describe an opaque
+   component. *)
 
 type substitution =
   tyvar -> core_type
@@ -288,12 +344,7 @@ let rec subst_type (sigma : substitution) (ty : core_type) : core_type =
   | NonOpaque, Ptyp_poly _
   | NonOpaque, Ptyp_package _
   | NonOpaque, Ptyp_extension _ ->
-      let loc = ty.ptyp_loc in
-      raise_errorf ~loc
-        "%s: cannot deal with the type %s.\n\
-         Consider annotating it with [@opaque]."
-        plugin
-        (string_of_core_type ty)
+      unsupported ty
 
 and subst_types sigma tys =
   List.map (subst_type sigma) tys
