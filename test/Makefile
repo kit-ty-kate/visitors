@@ -16,7 +16,7 @@ OCAMLBUILD := \
   -use-ocamlfind \
   -classic-display \
 
-.PHONY: test bench mli processed clean adhoc
+.PHONY: test bench mli processed clean
 
 test:
 	@ make -C ../src reinstall
@@ -46,6 +46,3 @@ clean:
 	@ rm -f *~
 	@ rm -f *.processed.ml
 	@ $(OCAMLBUILD) -clean
-
-adhoc: expr_info_polymorphic.native monopoly.native
-	@ make expr_info_polymorphic.processed.ml monopoly.processed.ml
