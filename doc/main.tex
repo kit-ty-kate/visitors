@@ -1570,11 +1570,15 @@ for instance, when arbitrary user code is inherited via the \ancestors
 parameter).
 
 The file \srcFile{Makefile.preprocess} offers a recipe that builds a file
-named \oc|%.processed.ml| out of the source file \oc|%.ml|. This file contains
+named \verb|%.processed.ml| out of the source file \verb|%.ml|. This file contains
 just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
 \oc|ocp-indent| to extract and beautify the code. This file is installed
 with the \visitors package; it can be found at the computed path
-\verb+`ocamlfind query visitors`/Makefile.preprocess+.
+\verb+`ocamlfind query visitors`/Makefile.preprocess+. In a \texttt{Makefile},
+use the following directive:
+\begin{verbatim}
+  include $(shell ocamlfind query visitors)/Makefile.preprocess
+\end{verbatim}
 
 % ------------------------------------------------------------------------------
 
