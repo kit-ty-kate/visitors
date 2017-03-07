@@ -281,7 +281,12 @@ their existence. Second, we have omitted the type constraint that bears on
 the type variable \oc|'self|, as it is in fact redundant: it is implicit in OCaml
 that the type of ``self'' must be an object type that lists the public methods.
 The bizarre-looking ``\oc|'monomorphic.|'' annotations indicate that the methods have
-monomorphic types; this trick is explained in \sref{sec:oo:monomorphic}.
+monomorphic types. (This notational trick is explained in \sref{sec:oo:monomorphic}.)
+This means that the type variable~\oc|'env| is not quantified at the level of each
+method\footnote{That would be undesirable, as it would force each method to
+treat the environment as an argument of unknown type!}, but at the level of the class.
+This means that the three methods must agree on the type of the environment, and
+that this type is presently undetermined, but can be determined in a subclass.
 
 The class type shown in \fref{fig:simplified} cannot be further simplified.
 The methods \tyconvisitor{EConst} and \tyconvisitor{EAdd} cannot be hidden, as
