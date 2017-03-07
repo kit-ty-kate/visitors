@@ -1506,6 +1506,11 @@ programming languages, but also in an object-oriented programming setting.
     concrete; otherwise, it is declared virtual.
     This is an optional parameter; its default value is \texttt{false}.
 \\
+  \data & (Boolean) &
+    If \texttt{true}, one visitor method is generated for every data constructor (\sref{sec:structure}).
+    If \texttt{false}, this method is not generated (it is inlined instead).
+    This is an optional parameter; its default value is \texttt{true}.
+\\
   \irregular & (Boolean) &
     If \texttt{true}, the regularity check (\sref{sec:regularity}) is disabled;
     otherwise, it is enabled.
@@ -1629,6 +1634,11 @@ The following \emph{concrete methods} are \emph{defined}:
         invoked:     & on the way down \\
         example:     & \fref{fig:expr00}
       \end{tabular}
+
+      If the parameter \data is \texttt{false}, then
+      this method is \emph{not} generated (\sref{sec:params}).
+      It is inlined instead. The behavior is the same, but cannot be overridden on
+      a per-data-constructor basis.
 
 \item if the visitor has arity two (\sref{sec:intro:aritytwo}),
       for every local type \oc|foo|,
