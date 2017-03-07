@@ -2,6 +2,10 @@
 
 TODO (REALLY)
 
+Check that the notion of irregular data type
+  and the regularity restriction
+  are explained in the right places.
+
 Document [polymorphic].
   Show expr_info_polymorphic.
   Show ['a seq] -- polymorphic recursion.
@@ -11,12 +15,12 @@ Document [polymorphic].
   Document that, in [polymorphic] mode, any methods inherited from ancestors should have the fully polymorphic expected type -- otherwise the generated code will be ill-typed.
     Can be illustrated with a hand-written visitor method for ['a opaque].
 
-Document [data].
-Document [nude].
-
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+In fully [polymorphic] mode, perhaps one could allow [@@deriving visitors]
+  to be used in an .mli file, producing class types.
 
 In [polymorphic] mode, we could annotate every invocation
   of an external visitor method with its expected (polymorphic) type,
