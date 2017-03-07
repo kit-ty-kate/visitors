@@ -1492,11 +1492,12 @@ programming languages, but also in an object-oriented programming setting.
 
 \begin{figure}[t]
 \renewcommand{\arraystretch}{1.5}
-\begin{tabular}{@{}r@{\qquad}l@{\qquad}p{.6\textwidth}@{}}
+\begin{tabular}{@{}r@{\qquad}l@{\qquad}p{.64\textwidth}@{}}
   \ancestors & (list of strings) &
     A list of classes that the generated class should inherit.
     This is an optional parameter; its default value is the empty list.
-    The class \runtime{<variety>} is implicitly prepended to this list.
+    The class \runtime{<variety>} is implicitly prepended to this list
+    unless \nude is \texttt{true}.
     Every ancestor class must have exactly \emph{one} type parameter,
     which is typically (but not necessarily) the type of ``self''.
 \\
@@ -1514,10 +1515,15 @@ programming languages, but also in an object-oriented programming setting.
     The name of the generated class.
     This is an optional parameter; its default value is \oc|<variety>|.
 \\
+  \nude & (Boolean) &
+    If \texttt{true}, the class \runtime{<variety>} is \emph{not} implicitly prepended to
+    the list \ancestors.
+    This is an optional parameter; its default value is \texttt{false}.
+\\
   \public & (list of strings) &
     This is an optional parameter.
-    If it is absent, then every method in the generated class is declared public.
-    If it is present, then every method in the generated class is declared
+    If absent, then every method in the generated class is declared public.
+    If present, then every method in the generated class is declared
     private, except those whose name appears in the list: those are declared public.
 \\
   \variety & (string) &
@@ -1527,10 +1533,12 @@ programming languages, but also in an object-oriented programming setting.
     \map (\sref{sec:intro:map}),
     \mapendo (\sref{sec:intro:endo}),
     \reduce (\sref{sec:intro:reduce}),
+    \mapreduce (\sref{sec:intro:mapreduce}),
     \fold (\sref{sec:intro:fold}),
     \itertwo,
     \maptwo,
     \reducetwo,
+    \mapreducetwo,
     \foldtwo (\sref{sec:intro:aritytwo}).
 \\
 \end{tabular}
@@ -1582,8 +1590,10 @@ The generated code consists of \emph{a single class}, whose name is \oc|<variety
 that is, the value of the \variety parameter (\sref{sec:params}). This class
 has \emph{one type parameter}, namely \oc|'self|, the type of ``self''
 (\sref{sec:oo:self}). It has no fields. It \emph{inherits} from the class
-\runtime{<variety>} (see \srcFile{VisitorsRuntime.ml}) and from the classes
-listed via the \ancestors parameter (\sref{sec:params}), in that order.
+\runtime{<variety>} (unless the parameter \nude is \texttt{true}, \sref{sec:params})
+and from the classes listed via the \ancestors parameter (\sref{sec:params}),
+in that order. To find out which methods exist in the class
+\runtime{<variety>}, please consult \srcFile{VisitorsRuntime.ml}.
 
 In the following, the index~\oc|i| ranges from 0 (included) to \oc|<arity>|
 (excluded), where \oc|<arity>| is the arity of the generated visitor (thus,
