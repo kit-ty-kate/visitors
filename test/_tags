@@ -1,3 +1,6 @@
+# Declare that the build directories should not be traversed.
+<_build*>: -traverse
+
 true: \
   debug, \
   safe_string, \

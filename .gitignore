@@ -3,7 +3,7 @@
 
 # Compilation:
 *.native
-_build
+_build*
 *.processed.ml
 
 # MacOS:
