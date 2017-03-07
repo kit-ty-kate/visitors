@@ -43,7 +43,7 @@
   partant. \\ --- \textit{Jean de La Bruyère}
 \end{flushright}
 
-\vspace{1cm}
+\vspace{8mm}
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -71,7 +71,9 @@ another data structure: typically, a copy of its argument that has been
 transformed in some way. An \mapendo visitor is a variant of a \map visitor
 that preserves physical sharing when possible. A \reduce visitor traverses a
 data structure and returns a value that somehow summarizes it: computing the
-size of a data structure is a typical example. All of these can be viewed as
+size of a data structure is a typical example. A \mapreduce visitor performs
+the tasks of a \map visitor and a \reduce visitor at the same time,
+possibly allowing symbiosis between them. All of these can be viewed as
 special cases of the \fold visitor, which performs a bottom-up computation
 over a data structure. The class \fold is equipped with virtual methods
 % (the ``\tyconascendingmethod{}'' methods)
@@ -82,7 +84,7 @@ Visitors also come in several arities. The visitors mentioned above have arity
 one: they traverse one data structure. However, it is sometimes necessary to
 simultaneously traverse two data structures of identical shape. For this
 purpose, there are visitors of arity two: here, they are known as \itertwo,
-\maptwo, \reducetwo, and \foldtwo visitors.
+\maptwo, \reducetwo, \mapreducetwo, and \foldtwo visitors.
 
 % \mapendotwo does not exist.
 
