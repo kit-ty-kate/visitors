@@ -922,8 +922,8 @@ because the type \oc|oexpr| is parameterized over the type variable
 A closed (recursive) type of expressions, \oc|expr|, can then be defined in
 terms of \oc|expr|. This is done in \fref{fig:expr13}. In type-theoretical
 terms, one would like to define \oc|expr| as the fixed point of the functor
-\oc|oexpr|.
-% TEMPORARY citation; demander à Pierre-Évariste
+\oc|oexpr|~\cite{milewski-13}.
+%
 That is, roughly speaking, one would like to define \oc|type expr = expr oexpr|.
 This is not accepted by OCaml, though;%
 %
