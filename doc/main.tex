@@ -242,8 +242,8 @@ class and omit its type. There are two reasons for this. First, this type is
 often verbose, as the class has many methods, and complex, as several type
 variables are often involved. Second, although we can explain the type of a
 generated visitor on a case-by-case basis, we cannot in the general case
-predict the type of a generated visitor (or even predict whether it is
-well-typed). The reason is, the type of a generated visitor depends upon the
+predict the type of a generated visitor.
+The reason is, the type of a generated visitor depends upon the
 types of the classes that are inherited via the \ancestors parameter
 (\sref{sec:ancestors}). Because a \texttt{ppx} syntax extension transforms
 untyped syntax trees to untyped syntax trees, the \visitors syntax extension
@@ -294,6 +294,12 @@ they are public. That said, if one wished to hide them, one could add the parame
 \oc|public = ["visit_expr"]| to the annotation \derivingvisitors in \fref{fig:expr00}.
 These two methods would then be declared private in the generated code,
 so it would be permitted to hide their existence.
+
+Although we have claimed earlier that one cannot in the general case predict
+the type of a generated visitor method, or even predict whether a generated
+method will be well-typed, it is possible to define a convention which in many
+cases can be adhered to. This convention is presented later on
+(\sref{sec:intro:parameterized:poly}).
 
 % ------------------------------------------------------------------------------
 
@@ -350,18 +356,18 @@ block, and if so, re-uses the original block instead.
 % at least in the case of a dictionary insertion operation,
 % where Gérard would raise an exception so as to go back to
 % the toplevel and avoid re-allocating a path.
-
+%
 This trick allows saving memory: for instance, when a performing a
 substitution operation on a term, the subterms that are unaffected
 by the substitution are not copied.
 
 One potential disadvantage of \mapendo visitors, in comparison with \map
-visitors, is that these runtime tests have a runtime cost. Another
+visitors, is that these runtime tests have a runtime cost. A more serious
 disadvantage is that \mapendo visitors have less general types: in an \mapendo
 visitor, the argument type and return type of every method must coincide,
-whence the name ``\mapendo''.%
+whence the name ``\mapendo''.
 %
-\footnote{An endomorphism is a function of a set into itself.}
+(An endomorphism is a function of a set into itself.)
 %
 \map visitors are not subject to this restriction: for an illustration, see
 \sref{sec:advanced:hashconsed} and \fref{fig:expr14}.
@@ -477,7 +483,7 @@ corresponding new subtree. As an example, \fref{fig:expr_info_mapreduce_use}
 shows how to transform an arithmetic expression into an arithmetic expression
 where every subexpression is annotated with its size. (This example uses a
 parameterized type of decorated expressions, which is explained in
-\sref{sec:intro:parameterized}. We suggest reading the explanations there
+\sref{sec:intro:parameterized:mono}. We suggest reading the explanations there
 first.) The transformation is carried out in one pass and in linear time. As
 in \fref{fig:reduce}, we use the addition monoid to compute integer sizes.
 This time, however, the visitor methods return not just a size, but a pair of
@@ -700,6 +706,102 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 
 % ------------------------------------------------------------------------------
 
+\subsection{Visitors for parameterized types}
+\label{sec:intro:parameterized}
+
+% ------------------------------------------------------------------------------
+
+Visitors can be generated for parameterized types, too. However, there are two
+ways in which this can be done. Here is why.
+
+To visit a data type where some type variable~\oc|'a| occurs, one must know
+how to visit a value of type~\oc|'a|.
+%
+% That is not quite true, in reality: perhaps there is no component of
+% type~\oc|'a|, perhaps because \oc|'a| is a phantom type parameter or a GADT index,
+% or perhaps because \oc|'a| occurs only under a type constructor that performs
+% special treatment and does not recursively descend its own components.
+%
+There are two ways in which this information can be provided. One way is to
+assume that there is a \emph{virtual visitor method} \oc|visit_'a| in charge
+of visiting a value of type~\oc|'a|. Another way is to pass a \emph{visitor
+  function} \oc|visit_'a| as an argument to every visitor method.
+
+% J'allais écrire que dans un cadre non typé, ces deux approches ont la
+% même expressivité. Mais c'est faux: seule la seconde approche permet
+% de gérer les types de données non réguliers (qui existent aussi dans
+% un cadre non typé, même s'ils ne sont pas explicitement décrits par
+% une déclaration).
+
+These two approaches differ in their expressive power. The
+virtual-visitor-method approach implies that the visitor methods must have
+monomorphic types: roughly speaking, the type variable~\oc|'a|
+% (or variants of it)
+appears free in the type of every visitor method.
+The visitor-function approach implies that the visitor methods can have
+polymorphic types: roughly speaking, each method independently
+can be polymorphic in \oc|'a|.
+For this reason, we refer to these two approaches as the \emph{monomorphic}
+approach and the \emph{polymorphic} approach, respectively.
+
+The monomorphic approach offers the advantage that the type of every method is
+inferred by OCaml. Indeed, in this mode, the generated code need not contain
+any type annotations. This allows correct, most general (monomorphic) types to
+be obtained even in the case where certain hand-written visitor methods
+(provided via the \ancestors parameter) have surprising types.
+%
+% The downside of this approach is that it does not allow taking several
+% distinct instances of a parameterized type. In particular, it is restricted
+% to regular algebraic data types (\sref{sec:regularity}).
+
+The polymorphic approach offers the advantage that visitor methods can receive
+polymorphic types. If the type \oc|container| is parameterized with a type
+variable~\oc|'a|, then the method \tyconvisitor{container} can be assigned a
+type that is universally quantified in~\oc|'a|, of the following form:
+%
+\begin{mdframed}[backgroundcolor=green!10]
+\begin{lstlisting}
+method visit_container:
+  'env 'a .
+  ('env -> 'a -> ...) ->
+  'env -> 'a container -> ...
+\end{lstlisting}
+\end{mdframed}
+%
+The type of \tyconvisitor{list}, shown later on (\sref{sec:intro:nonlocal}), % TEMPORARY check forward pointer
+follows this pattern.
+%
+Because \tyconvisitor{container} is polymorphic, taking multiple instances of
+the type \oc|container|, such as \oc|apple| \oc|container| and \oc|orange|
+\oc|container|, and attempting to generate visitor methods for these types,
+poses no difficulty. This works even if the definition of \oc|'a container|
+mentions other instances of this type, such as \oc|('a * 'a)| \oc|container|.
+In other words, in the polymorphic approach, irregular algebraic data types
+are supported.
+
+One downside of the polymorphic approach is that, because polymorphic types
+cannot be inferred by OCaml, the \visitors syntax extension must generate
+polymorphic type annotations. Therefore, it must be able to predict, ahead of
+time, the type of every visitor method.
+%
+% Actually, not the full type, but at least the polymorphic skeleton.
+%
+This requires that any visitor methods inherited via \ancestors adhere to a
+certain convention.
+
+In summary, both the monomorphic approach and the polymorphic approach are
+currently supported (\sref{sec:intro:parameterized:mono},
+\sref{sec:intro:parameterized:poly}). The parameter \polymorphic allows
+choosing between them. It is even possible to choose, for each type parameter,
+which way it should be handled (\sref{sec:intro:parameterized:fine}). As a
+rule of thumb, we suggest setting \oc|polymorphic = true|, as this produces
+visitors that compose more easily. Yet, there are sometimes strong reasons
+to choose the monomorphic approach, too.
+% TEMPORARY donner un exemple;
+% le type des expressions ouvertes en est-il un? je pense que oui, à vérifier.
+
+% ------------------------------------------------------------------------------
+
 \begin{figure}[p]
 \orig{expr_info}
 \vspace{-\baselineskip}
@@ -715,14 +817,9 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 \label{fig:expr_info_use}
 \end{figure}
 
-\subsection{Visitors for parameterized types}
-\label{sec:intro:parameterized}
+\subsection{Monomorphic visitor methods for parameterized types}
+\label{sec:intro:parameterized:mono}
 
-Visitors can be generated for parameterized types, too.%
-%
-\footnote{Technically, we impose a restriction to regular types; see
-  \S\ref{sec:regularity}.}
-%
 In \fref{fig:expr_info}, for instance, we define a variant of arithmetic
 expressions where every tree node is decorated with a value of type
 \oc|'info|. We request the generation of a \map visitor, whose code is shown
@@ -767,6 +864,13 @@ decorates each node in an arithmetic expression with a unique integer number.%
 
 % ------------------------------------------------------------------------------
 
+\subsection{Polymorphic visitor methods for parameterized types}
+\label{sec:intro:parameterized:poly}
+
+\label{sec:intro:parameterized:fine} % TEMPORARY
+
+% ------------------------------------------------------------------------------
+
 \begin{figure}[t]
 \orig{expr11}
 \vspace{-\baselineskip}
@@ -774,6 +878,8 @@ decorates each node in an arithmetic expression with a unique integer number.%
 \caption{Dealing with preexisting (parameterized) types, such as \oc|int| and \oc|list|}
 \label{fig:expr11}
 \end{figure}
+
+% TEMPORARY show and explain the type of visit_list
 
 \subsection{Dealing with references to preexisting types}
 \label{sec:intro:nonlocal}
@@ -922,7 +1028,7 @@ over a type variable~\oc|'expr|. It is not recursive: an expression of type
 \fref{fig:expr12}. Naturally, we may request the generation of visitors for
 the type \oc|oexpr|. In \fref{fig:expr12}, we generate a class of \map
 visitors, which we name \oc|omap|. (This is an example of using an explicit
-\name parameter.) As explained earlier (\sref{sec:intro:parameterized}),
+\name parameter.) As explained earlier (\sref{sec:intro:parameterized:mono}),
 because the type \oc|oexpr| is parameterized over the type variable
 \oc|'expr|, the visitor class has a virtual method, \tyconvisitor{'expr}.
 
