@@ -748,7 +748,7 @@ The monomorphic approach offers the advantage that the type of every method is
 inferred by OCaml. Indeed, in this mode, the generated code need not contain
 any type annotations. This allows correct, most general (monomorphic) types to
 be obtained even in the case where certain hand-written visitor methods
-(provided via the \ancestors parameter) have surprising types.
+(provided via the \ancestors parameter) have unconventional types.
 %
 % The downside of this approach is that it does not allow taking several
 % distinct instances of a parameterized type. In particular, it is restricted
@@ -768,8 +768,8 @@ method visit_container:
 \end{lstlisting}
 \end{mdframed}
 %
-The type of \tyconvisitor{list}, shown later on (\sref{sec:intro:nonlocal}), % TEMPORARY check forward pointer
-follows this pattern.
+The types of the \tyconvisitor{list} methods, shown later on
+(\sref{sec:intro:nonlocal}, \fref{fig:convention}), follow this pattern.
 %
 Because \tyconvisitor{container} is polymorphic, taking multiple instances of
 the type \oc|container|, such as \oc|apple| \oc|container| and \oc|orange|
@@ -777,13 +777,12 @@ the type \oc|container|, such as \oc|apple| \oc|container| and \oc|orange|
 poses no difficulty. This works even if the definition of \oc|'a container|
 mentions other instances of this type, such as \oc|('a * 'a)| \oc|container|.
 In other words, in the polymorphic approach, irregular algebraic data types
-are supported.
-% TEMPORARY forward pointer to example
+(\sref{sec:regularity}) are supported.
 
 One downside of the polymorphic approach is that, because polymorphic types
 cannot be inferred by OCaml, the \visitors syntax extension must generate
-polymorphic type annotations. Therefore, it must be able to predict, ahead of
-time, the type of every visitor method.
+polymorphic type annotations. Therefore, it must be able to predict
+the type of every visitor method.
 %
 % Actually, not the full type, but at least the polymorphic skeleton.
 %
@@ -793,13 +792,18 @@ certain convention (\refconvention).
 In summary, both the monomorphic approach and the polymorphic approach are
 currently supported (\sref{sec:intro:parameterized:mono},
 \sref{sec:intro:parameterized:poly}). The parameter \polymorphic allows
-choosing between them. It is even possible to choose, for each type parameter,
-which way it should be handled (\sref{sec:intro:parameterized:fine}). As a
-rule of thumb, we suggest setting \oc|polymorphic = true|, as this produces
-visitors that compose more easily. Yet, there are sometimes strong reasons
-to choose the monomorphic approach, too.
-% TEMPORARY donner un exemple;
-% le type des expressions ouvertes en est-il un? je pense que oui, à vérifier.
+choosing between them. As a rule of thumb, we suggest setting
+%
+\oc|polymorphic = true|, as this produces visitors that compose better.
+
+% TEMPORARY give an explanation why monomorphic mode can be useful?
+
+% In my ICFP paper, I believe monomorphic mode is necessary to deal with ['bn]
+% and ['env]. Indeed, we cannot expect [visit_abs] to be polymorphic in ['bn]
+% and ['env], as it needs to be told how to [extend] an environment with a
+% bound name.
+
+% Other examples?
 
 % ------------------------------------------------------------------------------
 
@@ -889,7 +893,10 @@ decorates each node in an arithmetic expression with a unique integer number.%
 
 We continue with an example of the \emph{polymorphic} mode. This mode can be
 explicitly requested by writing \oc|polymorphic = true| as part of the
-\derivingvisitors annotation.
+\derivingvisitors annotation. It is available for all varieties of visitors
+except \fold and \foldtwo. The reason why it seems difficult to come up with
+a satisfactory polymorphic type for \fold visitor methods is explained later
+on (\sref{sec:map_from_fold}).
 
 In \fref{fig:expr_info_polymorphic}, we again have arithmetic expressions
 where every tree node is decorated with a value of type \oc|'info|. We again
@@ -955,9 +962,8 @@ type is not as polymorphic as required by the above convention.
 
 %%
 
-% TEMPORARY document that irregular data types are supported
-
-% TEMPORARY might wish to document that \oc|'s| and \oc|'env| are reserved.
+% We might wish to document that the type variable names \oc|'s| and \oc|'env|
+% are reserved.
 
 % ------------------------------------------------------------------------------
 
@@ -1171,6 +1177,10 @@ visitors, which we name \oc|omap|. (This is an example of using an explicit
 \name parameter.) As explained earlier (\sref{sec:intro:parameterized:mono}),
 because the type \oc|oexpr| is parameterized over the type variable
 \oc|'expr|, the visitor class has a virtual method, \tyconvisitor{'expr}.
+%
+In this example, we use the monomorphic mode (\sref{sec:intro:parameterized:mono}),
+but could just as well use the polymorphic mode (\sref{sec:intro:parameterized:poly}):
+this is left as an exercise for the reader.
 
 A closed (recursive) type of expressions, \oc|expr|, can then be defined in
 terms of \oc|expr|. This is done in \fref{fig:expr13}. In type-theoretical
@@ -1198,11 +1208,11 @@ whose single data constructor is named~\oc|E|.%
 Let us now construct a visitor class for the type \oc|expr|. It is easy to
 do so, by hand, in a few lines of code.%
 %
-\footnote{We could request the generation of a visitor class via a
-  \oc|[@@deriving]| annotation. However, the type \oc|oexpr| would then be
-  viewed as nonlocal; therefore, in the generated code, the method
-  \tyconvisitor{oexpr} would be applied to \oc|self#visit_expr|, a
-  parameter which it does not expect.}
+% \footnote{We could request the generation of a visitor class via a
+%   \oc|[@@deriving]| annotation. However, the type \oc|oexpr| would then be
+%   viewed as nonlocal; therefore, in the generated code, the method
+%   \tyconvisitor{oexpr} would be applied to \oc|self#visit_expr|, a
+%   parameter which it does not expect.}
 %
 % Also, we would have to inherit from \oc|omap|, but that would cause us
 % to inherit twice from \runtime{map}, causing warnings.
@@ -1579,11 +1589,17 @@ oranges.
 \lstinputlisting{polyclass.ml}
 \end{origenv}
 This (well-known) property of classes is exploited in the \visitors package.
-Though every generated visitor method is monomorphic, the visitor classes are
+Although (in monomorphic mode, \sref{sec:intro:parameterized:mono}) every
+generated visitor method is monomorphic, the visitor classes are
 polymorphic, so (distinct) visitor objects can be used at many different
 types.
 
 % ------------------------------------------------------------------------------
+
+% This subsection is mostly obsolete now that we have [polymorphic] mode,
+% so I am removing it.
+
+\begin{comment}
 
 \subsection{Customization from above and from below}
 
@@ -1611,7 +1627,7 @@ class. The asymmetry between hand-written methods (which may be polymorphic)
 and generated methods (which must be monomorphic) is admittedly unfortunate,
 but this is the best that we offer, at present.
 
-% This treatment of polymorphism leads to a lack of compositionality.
+\end{comment}
 
 % ------------------------------------------------------------------------------
 
@@ -1745,7 +1761,7 @@ programming languages, but also in an object-oriented programming setting.
 
 \begin{figure}[p]
 \renewcommand{\arraystretch}{1.5}
-\begin{tabular}{@{}r@{\qquad}l@{\qquad}p{.64\textwidth}@{}}
+\begin{tabular}{@{}r@{\qquad}l@{\quad}p{.64\textwidth}@{}}
   \ancestors & (list of strings) &
     A list of classes that the generated class should inherit.
     This is an optional parameter; its default value is the empty list.
@@ -1873,21 +1889,25 @@ either 1 or 2).
 The following \emph{concrete methods} are \emph{defined}:
 %
 \begin{itemize}
-\item for every local type \oc|foo|, a visitor method.
+\item for every local type \oc|??? foo|, a visitor method.
 
       \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconvisitor{foo} \\
-        arguments:   & \oc|env|    & an environment of type \oc|'env| \\
+        arguments:   & \tyconvisitor{'a}, \ldots & a visitor function for each type param.\ of \oc|foo| \\
+                     &                           & (only if \oc|polymorphic = true|) \\
+                     & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
         invoked:     & on the way down \\
         example:     & \fref{fig:expr00}
       \end{tabular}
 
-\item for every data constructor \oc|Foo| of a local sum type \oc|foo|, a visitor method.
+\item for every data constructor \oc|Foo| of a local sum type \oc|??? foo|, a visitor method.
 
       \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \dataconvisitor{Foo} \\
-        arguments:   & \oc|env|         & an environment of type \oc|'env| \\
+        arguments:   & \tyconvisitor{'a}, \ldots & a visitor function for each type param.\ of \oc|foo| \\
+                     &                           & (only if \oc|polymorphic = true|) \\
+                     & \oc|env|         & an environment of type \oc|'env| \\
                      & \oc|this|        & a data structure of type \oc|??? foo| \\
                      &                  & (only in an \mapendo visitor) \\
                      & \oc|c0_0|, \oc|c0_1|, \ldots & for each \oc|i|, the first component of a \oc|Foo| value \\
@@ -1921,7 +1941,7 @@ The following \emph{virtual methods} are \emph{declared}:
 %
 \begin{itemize}
 \item for every type parameter \oc|'foo| of a local type,
-      a visitor method.
+      a visitor method. (Only if \oc|polymorphic = true|.)
 
       \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconvisitor{'foo} \\
@@ -1980,16 +2000,17 @@ The following \emph{virtual methods} are \emph{declared}:
 \end{itemize}
 
 The following methods are \emph{called}, therefore are expected to exist.
-These methods are neither defined nor declared: they must be inherited from a
-parent class. These methods can have a polymorphic type.
+These methods are neither defined nor declared: their definition or
+declaration must be inherited from a parent class. These methods can have a
+polymorphic type.
 %
 \begin{itemize}
-\item for every nonlocal type \oc|foo|, a visitor method.
+\item for every nonlocal type \oc|??? foo|, a visitor method.
 
       \begin{tabular}{@{\qquad}rp{35mm}@{\quad}p{7cm}}
         method name: & \tyconvisitor{foo} \\
-        arguments:   & \oc|f_0|, \oc|f_1|, \ldots & for each type parameter of \oc|foo|, \\
-                     &                            & a visitor function for this type \\
+        arguments:   & \oc|visit_0|, \ldots & for each actual type parameter in \oc|??? foo|, \\
+                     &                      & a visitor function for this type \\
                      & \oc|env|    & an environment of type \oc|'env| \\
                      & \oc|this_0|, \oc|this_1|, \ldots & for each \oc|i|, a value of type \oc|??? foo| \\
         invoked:     & on the way down \\
@@ -2002,8 +2023,11 @@ All of the above methods are parameterized with an environment \oc|env|, which
 is propagated in a top-down manner, that is, into the recursive calls. The
 environment is not returned out of the recursive calls, therefore not
 propagated bottom-up or left-to-right. The type of this environment is
-undetermined: it is a type variable \oc|'env|.
+undetermined: it is a type variable.
 % (which is implicitly related with \oc|'self|)
+There is no a priori constraint that the type of the environment should be
+the same in every method: it is possible for unrelated visitor methods to
+expect environments of unrelated types.
 
 The result types of the visitor methods, build methods, and failure methods
 depend on the parameter \variety (\sref{sec:params}). In an \iter visitor,
@@ -2015,12 +2039,12 @@ which can be a parameterized type. In a \map visitor, the type parameters that
 appear in the method's argument type and in the method's result type can differ.
 In an \mapendo visitor, they must be the same.}
 %
-In a \reduce visitor, every method has result type \oc|'z|, if \oc|'z| is the
-monoid, that is, if the methods \oc|zero| and \oc|plus| respectively have type \oc|'z|
-and \oc|'z -> 'z -> 'z|.
+In a \reduce visitor, every method has result type \oc|'s|, if \oc|'s| is the
+monoid, that is, if the methods \oc|zero| and \oc|plus| respectively have type \oc|'s|
+and \oc|'s -> 's -> 's|.
 %
 In a \mapreduce visitor, the visitor method associated with the type \oc|foo|
-has result type \oc|??? foo * 'z|, if \oc|'z| is the monoid.
+has result type \oc|??? foo * 's|, if \oc|'s| is the monoid.
 %
 In a \fold visitor, it is up to the user to decide what the result types of
 the visitor methods should be (subject to certain consistency constraints,
@@ -2046,10 +2070,15 @@ Definitions of abstract types and of extensible sum types are not supported.
 \label{sec:regularity}
 % The regularity restriction.
 
-Definitions of \emph{parameterized types} are supported. However, only
-\emph{regular} parameterized types are supported. A parameterized type is
-regular if, within its own definition, it is applied only to its formal
-parameters. For instance, the well-known definition of lists is regular:
+Definitions of \emph{parameterized types} are supported. In monomorphic mode
+(\sref{sec:intro:parameterized:mono}), only \emph{\hbox{regular}}
+parameterized types are permitted, whereas in polymorphic mode
+(\sref{sec:intro:parameterized:poly}), arbitrary parameterized types are
+permitted.
+%
+A parameterized type is regular if, within its own definition, it is applied
+only to its formal parameters. For instance, the well-known definition of
+lists is regular:
 
 \begin{origenv}
 \begin{lstlisting}
@@ -2074,18 +2103,21 @@ type 'a seq =
 Irregular data types are also known as
 ``nonuniform''~\cite[\S10.1]{okasaki-book-99} or ``nested'' data
 types~\cite{bird-meertens-98}.
-%
-The reason why the \visitors package enforces a regularity restriction is that
-(in most cases) attempting to generate a visitor for an irregular data type
-would produce ill-typed code. Indeed, proper support for irregular data types
-would require the visitor methods to be polymorphic; unfortunately, at
-present, only monomorphic methods can be generated.
-%
-The regularity check performed by the \visitors package can be disabled via
-the \irregular parameter (\sref{sec:params}).
 
-For analogous reasons, generalized algebraic data types (GADTs) are not
-supported either.
+% The regularity check performed by the \visitors package in monomorphic mode
+% can be disabled via the \irregular parameter (\sref{sec:params}).
+
+Existential types and generalized algebraic data types (GADTs) are currently
+not supported.
+
+% Visiting an existential type seems problematic anyway, since we do not know
+% how to descend into a value of unknkown type. Perhaps we could generate a
+% default visitor method which treats the value as opaque, and allow the user
+% to override this behavior if desired.
+
+% Visiting a GADT seems possible if the type parameters are used purely as
+% indices (i.e., they are phantom parameters). In that case, we actually do
+% not need visitor functions for the type parameters.
 
 In the right-hand side of a type definition, the following forms of types are
 supported:
@@ -2122,7 +2154,7 @@ behavior of a \fold visitor at a tuple type is to rebuild a tuple, just like a
 
 % ------------------------------------------------------------------------------
 
-\subsection{Treating a subterm as opaque}
+\subsection{Opaque components}
 \label{sec:opaque}
 
 One sometimes wishes for a component of a data structure \emph{not} to be
@@ -2146,7 +2178,8 @@ visitors follow an arbitrary convention at \oc|@opaque| components: they
 return the first of their two arguments. Again, it is up to the user to decide
 whether this behavior is appropriate.
 
-% TEMPORARY recall that a polymorphic type variable cannot occur under opaque
+In \polymorphic mode (\sref{sec:intro:parameterized:poly}), a type variable
+must not occur under an \oc|[@opaque]| annotation.
 
 % ------------------------------------------------------------------------------
 
