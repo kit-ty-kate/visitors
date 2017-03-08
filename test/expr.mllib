@@ -32,5 +32,7 @@ expr_info_mapreduce
 expr_info_mapreduce_test
 expr_info_mapreduce_use
 expr_info_polymorphic
+expr_info_polymorphic_use
+expr_info_polymorphic_use_test
 expr_info_use
 expr_redef
