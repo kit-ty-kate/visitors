@@ -989,16 +989,6 @@ end
 
 (* -------------------------------------------------------------------------- *)
 
-(* [fold2] *)
-
-class ['self] fold2 = object (_self)
-
-  (* See the comment in the class [fold] above. *)
-
-end
-
-(* -------------------------------------------------------------------------- *)
-
 (* [mapreduce2] *)
 
 class virtual ['self] mapreduce2 = object (self)
@@ -1118,5 +1108,15 @@ class virtual ['self] mapreduce2 = object (self)
   method private visit_unit: 'env .
     'env -> unit -> unit -> unit * 's
   = fun _ () () -> (), self#zero
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+(* [fold2] *)
+
+class ['self] fold2 = object (_self)
+
+  (* See the comment in the class [fold] above. *)
 
 end
