@@ -36,3 +36,5 @@ expr_info_polymorphic_use
 expr_info_polymorphic_use_test
 expr_info_use
 expr_redef
+hexpr_polymorphic
+oexpr_polymorphic

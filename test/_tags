@@ -7,7 +7,7 @@ true: \
   package(visitors.ppx), \
   package(visitors.runtime)
 
-<expr07*> or <expr08*> or <expr14*>: \
+<expr07*> or <expr08*> or <expr14*> or <hexpr_polymorphic*>: \
   package(hashcons)
 
 <bench.*>: \
