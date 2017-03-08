@@ -53,6 +53,7 @@ Then, one should also have the ability of parameterizing
 This could be used to define visit_hash_consed once and for all,
   in a clean way, as a base class that could be inherited,
   taking the memoization table as an argument.
+  See hexpr_polymorphic.ml.
 
 In [fold],
   the build_ methods could take not only the results of the recursive calls,
