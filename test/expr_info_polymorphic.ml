@@ -5,5 +5,5 @@ type 'info expr_node =
 and 'info expr =
   { info: 'info; node: 'info expr_node }
 
-[@@deriving visitors
-  { variety = "map"; polymorphic = true; data = false }]
+[@@deriving visitors { variety = "map"; polymorphic = true;
+                       concrete = true; data = false }]
