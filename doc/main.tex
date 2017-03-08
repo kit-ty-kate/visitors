@@ -778,6 +778,7 @@ poses no difficulty. This works even if the definition of \oc|'a container|
 mentions other instances of this type, such as \oc|('a * 'a)| \oc|container|.
 In other words, in the polymorphic approach, irregular algebraic data types
 are supported.
+% TEMPORARY forward pointer to example
 
 One downside of the polymorphic approach is that, because polymorphic types
 cannot be inferred by OCaml, the \visitors syntax extension must generate
@@ -806,7 +807,7 @@ to choose the monomorphic approach, too.
 \orig{expr_info}
 \vspace{-\baselineskip}
 \processed{expr_info}
-\caption{A visitor for a parameterized type of decorated expressions}
+\caption{A ``monomorphic-method'' visitor for a parameterized type of decorated expressions}
 \label{fig:expr_info}
 \end{figure}
 
@@ -820,7 +821,11 @@ to choose the monomorphic approach, too.
 \subsection{Monomorphic visitor methods for parameterized types}
 \label{sec:intro:parameterized:mono}
 
-In \fref{fig:expr_info}, for instance, we define a variant of arithmetic
+We begin with an example of the \emph{monomorphic} mode. This mode can be
+explicitly requested by writing \oc|polymorphic = false| as part of the
+\derivingvisitors annotation. It is the default mode.
+
+In \fref{fig:expr_info}, we define a variant of arithmetic
 expressions where every tree node is decorated with a value of type
 \oc|'info|. We request the generation of a \map visitor, whose code is shown
 in the second part of \fref{fig:expr_info}. The generated code has exactly the
@@ -866,6 +871,23 @@ decorates each node in an arithmetic expression with a unique integer number.%
 
 \subsection{Polymorphic visitor methods for parameterized types}
 \label{sec:intro:parameterized:poly}
+
+\begin{figure}[p]
+\orig{expr_info_polymorphic}
+\vspace{-\baselineskip}
+\processed{expr_info_polymorphic}
+\caption{A ``polymorphic-method'' visitor for a parameterized type of decorated expressions}
+\label{fig:expr_info_polymorphic}
+\end{figure}
+
+\begin{figure}[p]
+\codefollowup{expr_info_polymorphic}
+\origfirstline{expr_info_polymorphic_use}{3}
+\caption{Working with different types of decorations}
+\label{fig:expr_info_polymorphic_use}
+\end{figure}
+
+% ------------------------------------------------------------------------------
 
 \label{sec:intro:parameterized:fine} % TEMPORARY
 
