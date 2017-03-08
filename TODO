@@ -7,11 +7,7 @@ Check that the notion of irregular data type
   are explained in the right places.
 
 Document [polymorphic].
-  Show expr_info_polymorphic.
   Show ['a seq] -- polymorphic recursion.
-  Document that 's and 'env are reserved.
-  Document that one can control whether the methods should be polymorphic in 'env.
-  Document that a [poly] variable under @opaque is forbidden.
   Document that, in [polymorphic] mode, any methods inherited from ancestors should have the fully polymorphic expected type -- otherwise the generated code will be ill-typed.
     Can be illustrated with a hand-written visitor method for ['a opaque].
 
