@@ -427,6 +427,13 @@ end
 
 (* [reduce] *)
 
+(* For arrays and lists, we use [fold_left] instead of a natural (bottom-up)
+   fold. The order in which the elements are traversed is the same either way
+   (namely, left-to-right) but the manner in which the [plus] operations are
+   associated is not the same, so the [plus] operator should be associative.
+
+   We could go back to a natural fold, but we would lose tail recursion. *)
+
 class virtual ['self] reduce = object (self : 'self)
 
   inherit ['s] monoid
