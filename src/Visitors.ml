@@ -307,6 +307,28 @@ let ty_env =
   else
     ty_any
 
+(* What is the type of a virtual visitor method [visit_'a] in charge of
+   dealing with a [mono] type variable ['a]?
+
+   One might think that it must be a monomorphic type, so we can just
+   issue a wildcard [_] and let OCaml infer this type.
+
+   Yet, if the user has requested that every method be polymorphic in
+   the type ['env] of the environment, then [visit_'a], too must be
+   polymorphic in ['env]. (Otherwise, the generated code would be ill-typed.)
+   In that case, we must generate ['env . 'env -> _].
+
+   This implies that [visit_'a] cannot use the environment.
+   So, it seems somewhat doubtful that this feature is useful.
+   Perhaps we could allow the environment to consist of two components
+   and to quantify universally over only one of them? *)
+
+let tyvar_visitor_method_type =
+  if X.poly "env" then
+    Typ.poly ["env"] (ty_arrow ty_env ty_any)
+  else
+    ty_any
+
 (* -------------------------------------------------------------------------- *)
 
 (* Construction of type annotations. *)
@@ -652,8 +674,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
       if X.poly alpha then
         evar (tyvar_visitor_function alpha)
       else
-        (* The virtual visitor method has monomorphic type. OCaml infers it. *)
-        vhook (tyvar_visitor_method alpha) [] ty_any
+        vhook (tyvar_visitor_method alpha) [] tyvar_visitor_method_type
 
   (* A tuple type. We handle the case where [env_in_scope] is true, as it
      is easier. *)
