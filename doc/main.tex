@@ -299,7 +299,7 @@ Although we have claimed earlier that one cannot in the general case predict
 the type of a generated visitor method, or even predict whether a generated
 method will be well-typed, it is possible to define a convention which in many
 cases can be adhered to. This convention is presented later on
-(\sref{sec:intro:parameterized:poly}).
+(\refconvention).
 
 % ------------------------------------------------------------------------------
 
@@ -788,7 +788,7 @@ time, the type of every visitor method.
 % Actually, not the full type, but at least the polymorphic skeleton.
 %
 This requires that any visitor methods inherited via \ancestors adhere to a
-certain convention.
+certain convention (\refconvention).
 
 In summary, both the monomorphic approach and the polymorphic approach are
 currently supported (\sref{sec:intro:parameterized:mono},
@@ -961,8 +961,8 @@ type is not as polymorphic as required by the above convention.
 
 % ------------------------------------------------------------------------------
 
-% TEMPORARY
-% At the moment, this feature is considered experimental and undocumented.
+% At the moment, the following feature is considered experimental and
+% undocumented:
 
 \begin{comment}
 
@@ -979,7 +979,6 @@ be a visitor function, which is passed as an argument to
 %
 \oc|polymorphic = ["'b"]| as part of the \derivingvisitors annotation.
 
-% TEMPORARY
 % The user can control whether the visitor methods are polymorphic in \oc|'env|.
 % This is done by including (or not including) \oc|'env| in the list.
 % (The type variable \oc|'env| is reserved.)
@@ -992,11 +991,11 @@ be a visitor function, which is passed as an argument to
 \orig{expr11}
 \vspace{-\baselineskip}
 \processed{expr11}
-\caption{Dealing with preexisting (parameterized) types, such as \oc|int| and \oc|list|}
+\caption{Using preexisting (parameterized) types, such as \oc|int| and \oc|list|}
 \label{fig:expr11}
 \end{figure}
 
-% TEMPORARY show and explain the type of visit_list
+\input{convention}
 
 \subsection{Dealing with references to preexisting types}
 \label{sec:intro:nonlocal}
@@ -1038,12 +1037,34 @@ module \oc|VisitorsRuntime|. This module contains several classes named
 As is evident in Figures~\ref{fig:expr00}, \ref{fig:expr01}, and so on, the
 generated visitor automatically inherits from the appropriate class in
 \oc|VisitorsRuntime|, so it receives default implementations of the methods
-\tyconvisitor{int}, \tyconvisitor{list}, and so on. The visitor methods for
-parameterized data types (\oc|array|, \oc|Lazy.t|, \oc|list|, \oc|option|,
-\oc|ref|, \oc|result|) are polymorphic, so it is not a problem if both lists
-of apples and lists of oranges need to be traversed.
+\tyconvisitor{int}, \tyconvisitor{list}, and so on.
 
-Nevertheless, at a primitive type, it is advisable to carefully consider what
+The visitor methods for parameterized data types (\oc|array|, \oc|Lazy.t|,
+\oc|list|, \oc|option|, \oc|ref|, \oc|result|) are polymorphic, so it is not a
+problem if both lists of apples and lists of oranges need to be traversed.
+The types of these methods follow a strict \emph{convention},
+illustrated in \fref{fig:convention} with the example of \tyconvisitor{list}.
+
+The \tyconvisitor{list} methods in the classes \runtime{iter}, \runtime{map},
+and so on, have been hand-written, but could equally well have been generated,
+with \oc|polymorphic = true|: their types would be the same.
+%
+% The code would not be the same. At the moment, we are using List.fold_left
+% instead of a natural fold.
+%
+This illustrates the fact that, with \oc|polymorphic = true|,
+\emph{visitors are compositional}.
+%
+% With \oc|polymorphic = false|, visitors are compositional, too,
+% but only for non-parameterized types.
+%
+That is, if the definition of the type \oc|'b bar| refers to the type \oc|'a foo|,
+then one can \emph{separately} generate a visitor class for \oc|'a foo|
+and generate a visitor class for \oc|'b bar|, which inherits the previous class.
+% There is no need to generate a single visitor class for \oc|'a foo| and
+% \oc|'b bar| at once.
+
+At a primitive type, it is advisable to carefully consider what
 behavior is desired. On the one hand, perhaps the inherited method
 \tyconvisitor{int} need not be invoked in the first place; this behavior can
 be obtained by using \oc|(int[@opaque])| instead of \oc|int|. (See
@@ -1058,6 +1079,8 @@ is undesirable, it can be overridden.
 
 It is possible to inherit as many classes as one wishes, beyond those defined
 in \oc|VisitorsRuntime|. This is done via the \ancestors parameter
+(\sref{sec:ancestors}). It is also possible to \emph{not} inherit any methods
+from \oc|VisitorsRuntime|. This is done via the \nude parameter
 (\sref{sec:ancestors}).
 
 % ------------------------------------------------------------------------------
