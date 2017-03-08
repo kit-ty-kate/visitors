@@ -24,6 +24,8 @@ EXTRACT      := $(SED) -e '/VISITORS.BEGIN/,/VISITORS.END/!d;//d'
 # -- Force a line break after [| ... ->] on a line by itself, unless there is one already.
 # -- Force a line break after [method ... =], unless there is one already.
 # -- Remove the line break between [=] and [object].
+# -- Replace [fun x y -> fun ] with [fun x y ], so multiple-argument functions are prettier.
+#    Do this twice, so we can handle functions of arity up to 3. (Yes, this is very ad hoc.)
 BEAUTIFY     := \
               | $(SED) -e 's/,/, /g' \
               | $(SED) -e 's/\([a-zA-Z_)]\)=/\1 =/g' \
@@ -33,6 +35,8 @@ BEAUTIFY     := \
               | $(SED) -e 's/^\( *|.* ->\) /\1\n/g' \
               | $(SED) -e 's/\(method[^=]*=\) /\1\n/g' \
               | perl -0777 -pe 's/=\n *object/= object/gs' \
+              | perl -0777 -pe "s/fun ([a-zA-Z0-9_' ]+) ->\n *fun /fun \1 /gs" \
+              | perl -0777 -pe "s/fun ([a-zA-Z0-9_' ]+) ->\n *fun /fun \1 /gs" \
 
 # Use ocp-indent to beautify the generated code.
 INDENT       := ocp-indent --config=JaneStreet,match_clause=4
