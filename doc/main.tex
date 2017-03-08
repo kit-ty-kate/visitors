@@ -1720,7 +1720,7 @@ programming languages, but also in an object-oriented programming setting.
 % ------------------------------------------------------------------------------
 % Parameters.
 
-\begin{figure}[t]
+\begin{figure}[p]
 \renewcommand{\arraystretch}{1.5}
 \begin{tabular}{@{}r@{\qquad}l@{\qquad}p{.64\textwidth}@{}}
   \ancestors & (list of strings) &
@@ -1754,6 +1754,15 @@ programming languages, but also in an object-oriented programming setting.
     If \texttt{true}, the class \runtime{<variety>} is \emph{not} implicitly prepended to
     the list \ancestors.
     This is an optional parameter; its default value is \texttt{false}.
+\\
+  \polymorphic & (Boolean) &
+    If \texttt{true}, type variables are handled by virtual visitor methods,
+    and generated methods are monomorphic
+    (\sref{sec:intro:parameterized:mono});
+    if \texttt{false}, type variables are handled by visitor functions,
+    and generated methods are polymorphic
+    (\sref{sec:intro:parameterized:poly}).
+    This is an optional parameter, whose default value is \texttt{false}.
 \\
   \public & (list of strings) &
     This is an optional parameter.
