@@ -50,6 +50,13 @@ bench: reinstall
 	@ echo Running...
 	@ _build_bench/bench.native
 
+# Building an executable.
+
+%.native:
+	@ $(OCAMLBUILD) -build-dir \
+	    _build_$(shell grep -iw $* *.mllib | sed -e 's/\([^.]*\).mllib:.*/\1/') \
+	    $@
+
 # ------------------------------------------------------------------------------
 
 # Building inferred .mli files.
