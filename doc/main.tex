@@ -818,7 +818,7 @@ to choose the monomorphic approach, too.
 \label{fig:expr_info_use}
 \end{figure}
 
-\subsection{Monomorphic visitor methods for parameterized types}
+\subsubsection{Monomorphic visitor methods for parameterized types}
 \label{sec:intro:parameterized:mono}
 
 We begin with an example of the \emph{monomorphic} mode. This mode can be
@@ -869,7 +869,7 @@ decorates each node in an arithmetic expression with a unique integer number.%
 
 % ------------------------------------------------------------------------------
 
-\subsection{Polymorphic visitor methods for parameterized types}
+\subsubsection{Polymorphic visitor methods for parameterized types}
 \label{sec:intro:parameterized:poly}
 
 \begin{figure}[p]
@@ -887,9 +887,104 @@ decorates each node in an arithmetic expression with a unique integer number.%
 \label{fig:expr_info_polymorphic_use}
 \end{figure}
 
+We continue with an example of the \emph{polymorphic} mode. This mode can be
+explicitly requested by writing \oc|polymorphic = true| as part of the
+\derivingvisitors annotation.
+
+In \fref{fig:expr_info_polymorphic}, we again have arithmetic expressions
+where every tree node is decorated with a value of type \oc|'info|. We again
+request a \map visitor but, this time, we specify \oc|polymorphic = true|.
+%
+In order to make the generated code shorter, we specify \oc|data = false|
+(\sref{sec:params}), which causes the methods \dataconvisitor{EConst} and
+\dataconvisitor{EAdd} to disappear. (They are inlined at their call sites.)
+
+The generated code is the same as in the previous section,
+% except the methods \dataconvisitor{EConst} and \dataconvisitor{EAdd} have
+% disappeared, as explained above, and
+except that \tyconvisitor{'info} is not a method any more. Instead, it is
+a function, which is passed as an argument to every visitor method.
+
+% Because \tyconvisitor{'info} is a function, as opposed to a virtual method,
+The class \map does not have any virtual methods. It can thus be declared as
+concrete class: to this end, we specify
+%
+\oc|concrete = true| (\sref{sec:params}). Without this indication, it would be
+declared \oc|virtual|.
+
+Because \tyconvisitor{'info} is an argument of every visitor method,
+every visitor method can be declared polymorphic in the type variables~\oc|'env|,
+\oc|'info_0| and \oc|'info_1|,
+where the function \tyconvisitor{'info} has type \oc|'env -> 'info_0 -> 'info_1|.
+%
+The fact that we would like every method to have a polymorphic type cannot
+be inferred by OCaml. For this reason, the generated code contains explicit
+polymorphic type annotations.
+
+\fref{fig:expr_info_polymorphic_use} presents two example uses of the class
+\map defined in \fref{fig:expr_info_polymorphic}. As in
+\fref{fig:expr_info_use}, we define two functions \oc|strip| and \oc|number|.
+A striking feature of this code is that a single visitor object~\oc|v| is now
+allocated, once and for all, and is used in every subsequent call to \oc|strip|
+and \oc|number|. The two \tyconvisitor{'info} functions are also defined once
+and for all.%
+%
+\footnote{Although we have nested these functions inside the definitions of
+  \oc|strip| and \oc|number|, they are closed, so they could be hoisted out to
+  the top level, if desired.}
+
+In the definition of \oc|number|, we choose to store the current count in a
+reference, \oc|count|, and to let \oc|count| play the role of the
+``environment''. Thus, we initially pass \oc|count| to \tyconvisitor{expr},
+and \tyconvisitor{'info} receives \oc|count| as its ``environment'' argument.
+
+%%
+
+The polymorphic type annotations that are automatically generated
+(\fref{fig:expr_info_polymorphic}) follow a certain fixed convention. If the
+user throws in hand-written visitor methods via the \ancestors parameter, then
+those hand-written methods must adhere to the same convention (or the
+generated code would be ill-typed). This convention is illustrated in the next
+section (\sref{sec:intro:nonlocal}) with the example of the
+\tyconvisitor{list} methods.
+
+A type variable is not allowed to occur under an \oc|[@opaque]| annotation
+(\sref{sec:opaque}). Indeed, annotating a type variable~\oc|'a| with
+\oc|[@opaque]| would cause special-purpose visit code to be generated, whose
+type is not as polymorphic as required by the above convention.
+
+%%
+
+% TEMPORARY document that irregular data types are supported
+
+% TEMPORARY might wish to document that \oc|'s| and \oc|'env| are reserved.
+
 % ------------------------------------------------------------------------------
 
-\label{sec:intro:parameterized:fine} % TEMPORARY
+% TEMPORARY
+% At the moment, this feature is considered experimental and undocumented.
+
+\begin{comment}
+
+\subsubsection{Mixing the monomorphic and polymorphic modes}
+\label{sec:intro:parameterized:fine}
+
+It is possible to mix the monomorphic and polymorphic modes
+(\sref{sec:intro:parameterized:mono}, \sref{sec:intro:parameterized:poly}) in
+a single generated visitor class. Suppose we wish to generate a visitor class
+for the type \oc|('a, 'b) dictionary|. Suppose, for some reason, that we would
+like \tyconvisitor{'a} to be a virtual visitor method and \tyconvisitor{'b} to
+be a visitor function, which is passed as an argument to
+\tyconvisitor{dictionary}. This can be achieved by declaring
+%
+\oc|polymorphic = ["'b"]| as part of the \derivingvisitors annotation.
+
+% TEMPORARY
+% The user can control whether the visitor methods are polymorphic in \oc|'env|.
+% This is done by including (or not including) \oc|'env| in the list.
+% (The type variable \oc|'env| is reserved.)
+
+\end{comment}
 
 % ------------------------------------------------------------------------------
 
@@ -2018,6 +2113,8 @@ behavior is desired. Furthermore, it should be noted that \maptwo and \foldtwo
 visitors follow an arbitrary convention at \oc|@opaque| components: they
 return the first of their two arguments. Again, it is up to the user to decide
 whether this behavior is appropriate.
+
+% TEMPORARY recall that a polymorphic type variable cannot occur under opaque
 
 % ------------------------------------------------------------------------------
 
