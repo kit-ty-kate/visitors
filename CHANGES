@@ -1,10 +1,11 @@
-2017/03/06:
+2017/03/08:
 A new option [polymorphic = true] allows generating visitor methods with
 polymorphic types. With [polymorphic = true], a type variable ['a] is
 handled by a visitor *function* [visit_'a], which is passed as an argument
 to every visitor method; whereas, with [polymorphic = false], a type
 variable ['a] is handled by a virtual visitor *method* [visit_'a].
-When [polymorphic] is [true], irregular algebraic data types are supported.
+When [polymorphic = true], visitor classes compose better,
+and irregular algebraic data types are supported.
 See the documentation for more details.
 
 2017/03/03:
