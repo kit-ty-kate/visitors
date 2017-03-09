@@ -5,7 +5,7 @@
 SHELL := bash
 export CDPATH=
 
-.PHONY: package check export opam pin unpin
+.PHONY: package check export tag opam pin unpin
 
 # -------------------------------------------------------------------------
 
@@ -101,6 +101,13 @@ export:
 # Copier l'archive et la doc vers yquem.
 	$(RSYNC) $(TARBALL) $(TARGET)
 	$(RSYNC) $(PACKAGE)/manual.pdf $(TARGET)
+
+# -------------------------------------------------------------------------
+
+# Creating a git tag.
+
+tag:
+	git tag -a $(DATE) -m "Release $(DATE)."
 
 # -------------------------------------------------------------------------
 
