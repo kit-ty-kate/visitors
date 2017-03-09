@@ -1,12 +1,40 @@
-type 'a delay = 'a
+(* To play with this code in an OCaml toplevel, launch [ocaml] and type this:
+   #use "topfind";;
+   #require "visitors.ppx";;
+   #require "visitors.runtime";;
+ *)
 
-type 'a delaytree =
-  | DTNothing
-  | DTElement of 'a
-  | DTConcat of 'a delaytree * 'a delaytree
-  | DTDelay of (unit -> 'a delaytree)
+(* -------------------------------------------------------------------------- *)
 
-(* https://github.com/ocaml/ocaml/pull/1002 *)
+(* Suppose we have an arbitrary data structure that contains elements
+   of type ['a]. Here, it is a binary tree, but it could be anything: *)
+
+type 'a sometree =
+  | Leaf
+  | Node of 'a sometree * 'a * 'a sometree
+
+(* We would like to enumerate the elements of this data structure.
+   More precisely, we would like to construct an iterator, that is,
+   an an on-demand producer of elements. Here is a simple definition
+   of a stateful iterator: *)
+
+type 'a iterator =
+  unit -> 'a option
+
+(* The question is, can we construct an iterator for the type ['a sometree],
+   based on an automatically-generated visitor, so that the construction is
+   entirely independent of the type ['a sometree]? *)
+
+(* -------------------------------------------------------------------------- *)
+
+(* For starters, let us first define cascades, which are a more pleasant kind
+   of iterators. A cascade is a persistent (stateless) iterator. It can be
+   thought of as a delayed list, that is, a list whose elements are computed
+   only on demand. *)
+
+(* Cascades could (should) be part of a separate library. There is in fact a
+   proposal to add them to OCaml's standard library: see the discussion at
+   https://github.com/ocaml/ocaml/pull/1002 *)
 
 type 'a cascade =
   unit -> 'a head
@@ -15,92 +43,180 @@ and 'a head =
   | Nil
   | Cons of 'a * 'a cascade
 
+(* A delayed computation is represented as a function of type [unit -> _].
+   Thus, no memoization takes place. It is easy to implement a function
+   [memo: 'a cascade -> 'a cascade] that turns a nonmemoizing cascade into
+   a memoizing one, so memoization can be requested a posteriori, if
+   desired. *)
+
+(* The empty cascade. *)
+
 let nil : 'a cascade =
   fun () -> Nil
 
-let force thunk =
-  thunk()
+(* Forcing a cascade reveals its head. *)
 
-let head (xs : 'a cascade) : 'a =
-  match force xs with
-  | Nil ->
-      invalid_arg "head"
-  | Cons (x, _) ->
-      x
+let force xs =
+  xs()
 
-let tail (xs : 'a cascade) : 'a cascade =
-  match force xs with
-  | Nil ->
-      invalid_arg "tail"
-  | Cons (_, xs) ->
-      xs
+(* A cascade can be easily converted to a stateful iterator. *)
 
-type 'a iterator =
-  unit -> 'a option
-
-let cascade2iterator (xs : 'a cascade) : 'a iterator =
+let cascade_to_iterator (xs : 'a cascade) : 'a iterator =
   let s = ref xs in
   fun () ->
     match force !s with
     | Nil ->
-        s := nil; (* avoid repeating this work, next time *)
+        (* Writing [nil] into [s] may seem superfluous, but is in fact
+           necessary to guarantee that the computation that just led to
+           a [Nil] outcome is not repeated in the future. *)
+        s := nil;
         None
     | Cons (x, xs) ->
         s := xs;
         Some x
 
-let rec delaytree2cascade (dt : 'a delaytree) (k : 'a cascade) : 'a cascade =
-  fun () -> delaytree2head dt k
+(* Because cascades are close cousins of lists, they are easy to work with.
+   Constructing a cascade for a tree-like data structure is straightforward,
+   whereas directly constructing a stateful iterator would be more involved. *)
 
-and delaytree2head (dt : 'a delaytree) (k : 'a cascade) : 'a head =
+(* -------------------------------------------------------------------------- *)
+
+(* Now, can we use some kind of visitor to turn a tree of type ['a sometree]
+   into a cascade of type ['a cascade]? *)
+
+(* At first sight, this does not seem very easy, for two reasons: 1- a visitor
+   usually traverses a tree in an eager manner, whereas we need the traversal
+   to make progress only as cascade elements are demanded; and 2- a visitor
+   performs a bottom-up computation, without a left-to-right bias (assuming
+   mutable state is not used), whereas a cascade enumerates elements in a
+   left-to-right manner. (Or in a right-to-left manner. As will be apparent
+   below, both directions are possible.) *)
+
+(* The trick is to use another intermediate step. Instead of turning a tree
+   directly into a cascade, we first transform it into a generic tree-like
+   structure: a *delayed tree*. Problem 1 is solved because, by introducing
+   delays into the new tree, we allow its construction to be carried out on
+   demand. Problem 2 is solved because this tree-to-tree transformation can be
+   carried out in a purely bottom-up manner by a [reduce] visitor. Then,
+   finally, it is straightforward to transform a delayed tree into a
+   cascade. *)
+
+(* -------------------------------------------------------------------------- *)
+
+(* A delayed tree contains ordinary nodes of arity 0, 1, and 2. Furthermore,
+   it contains [DTDelay] nodes, of arity 1, whose child is delayed, that is,
+   computed only on demand. *)
+
+type 'a delayed_tree =
+  | DTZero
+  | DTOne of 'a
+  | DTTwo of 'a delayed_tree * 'a delayed_tree
+  | DTDelay of (unit -> 'a delayed_tree)
+
+(* A delayed tree is converted to a cascade as follows. We may choose, at this
+   point, between left-to-right and right-to-left traversals. As usual, when
+   building a cascade, one must take a continuation [k] as an argument, so as
+   to avoid naive and costly cascade concatenation operations. *)
+
+let rec delayed_tree_to_cascade (dt : 'a delayed_tree) (k : 'a cascade)
+: 'a cascade =
+  fun () -> delayed_tree_to_head dt k
+
+and delayed_tree_to_head (dt : 'a delayed_tree) (k : 'a cascade) : 'a head =
   match dt with
-  | DTNothing ->
+  | DTZero ->
       force k
-  | DTElement x ->
+  | DTOne x ->
      Cons (x, k)
-  | DTConcat (dt1, dt2) ->
-     delaytree2head dt1 (delaytree2cascade dt2 k)
+  | DTTwo (dt1, dt2) ->
+     delayed_tree_to_head dt1 (delayed_tree_to_cascade dt2 k)
   | DTDelay dt ->
-     delaytree2head (force dt) k
+     delayed_tree_to_head (force dt) k
 
-let delaytree2cascade dt =
-  delaytree2cascade dt nil
+let delayed_tree_to_cascade (dt : 'a delayed_tree) : 'a cascade =
+  delayed_tree_to_cascade dt nil
 
-let yield _env x =
-  DTElement x
+let delayed_tree_to_iterator (dt : 'a delayed_tree) : 'a iterator =
+  cascade_to_iterator (delayed_tree_to_cascade dt)
 
-class ['self] delaytree_monoid = object (_ : 'self)
+(* -------------------------------------------------------------------------- *)
 
-  method private zero =
-    DTNothing
+(* We now set up four constructor functions and constructor methods, which
+   construct delayed trees, and which we will use in a [reduce] visitor. *)
 
-  method private plus s1 s2 =
+(* The type ['a delay] is a synonym for ['a]. It is used as a decoration, in a
+   type definition, to indicate that a call to the method [visit_delay] is
+   desired. *)
+
+type 'a delay = 'a
+
+class ['self] delayed_tree_monoid = object (_ : 'self)
+
+  (* Delayed trees form a monoid, in the sense that we concatenate them using
+     [DTTwo], and the neutral element is [DTZero]. We package these two data
+     constructors in the methods [zero] and [plus], which are automatically
+     called in an automatically-generated [reduce] visitor. *)
+
+  method zero =
+    DTZero
+
+  method plus s1 s2 =
     match s1, s2 with
-    | DTNothing, s
-    | s, DTNothing ->
-        (* An optional optimization. *)
+    | DTZero, s
+    | s, DTZero ->
+        (* This optimization is not mandatory. It helps allocate fewer nodes. *)
         s
     | _, _ ->
-        DTConcat (s1, s2)
+        DTTwo (s1, s2)
+
+  (* The visitor method [visit_delay] delays the visit of a subtree by
+     constructing and returning a [DTDelay] node, which carries a delayed
+     recursive call to a visitor. *)
 
   method visit_delay: 'env 'a .
-    ('env -> 'a -> 'b delaytree) ->
-    'env -> 'a delay -> 'b delaytree
+    ('env -> 'a -> 'b delayed_tree) ->
+    'env -> 'a delay -> 'b delayed_tree
   = fun visit_'a env x ->
       DTDelay (fun () -> visit_'a env x)
 
 end
 
-type 'a kctree =
-  | Leaf
-  | Node of 'a kctree * 'a * 'a kctree
+(* The visitor function [yield] will be invoked at elements of type ['a].
+   It constructs a one-element delayed tree. *)
 
-type 'a t = 'a kctree =
-  | Leaf
-  | Node of 'a u * 'a * 'a u
+let yield _env x =
+  DTOne x
 
-and 'a u = 'a t delay
-[@@deriving visitors { variety = "reduce"; ancestors = ["delaytree_monoid"]; polymorphic = true; concrete = true }]
+(* -------------------------------------------------------------------------- *)
+
+(* It is now time to generate a [reduce] visitor for the type ['a sometree].
+   This is the only part of the code which is specific of [sometree].
+   Everything else is generic. *)
+
+(* We must insert [delay]s into the structure of the type ['a sometree] so as
+   to indicate where [visit_delay] should be called and (therefore) where
+   [DTDelay] nodes should be allocated. To do this, we write a copy of the
+   definition of the type ['a sometree], with extra delays in it. The new type
+   is actually considered equal to ['a sometree] by OCaml. Its role is purely
+   to carry a [@@deriving visitors] annotation. *)
+
+(* In the data constructor [Node], the left-hand [delay] is in fact
+   superfluous. With or without it, our iterators will eagerly descend along
+   the leftmost branch of a tree, anyway. *)
+
+type 'a mytree = 'a sometree =
+  | Leaf
+  | Node of 'a mytree delay * 'a * 'a mytree delay
+
+and 'a mytree_delay =
+  'a mytree delay
+
+[@@deriving visitors { variety = "reduce"; polymorphic = true;
+                       concrete = true; ancestors = ["delayed_tree_monoid"] }]
+
+(* -------------------------------------------------------------------------- *)
+
+(* For demonstration purposes, let us make our visitor verbose. *)
 
 class ['self] verbose_reduce = object (_ : 'self)
   inherit [_] reduce as super
@@ -112,25 +228,48 @@ class ['self] verbose_reduce = object (_ : 'self)
     super#visit_Node visit_'a env t1 x t2
 end
 
-let t2delaytree (t : 'a kctree) =
-  new verbose_reduce # visit_u yield () t
+(* In production, one should remove [verbose_reduce] and use [reduce]
+   instead. *)
 
-let t2cascade t =
-  delaytree2cascade (t2delaytree t)
+let sometree_to_delayed_tree (t : 'a sometree) =
+  new verbose_reduce # visit_mytree_delay yield () t
+    (* We use [visit_mytree_delay], even though [visit_mytree] would work
+       just as well, so as to ensure that we get a delayed tree whose root
+       is a [DTDelay] node. *)
 
-let t2iterator (t : 'a kctree) : 'a iterator =
-  cascade2iterator (t2cascade t)
+(* Problem solved! *)
 
-let t =
+let sometree_to_iterator (t : 'a sometree) : 'a iterator =
+  delayed_tree_to_iterator (sometree_to_delayed_tree t)
+
+(* -------------------------------------------------------------------------- *)
+
+(* Demo. *)
+
+let t : int sometree =
   Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf))
 
-let i = t2iterator t
+let i : int iterator =
+  sometree_to_iterator t
 
-let _ = i()
+(* Transcript of an OCaml toplevel session:
 
-let u =
-  Node (Node (Leaf, false, Leaf), true, Node (Leaf, false, Leaf))
+  # i();;
+  Visiting a node.
+  Visiting a node.
+  Visiting a leaf.
+  - : int option = Some 1
+  # i();;
+  Visiting a leaf.
+  - : int option = Some 2
+  # i();;
+  Visiting a node.
+  Visiting a leaf.
+  - : int option = Some 3
+  # i();;
+  Visiting a leaf.
+  - : int option = None
+  # i();;
+  - : int option = None
 
-let j = t2iterator u
-
-let _ = j()
+ *)
