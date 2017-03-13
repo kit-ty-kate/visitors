@@ -237,12 +237,12 @@ It is now time to generate a `reduce` visitor for the type `'a sometree`.
 This is the only part of the code which is specific of `sometree`.
 Everything else is generic.
 
-We must insert `delay`s into the structure of the type `'a sometree` so as
-to indicate where `visit_delay` should be called and (therefore) where
-`DTDelay` nodes should be allocated. To do this, we write a copy of the
-definition of the type `'a sometree`, with extra delays in it. The new type
-is actually considered equal to `'a sometree` by OCaml. Its role is purely
-to carry a `@@deriving visitors` annotation.
+We must insert *delays* into the structure of the type `'a sometree` so as to
+indicate where `visit_delay` should be called and (therefore) where `DTDelay`
+nodes should be allocated. To do this, we write a copy of the definition of
+the type `'a sometree`, with extra uses of `delay` in it. The new type is
+actually considered equal to `'a sometree` by OCaml. Its role is purely to
+carry a `@@deriving visitors` annotation.
 
 In the data constructor `Node`, the left-hand `delay` is in fact superfluous.
 With or without it, our iterators will eagerly descend along the leftmost
@@ -260,7 +260,7 @@ and 'a mytree_delay =
                        concrete = true; ancestors = ["delayed_tree_monoid"] }]
 ```
 
-This approach is pleasant insofar as one controls exactly where `delay`s are
+This approach is pleasant insofar as one controls exactly where delays are
 inserted. However, it requires copying the type definition, which may be
 unpleasant. Another approach is described
 [further on](#variant-avoiding-duplication-of-the-type-definition).
@@ -341,7 +341,7 @@ to insert `delay` type constructors into the type, so as to influence the
 generated visitor.
 
 This style is relatively pleasant because it is declarative and lets us
-control exactly where `delay`s are inserted. However, it requires duplicating
+control exactly where delays are inserted. However, it requires duplicating
 the definition of the type `'a sometree`, which may be unpleasant (if the
 definition is large) or impossible (if the definition is hidden behind an
 abstraction barrier).
@@ -360,8 +360,8 @@ type 'a sometree =
 ```
 
 At this point, we pretend that we do not know yet what this visitor will be
-used for, so we have not annotated the type definition with `delay`s, and have
-not used `delayed_tree_monoid` as a base class. We get a visitor class, named
+used for, so we do not annotate the type definition with `delay`, and do not
+use `delayed_tree_monoid` as a base class. We get a visitor class, named
 `sometree_reduce`. This class has two virtual methods, `zero` and `plus`.
 
 Then, we create a subclass, named `reduce`, which we tailor to our needs.
@@ -377,7 +377,8 @@ class ['self] reduce = object (self : 'self)
 end
 ```
 
-The rest of the code is unchanged.
+The rest of the code is unchanged (except the method `visit_mytree_delay` no
+longer exists; one calls `visit_sometree` instead).
 
 ## Acknowledgements
 
