@@ -13,6 +13,12 @@ type 'a sometree =
   | Leaf
   | Node of 'a sometree * 'a * 'a sometree
 
+(* This annotation is used only at the very end and can be ignored upon
+   first reading: *)
+
+[@@deriving visitors { variety = "reduce"; polymorphic = true;
+                       name = "sometree_reduce" }]
+
 (* We would like to enumerate the elements of this data structure.
    More precisely, we would like to construct an iterator, that is,
    an on-demand producer of elements. Here is a simple definition
@@ -273,3 +279,45 @@ let i : int iterator =
   - : int option = None
 
  *)
+
+(* -------------------------------------------------------------------------- *)
+
+(* Variant: it is possible to use the visitor [sometree_reduce] which was
+   generated at the very beginning. This removes the need for defining the
+   type [mytree]. The trick is to override the method [visit_sometree] so as
+   to insert a delay at every tree node. *)
+
+module Variant1 = struct
+
+  class ['self] reduce = object (self : 'self)
+    inherit [_] sometree_reduce as super
+    inherit [_] delayed_tree_monoid
+    method! visit_sometree visit_'a env t =
+      self#visit_delay (super#visit_sometree visit_'a) env t
+  end
+
+  (* The rest of the code is unchanged. It is reproduced here for testing. *)
+
+  class ['self] verbose_reduce = object (_ : 'self)
+    inherit [_] reduce as super
+    method! visit_Leaf visit_'a env =
+      Printf.printf "Visiting a leaf.\n%!";
+      super#visit_Leaf visit_'a env
+    method! visit_Node visit_'a env t1 x t2 =
+      Printf.printf "Visiting a node.\n%!";
+      super#visit_Node visit_'a env t1 x t2
+  end
+
+  let sometree_to_delayed_tree (t : 'a sometree) =
+    new verbose_reduce # visit_sometree yield () t
+
+  let sometree_to_iterator (t : 'a sometree) : 'a iterator =
+    delayed_tree_to_iterator (sometree_to_delayed_tree t)
+
+  let t : int sometree =
+    Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf))
+
+  let i : int iterator =
+    sometree_to_iterator t
+
+end
