@@ -130,7 +130,7 @@ transformation can be carried out in a purely bottom-up manner by a `reduce`
 visitor. Then, finally, it is straightforward to transform a delayed tree into
 a cascade.
 
-## From Delayed Trees to Cascades
+## From Delayed Trees to Cascades and Iterators
 
 A delayed tree contains ordinary nodes of arity 0, 1, and 2. Furthermore,
 it contains `DTDelay` nodes, of arity 1, whose child is delayed, that is,
@@ -260,6 +260,13 @@ and 'a mytree_delay =
                        concrete = true; ancestors = ["delayed_tree_monoid"] }]
 ```
 
+This approach is pleasant insofar as one controls exactly where `delay`s are
+inserted. However, it requires copying the type definition, which may be
+unpleasant. Another approach is described
+[further on](#variant:-avoiding-duplication-of-the-type-definition).
+
+## Using the Generated Visitor
+
 For demonstration purposes, let us make our visitor verbose. In production,
 one should remove `verbose_reduce` and use `reduce` instead.
 
@@ -323,6 +330,10 @@ Here is a transcript of an OCaml toplevel session:
   # i();;
   - : int option = None
 ```
+
+## Variant: Avoiding Duplication of the Type Definition
+
+
 
 ## Acknowledgements
 
