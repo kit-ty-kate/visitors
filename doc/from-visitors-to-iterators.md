@@ -53,7 +53,8 @@ iterators. A cascade is a persistent (stateless) iterator. It can be thought
 of as a delayed list, that is, a list whose elements are computed only on
 demand.
 
-Cascades could (should) be part of a separate library. There is in fact
+Cascades could (should) be part of a separate library.
+As the time of writing (March, 2017), there is in fact
 [a proposal](https://github.com/ocaml/ocaml/pull/1002)
 to add them to OCaml's standard library.
 
@@ -67,10 +68,6 @@ and 'a head =
 ```
 
 A delayed computation is represented as a function of type `unit -> _`.
-Thus, no memoization takes place. It is easy to implement a function
-`memo: 'a cascade -> 'a cascade` that turns a nonmemoizing cascade into
-a memoizing one, so memoization can be requested a posteriori, if
-desired.
 
 The empty cascade is defined as follows:
 
@@ -147,10 +144,12 @@ type 'a delayed_tree =
   | DTDelay of (unit -> 'a delayed_tree)
 ```
 
-A delayed tree is converted to a cascade as follows. We may choose, at this
-point, between left-to-right and right-to-left traversals. As usual, when
-building a cascade, one must take a continuation `k` as an argument, so as
-to avoid naive and costly cascade concatenation operations.
+A delayed tree is converted to a cascade as follows. As is often the case,
+when building a cascade, one must take a continuation `k` as an argument, so
+as to avoid naive and costly cascade concatenation operations. Thus, the
+specification of the function call `delayed_tree_to_cascade dt k` is to
+construct a cascade whose elements are the elements of the delayed tree `dt`
+(listed from left to right), followed with the elements of the cascade `k`.
 
 ```
 let rec delayed_tree_to_cascade (dt : 'a delayed_tree) (k : 'a cascade)
@@ -175,7 +174,10 @@ let delayed_tree_to_iterator (dt : 'a delayed_tree) : 'a iterator =
   cascade_to_iterator (delayed_tree_to_cascade dt)
 ```
 
-## Constructing delayed trees
+In the above code, we have chosen to perform a left-to-right traversal of
+the delayed tree, but could just as well have chosen a right-to-left traversal.
+
+## Constructing Delayed Trees
 
 The type `'a delay` is a synonym for `'a`. We will use it as a decoration, in
 a type definition, to indicate that a call to the method `visit_delay` is
