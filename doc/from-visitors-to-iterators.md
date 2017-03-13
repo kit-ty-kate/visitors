@@ -333,8 +333,8 @@ Here is a transcript of an OCaml toplevel session:
 
 ## Variant: Avoiding Duplication of the Type Definition
 
-Earlier, we have generated a visitor for the existing type `'a sometree` in "a
-posteriori" style. We have manually created an isomorphic copy of the type `'a
+Earlier, we have generated a visitor for the existing type `'a sometree` in *a
+posteriori* style. We have manually created an isomorphic copy of the type `'a
 sometree`, which we have named `'a mytree`, and have annotated this copy with
 `[@@deriving visitors { ... }]`. Furthermore, we have taken this opportunity
 to insert `delay` type constructors into the type, so as to influence the
@@ -346,7 +346,7 @@ the definition of the type `'a sometree`, which may be unpleasant (if the
 definition is large) or impossible (if the definition is hidden behind an
 abstraction barrier).
 
-Another approach is to generate a visitor in 'a priori' style. When the type
+Another approach is to generate a visitor in *a priori* style. When the type
 `'a sometree` is first defined, a `reduce` visitor can be immediately
 generated for it, as follows:
 
