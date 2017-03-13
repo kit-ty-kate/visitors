@@ -333,7 +333,51 @@ Here is a transcript of an OCaml toplevel session:
 
 ## Variant: Avoiding Duplication of the Type Definition
 
+Earlier, we have generated a visitor for the existing type `'a sometree` in "a
+posteriori" style. We have manually created an isomorphic copy of the type `'a
+sometree`, which we have named `'a mytree`, and have annotated this copy with
+`[@@deriving visitors { ... }]`. Furthermore, we have taken this opportunity
+to insert `delay` type constructors into the type, so as to influence the
+generated visitor.
 
+This style is relatively pleasant because it is declarative and lets us
+control exactly where `delay`s are inserted. However, it requires duplicating
+the definition of the type `'a sometree`, which may be unpleasant (if the
+definition is large) or impossible (if the definition is hidden behind an
+abstraction barrier).
+
+Another approach is to generate a visitor in "a priori" style. When the type
+`'a sometree` is first defined, a `reduce` visitor can be immediately
+generated for it, as follows:
+
+```
+type 'a sometree =
+  | Leaf
+  | Node of 'a sometree * 'a * 'a sometree
+
+[@@deriving visitors { variety = "reduce"; polymorphic = true;
+                       name = "sometree_reduce" }]
+```
+
+At this point, we pretend that we do not know yet what this visitor will be
+used for, so we have not annotated the type definition with `delay`s, and have
+not used `delayed_tree_monoid` as a base class. We get a visitor class, named
+`sometree_reduce`. This class has two virtual methods, `zero` and `plus`.
+
+Then, we create a subclass, named `reduce`, which we tailor to our needs.
+We mix the generated class `sometree_reduce` with the class `delayed_tree_monoid`,
+and insert a delay at every tree node by overriding the method `visit_sometree`:
+
+```
+class ['self] reduce = object (self : 'self)
+  inherit [_] sometree_reduce as super
+  inherit [_] delayed_tree_monoid
+  method! visit_sometree visit_'a env t =
+    self#visit_delay (super#visit_sometree visit_'a) env t
+end
+```
+
+The rest of the code is unchanged.
 
 ## Acknowledgements
 
