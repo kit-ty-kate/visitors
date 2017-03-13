@@ -161,11 +161,11 @@ and delayed_tree_to_head (dt : 'a delayed_tree) (k : 'a cascade) : 'a head =
   | DTZero ->
       force k
   | DTOne x ->
-     Cons (x, k)
+      Cons (x, k)
   | DTTwo (dt1, dt2) ->
-     delayed_tree_to_head dt1 (delayed_tree_to_cascade dt2 k)
+      delayed_tree_to_head dt1 (delayed_tree_to_cascade dt2 k)
   | DTDelay dt ->
-     delayed_tree_to_head (force dt) k
+      delayed_tree_to_head (force dt) k
 
 let delayed_tree_to_cascade (dt : 'a delayed_tree) : 'a cascade =
   delayed_tree_to_cascade dt nil
@@ -176,6 +176,9 @@ let delayed_tree_to_iterator (dt : 'a delayed_tree) : 'a iterator =
 
 In the above code, we have chosen to perform a left-to-right traversal of
 the delayed tree, but could just as well have chosen a right-to-left traversal.
+
+It is possible to make the delayed tree data structure implicit in the code;
+this is explained [further on](#variant-getting-rid-of-explicit-delayed-trees).
 
 ## Constructing Delayed Trees
 
@@ -379,6 +382,116 @@ end
 
 The rest of the code is unchanged (except the method `visit_mytree_delay` no
 longer exists; one calls `visit_sometree` instead).
+
+## Variant: Getting Rid of Explicit Delayed Trees
+
+I like presenting delayed trees as an explicit data structure, because this
+helps understand what is going on. However, if desired, it is possible to
+hide them by *refunctionalization* (the opposite of *defunctionalization*).
+
+Above, the function `delayed_tree_to_cascade` was written with the help of an
+auxiliary function, `delayed_tree_to_head`. At the cost of a constant factor
+in time, we could have written it directly, as follows:
+
+```
+let rec delayed_tree_to_cascade (dt : 'a delayed_tree) (k : 'a cascade)
+: 'a cascade =
+  match dt with
+  | DTZero ->
+      k
+  | DTOne x ->
+      fun () -> Cons (x, k)
+  | DTTwo (dt1, dt2) ->
+      delayed_tree_to_cascade dt1 (delayed_tree_to_cascade dt2 k)
+  | DTDelay dt ->
+      fun () -> delayed_tree_to_cascade (force dt) k ()
+```
+
+In this form, the only function that is ever applied to a delayed tree is
+`delayed_tree_to_cascade`. Therefore, wherever we construct a delayed tree
+`t`, we could instead directly build a closure whose behavior is equivalent to
+`delayed_tree_to_cascade t`. This is *refunctionalization*.
+
+The data structure of delayed trees seems to disappears.
+The type `'a delayed_tree` can be defined as a synonym
+for a `'a cascade -> 'a cascade`. I usually refer to
+this type as `'a producer`: it is the type of a function
+that concatenates elements in front of the cascade that it
+receives as an argument.
+
+```
+type 'a producer =
+  'a cascade -> 'a cascade
+
+type 'a delayed_tree =
+  'a producer
+```
+
+The four data constructors are defined as follows:
+
+```
+let _DTZero k =
+  k
+
+let _DTOne x k =
+  fun () -> Cons (x, k)
+
+let _DTTwo dt1 dt2 k =
+  dt1 (dt2 k)
+
+let _DTDelay dt k =
+  fun () -> force dt k ()
+```
+
+The reader can check that the types of these data constructors are the
+same as in the previous version of the code. For instance, `_DTDelay`
+has type `(unit -> 'a delayed_tree) -> 'a delayed_tree`.
+
+The root function `delayed_tree_to_cascade` (without a continuation argument)
+is defined as follows:
+
+```
+let delayed_tree_to_cascade (dt : 'a delayed_tree) : 'a cascade =
+  dt nil
+```
+
+The delayed tree monoid uses the new versions of the four data constructors.
+In the method `plus`, we lose the little optimization whereby the data
+constructor `DTZero` was recognized and eliminated on the fly.
+
+```
+class ['self] delayed_tree_monoid = object (_ : 'self)
+
+  method zero =
+    _DTZero
+
+  method plus =
+    _DTTwo
+
+  method visit_delay: 'env 'a .
+    ('env -> 'a -> 'b delayed_tree) ->
+    'env -> 'a delay -> 'b delayed_tree
+  = fun visit_'a env x ->
+      _DTDelay (fun () -> visit_'a env x)
+
+end
+
+let yield _env x =
+  _DTOne x
+```
+
+The four functions `_DTZero`, `_DTOne`, `_DTTwo`, and `_DTDelay` could be
+inlined, if desired, so as to make the above code seem even more concise.
+
+The rest of the code is unchanged.
+
+In this version, delayed trees are no longer visible as an explicit data structure.
+Nevertheless, the closures that are allocated at runtime still form a delayed tree;
+so the runtime behavior of the code is exactly the same (except that we have a lost
+a few optimizations along the way).
+
+This version is more concise and more clever. I tend to prefer the explicit
+version, as it is more pedagogical, in my opinion.
 
 ## Acknowledgements
 
