@@ -166,7 +166,7 @@ class ['self] delayed_tree_monoid = object (_ : 'self)
     | s, DTZero ->
         (* This optimization is not mandatory. It helps allocate fewer nodes. *)
         s
-    | _, _ ->
+    | (DTOne _ | DTTwo _ | DTDelay _), _ ->
         DTTwo (s1, s2)
 
   (* The visitor method [visit_delay] delays the visit of a subtree by
