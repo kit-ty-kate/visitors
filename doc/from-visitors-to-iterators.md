@@ -393,7 +393,7 @@ helps understand what is going on. However, if desired, it is possible to
 hide them by *refunctionalization* (the opposite of *defunctionalization*).
 
 Above, the function `delayed_tree_to_cascade` was written with the help of an
-auxiliary function, `delayed_tree_to_head`. We could have also written it
+auxiliary function, `delayed_tree_to_head`. We could also have written it
 directly, as follows:
 
 ```
