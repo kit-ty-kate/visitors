@@ -60,6 +60,9 @@ and 'a head =
 let nil : 'a cascade =
   fun () -> Nil
 
+let cons (x : 'a) (xs : 'a cascade) : 'a cascade =
+  fun () -> Cons (x, xs)
+
 (* Forcing a cascade reveals its head. *)
 
 let force xs =
@@ -335,7 +338,7 @@ module Variant2 = struct
     | DTZero ->
         k
     | DTOne x ->
-        fun () -> Cons (x, k)
+        cons x k
     | DTTwo (dt1, dt2) ->
         _delayed_tree_to_cascade dt1 (_delayed_tree_to_cascade dt2 k)
     | DTDelay dt ->
@@ -356,7 +359,7 @@ module Variant2 = struct
     k
 
   let _DTOne x k =
-    fun () -> Cons (x, k)
+    cons x k
 
   let _DTTwo dt1 dt2 k =
     dt1 (dt2 k)
