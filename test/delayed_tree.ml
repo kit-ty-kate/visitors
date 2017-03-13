@@ -15,7 +15,7 @@ type 'a sometree =
 
 (* We would like to enumerate the elements of this data structure.
    More precisely, we would like to construct an iterator, that is,
-   an an on-demand producer of elements. Here is a simple definition
+   an on-demand producer of elements. Here is a simple definition
    of a stateful iterator: *)
 
 type 'a iterator =
@@ -27,8 +27,8 @@ type 'a iterator =
 
 (* -------------------------------------------------------------------------- *)
 
-(* For starters, let us first define cascades, which are a more pleasant kind
-   of iterators. A cascade is a persistent (stateless) iterator. It can be
+(* For starters, let us define cascades, which are a more pleasant kind of
+   iterators. A cascade is a persistent (stateless) iterator. It can be
    thought of as a delayed list, that is, a list whose elements are computed
    only on demand. *)
 
