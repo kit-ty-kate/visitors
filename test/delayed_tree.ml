@@ -133,11 +133,11 @@ and delayed_tree_to_head (dt : 'a delayed_tree) (k : 'a cascade) : 'a head =
   | DTZero ->
       force k
   | DTOne x ->
-     Cons (x, k)
+      Cons (x, k)
   | DTTwo (dt1, dt2) ->
-     delayed_tree_to_head dt1 (delayed_tree_to_cascade dt2 k)
+      delayed_tree_to_head dt1 (delayed_tree_to_cascade dt2 k)
   | DTDelay dt ->
-     delayed_tree_to_head (force dt) k
+      delayed_tree_to_head (force dt) k
 
 let delayed_tree_to_cascade (dt : 'a delayed_tree) : 'a cascade =
   delayed_tree_to_cascade dt nil
@@ -297,6 +297,115 @@ module Variant1 = struct
   end
 
   (* The rest of the code is unchanged. It is reproduced here for testing. *)
+
+  class ['self] verbose_reduce = object (_ : 'self)
+    inherit [_] reduce as super
+    method! visit_Leaf visit_'a env =
+      Printf.printf "Visiting a leaf.\n%!";
+      super#visit_Leaf visit_'a env
+    method! visit_Node visit_'a env t1 x t2 =
+      Printf.printf "Visiting a node.\n%!";
+      super#visit_Node visit_'a env t1 x t2
+  end
+
+  let sometree_to_delayed_tree (t : 'a sometree) =
+    new verbose_reduce # visit_sometree yield () t
+
+  let sometree_to_iterator (t : 'a sometree) : 'a iterator =
+    delayed_tree_to_iterator (sometree_to_delayed_tree t)
+
+  let t : int sometree =
+    Node (Node (Leaf, 1, Leaf), 2, Node (Leaf, 3, Leaf))
+
+  let i : int iterator =
+    sometree_to_iterator t
+
+end
+
+(* -------------------------------------------------------------------------- *)
+
+module Variant2 = struct
+
+  (* The function [delayed_tree_to_cascade] could have been written directly
+     as follows, without the auxiliary function [delayed_tree_to_head]: *)
+
+  let rec _delayed_tree_to_cascade (dt : 'a delayed_tree) (k : 'a cascade)
+  : 'a cascade =
+    match dt with
+    | DTZero ->
+        k
+    | DTOne x ->
+        fun () -> Cons (x, k)
+    | DTTwo (dt1, dt2) ->
+        _delayed_tree_to_cascade dt1 (_delayed_tree_to_cascade dt2 k)
+    | DTDelay dt ->
+        fun () -> _delayed_tree_to_cascade (force dt) k ()
+
+  (* In this form, [delayed_tree_to_cascade] is the only operation that is
+     ever applied to a delayed tree, so we can refunctionalize delayed trees,
+     that is, wherever we used to build a delayed tree [t], we now directly
+     build a closure that is equivalent to [delayed_tree_to_cascade t]. *)
+
+  type 'a producer =
+    'a cascade -> 'a cascade
+
+  type 'a delayed_tree =
+    'a producer
+
+  let _DTZero k =
+    k
+
+  let _DTOne x k =
+    fun () -> Cons (x, k)
+
+  let _DTTwo dt1 dt2 k =
+    dt1 (dt2 k)
+
+  let _DTDelay dt k =
+    fun () -> force dt k ()
+
+  let (_ : 'a delayed_tree) = _DTZero
+  let (_ : 'a -> 'a delayed_tree) = _DTOne
+  let (_ : 'a delayed_tree -> 'a delayed_tree -> 'a delayed_tree) = _DTTwo
+  let (_ : (unit -> 'a delayed_tree) -> 'a delayed_tree) = _DTDelay
+
+  let delayed_tree_to_cascade (dt : 'a delayed_tree) : 'a cascade =
+    dt nil
+
+  let delayed_tree_to_iterator (dt : 'a delayed_tree) : 'a iterator =
+    cascade_to_iterator (delayed_tree_to_cascade dt)
+
+  (* The delayed monoid uses the new constructors. In [plus], we lose the
+     little optimization whereby [DTZero] were recognized and eliminated on
+     the fly. *)
+
+  class ['self] delayed_tree_monoid = object (_ : 'self)
+
+    method zero =
+      _DTZero
+
+    method plus =
+      _DTTwo
+
+    method visit_delay: 'env 'a .
+      ('env -> 'a -> 'b delayed_tree) ->
+      'env -> 'a delay -> 'b delayed_tree
+    = fun visit_'a env x ->
+        _DTDelay (fun () -> visit_'a env x)
+
+  end
+
+  let yield _env x =
+    _DTOne x
+
+  (* The rest of the code is as before. It is reproduced here for testing. *)
+
+  class ['self] reduce = object (self : 'self)
+    inherit [_] sometree_reduce as super
+    inherit [_] delayed_tree_monoid
+    method! visit_sometree visit_'a env t =
+      self#visit_delay (super#visit_sometree visit_'a) env t
+  end
 
   class ['self] verbose_reduce = object (_ : 'self)
     inherit [_] reduce as super
