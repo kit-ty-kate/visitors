@@ -263,7 +263,7 @@ and 'a mytree_delay =
 This approach is pleasant insofar as one controls exactly where `delay`s are
 inserted. However, it requires copying the type definition, which may be
 unpleasant. Another approach is described
-[further on](#variant:-avoiding-duplication-of-the-type-definition).
+[further on](#variant-avoiding-duplication-of-the-type-definition).
 
 ## Using the Generated Visitor
 
