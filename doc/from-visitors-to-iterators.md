@@ -69,11 +69,14 @@ and 'a head =
 
 A delayed computation is represented as a function of type `unit -> _`.
 
-The empty cascade is defined as follows:
+The cascade constructors are as follows:
 
 ```
 let nil : 'a cascade =
   fun () -> Nil
+
+let cons (x : 'a) (xs : 'a cascade) : 'a cascade =
+  fun () -> Cons (x, xs)
 ```
 
 Forcing a cascade reveals its head:
@@ -385,13 +388,13 @@ longer exists; one calls `visit_sometree` instead).
 
 ## Variant: Getting Rid of Explicit Delayed Trees
 
-I like presenting delayed trees as an explicit data structure, because this
+I like to present delayed trees as an explicit data structure, because this
 helps understand what is going on. However, if desired, it is possible to
 hide them by *refunctionalization* (the opposite of *defunctionalization*).
 
 Above, the function `delayed_tree_to_cascade` was written with the help of an
-auxiliary function, `delayed_tree_to_head`. At the cost of a constant factor
-in time, we could have written it directly, as follows:
+auxiliary function, `delayed_tree_to_head`. We could have also written it
+directly, as follows:
 
 ```
 let rec delayed_tree_to_cascade (dt : 'a delayed_tree) (k : 'a cascade)
@@ -400,7 +403,7 @@ let rec delayed_tree_to_cascade (dt : 'a delayed_tree) (k : 'a cascade)
   | DTZero ->
       k
   | DTOne x ->
-      fun () -> Cons (x, k)
+      cons x k
   | DTTwo (dt1, dt2) ->
       delayed_tree_to_cascade dt1 (delayed_tree_to_cascade dt2 k)
   | DTDelay dt ->
@@ -434,7 +437,7 @@ let _DTZero k =
   k
 
 let _DTOne x k =
-  fun () -> Cons (x, k)
+  cons x k
 
 let _DTTwo dt1 dt2 k =
   dt1 (dt2 k)
@@ -455,9 +458,7 @@ let delayed_tree_to_cascade (dt : 'a delayed_tree) : 'a cascade =
   dt nil
 ```
 
-The delayed tree monoid uses the new versions of the four data constructors.
-In the method `plus`, we lose the little optimization whereby the data
-constructor `DTZero` was recognized and eliminated on the fly.
+The delayed tree monoid uses the new versions of the four data constructors:
 
 ```
 class ['self] delayed_tree_monoid = object (_ : 'self)
@@ -484,14 +485,6 @@ The four functions `_DTZero`, `_DTOne`, `_DTTwo`, and `_DTDelay` could be
 inlined, if desired, so as to make the above code seem even more concise.
 
 The rest of the code is unchanged.
-
-In this version, delayed trees are no longer visible as an explicit data structure.
-Nevertheless, the closures that are allocated at runtime still form a delayed tree;
-so the runtime behavior of the code is exactly the same (except that we have a lost
-a few optimizations along the way).
-
-This version is more concise and more clever. I tend to prefer the explicit
-version, as it is more pedagogical, in my opinion.
 
 ## Acknowledgements
 
