@@ -17,6 +17,22 @@ type tyvars = tyvar list
 
 (* Testing for the presence of attributes. *)
 
+(* We use [Ppx_deriving] to extract attributes. By convention, an attribute
+   named [name] can also be referred to as [visitors.name] or
+   [deriving.visitors.name]. *)
+
+(* [select name attrs] extracts the attribute named [name] from the attribute
+   list [attrs]. *)
+
+let select (name : string) (attrs : attribute list) : attribute option =
+  attr ~deriver:plugin name attrs
+
+(* [present name attrs] tests whether an attribute named [name] is present
+   (with no argument) in the list [attrs]. *)
+
+let present (name : string) (attrs : attribute list) : bool =
+  Arg.get_flag ~deriver:plugin (select name attrs)
+
 (* [opacity attrs] tests whether the attribute list [attrs] contains an
    [@opaque] attribute. *)
 
@@ -24,12 +40,8 @@ type opacity =
   | Opaque
   | NonOpaque
 
-let is_opaque (attr : attribute) : bool =
-  let { txt = name; _ }, _payload = attr in
-  name = "opaque"
-
 let opacity (attrs : attributes) : opacity =
-  if List.exists is_opaque attrs then Opaque else NonOpaque
+  if present "opaque" attrs then Opaque else NonOpaque
 
 (* -------------------------------------------------------------------------- *)
 
