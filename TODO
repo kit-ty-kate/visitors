@@ -6,6 +6,11 @@ TODO (REALLY)
 
 TODO (PERHAPS)
 
+If there is an error, then the warnings are never seen,
+  because they are placed in the generated code.
+  Can we fix this?
+  e.g. type t = A of (int -> int)[@opaque]
+
 In fully [polymorphic] mode, perhaps one could allow [@@deriving visitors]
   to be used in an .mli file, producing class types.
 
