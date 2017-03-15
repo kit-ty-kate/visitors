@@ -131,11 +131,11 @@ let identifier : string Arg.conv =
 let name (attrs : attributes) : string option =
   Arg.get_attr ~deriver:plugin identifier (select "name" attrs)
 
-(* [constructor attrs] tests for the presence of a [@constructor] attribute,
+(* [build attrs] tests for the presence of a [@build] attribute,
    carrying a payload that is an arbitrary OCaml expression. *)
 
-let constructor (attrs : attributes) : expression option =
-  Arg.get_attr ~deriver:plugin Arg.expr (select "constructor" attrs)
+let build (attrs : attributes) : expression option =
+  Arg.get_attr ~deriver:plugin Arg.expr (select "build" attrs)
 
 (* [maybe ox y] returns [x] if present, otherwise [y]. *)
 
