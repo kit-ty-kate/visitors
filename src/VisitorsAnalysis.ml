@@ -114,20 +114,22 @@ let decl_params (decl : type_declaration) : tyvars =
   type_params_to_tyvars decl.ptype_params
 
 (* [is_local decls tycon] tests whether the type constructor [tycon] is
-   declared by the type declarations [decls]. If so, it returns the list
-   of its formal type parameters. *)
+   declared by the type declarations [decls]. If so, it returns the
+   corresponding declaration. *)
 
-let rec is_local (decls : type_declaration list) (tycon : tycon) : tyvars option =
+let rec is_local (decls : type_declaration list) (tycon : tycon)
+: type_declaration option =
   match decls with
   | [] ->
       None
   | decl :: decls ->
       if decl.ptype_name.txt = tycon then
-        Some (decl_params decl)
+        Some decl
       else
         is_local decls tycon
 
-let is_local (decls : type_declaration list) (tycon : Longident.t) : tyvars option =
+let is_local (decls : type_declaration list) (tycon : Longident.t)
+: type_declaration option =
   match tycon with
   | Lident tycon ->
       is_local decls tycon

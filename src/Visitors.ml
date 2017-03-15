@@ -646,7 +646,8 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
          applied to the visitor functions associated with SOME of the [tys]. *)
       let tys =
         match is_local X.decls tycon with
-        | Some formals ->
+        | Some decl ->
+            let formals = decl_params decl in
             (* [tycon] is a local type constructor, whose formal type parameters
                are [formals]. Among these formal type parameters, some should be
                treated in a monomorphic manner, and some should be treated in a
