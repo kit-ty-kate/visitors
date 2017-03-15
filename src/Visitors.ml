@@ -53,11 +53,12 @@ let generate_virtual_method m ty =
 
 include WarningStore(struct end)
 
-(* [datacon_opacity_warning cd] emits a technical warning (if necessary). One
-   should not write "A of int[@opaque]". Instead, one should write "A of
-   (int[@opaque])". In the case of records fields, we fix this silently, by
-   moving the attribute from the record field to the type, but in the case of
-   data constructors with multiple fields, it is preferable to be strict. *)
+(* [datacon_opacity_warning cd] emits a warning (if necessary) about the
+   following issue. One should not write "A of int[@opaque]". Instead, one
+   should write "A of (int[@opaque])". In the case of records fields, we fix
+   this silently, by moving the attribute from the record field to the type,
+   but in the case of data constructors with multiple fields, it is preferable
+   to be strict. *)
 
 let datacon_opacity_warning (cd : constructor_declaration) : unit =
   if opacity cd.pcd_attributes = Opaque then
