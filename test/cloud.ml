@@ -3,7 +3,12 @@ class ['self] base = object (_ : 'self)
 end
 
 type cloud =
-| Point of (float[@name "real"]) * (float[@name "real"])
-| Clouds of cloud list
-[@@name "nuage"]
-[@@deriving visitors { variety = "map"; ancestors = ["base"] }]
+  | Point of (float[@name "real"]) * (float[@name "real"])
+  | Clouds of cloud list
+  [@@name "nuage"]
+  [@@deriving visitors { variety = "map"; ancestors = ["base"] }]
+
+type 'a mylist = 'a list =
+  | []                     [@name "nil"]
+  | (::) of 'a * 'a mylist [@name "cons"]
+  [@@deriving visitors { variety = "map" }]
