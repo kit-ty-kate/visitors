@@ -2,8 +2,9 @@
 
 TODO (REALLY)
 
-Document @name and @@name for types and data constructors.
 Allow & document @constructor for sum types and record types.
+
+Add a pointer to http://gallium.inria.fr/blog/from-visitors-to-iterators/
 
 ------------------------------------------------------------------------------
 
