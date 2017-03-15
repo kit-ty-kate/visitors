@@ -679,84 +679,156 @@ let ifbuild (attrs : attributes) (builder : builder) : builder =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [ascend] builds the code that forms the ascending part of a visitor method,
-   that is, the code found after the recursive calls. The parameters of the
-   function [ascend] are as follows:
+(* The following classes help build the code that forms the ascending part of
+   a visitor method, that is, the code found after the recursive calls. *)
 
-   [this]       a variable that denotes the data structure that is visited
+(* There are four variants of this code, used in visitor methods for data
+   constructors, in visitor methods for records, in visitor functions for
+   tuples, and in visitor functions for @opaque types. *)
+
+(* The base class, [ascend], provides as much shared behavior as possible. *)
+
+class virtual ascend (ss : variables) = object (self)
+
+  (* An [iter] visitor returns a unit value. *)
+  method ascend_Iter =
+    unit()
+
+  (* The behavior of a [map] visitor is defined in subclasses. *)
+  method virtual ascend_Map : expression
+
+  (* By default, an [endo] visitor behaves like a [map] visitor. This behavior
+  is appropriate at @opaque types. *)
+  method ascend_Endo =
+    self#ascend_Map
+
+  (* A [reduce] visitor uses [zero] and [plus] to combine the results
+     of the recursive calls, which are bound to the variables [ss]. *)
+  method ascend_Reduce =
+    reduce (evars ss)
+
+  (* A [mapreduce] visitor returns a pair of the results that would be
+     returned by a [map] visitor and by a [reduce] visitor. *)
+  method ascend_MapReduce =
+    tuple [ self#ascend_Map; self#ascend_Reduce ]
+
+  (* By default, a [fold] visitor behaves like a [map] visitor, because we
+     have no better choice. This behavior is used  at tuples and at @opaque
+     types. *)
+  method ascend_Fold =
+    self#ascend_Map
+
+  (* Dispatch. *)
+  method ascend =
+    match X.scheme with
+    | Iter      -> self#ascend_Iter
+    | Map       -> self#ascend_Map
+    | Endo      -> self#ascend_Endo
+    | Reduce    -> self#ascend_Reduce
+    | MapReduce -> self#ascend_MapReduce
+    | Fold      -> self#ascend_Fold
+
+end
+
+(* The subclass [ascend_opaque] defines the desired behavior at @opaque types. *)
+
+(* In an [iter] visitor, we return a unit value, as always. This means that,
+   even if [arity] is greater than 1, NO EQUALITY TEST takes place. This
+   differs from the behavior of the methods [visit_int], [visit_bool], etc.,
+   which perform an equality test. *)
+
+(* In a [map] visitor, we return THE FIRST ARGUMENT of the visitor. At arity
+   greater than 1, this is an ARBITRARY choice. It is not clear what else we
+   could do. *)
+
+(* In a [reduce] visitor, we return the neutral element, [self#zero]. *)
+
+(* In a [fold] visitor, we keep the default behavior, which is to behave like
+   a [map] visitor. *)
+
+class ascend_opaque (xs : variables) = object
+
+  inherit ascend []
+
+  method ascend_Map =
+    evar (hd xs) (* [xs] is the vector of arguments; pick the first one *)
+
+end
+
+(* The subclass [ascend_endo] defines the standard behavior of an [endo]
+   visitor, which is to perform physical equality tests. *)
+
+(* Its parameters are as follows:
+
+   [this]       (a variable for) the data structure that is visited
    [subjects]   the matrix of arguments to the recursive calls
-   [rs], [ss]   vectors of variables that denote the results of the calls
-   [builder]    code for reconstructing a data structure
-   [fold]       what to do if this is a [fold] visitor;
-                if [None], behave as in a [map] visitor
+   [rs], [ss]   (vectors of variables for) the results of the recursive calls *)
 
- *)
-
-let ascend
+class virtual ascend_endo
   (this : variable)
   (subjects : expressions list)
   (rs : variables)
   (ss : variables)
+= object (self)
+
+  inherit ascend ss
+
+  (* An [endo] visitor first tests if the arguments of the recursive calls,
+     [subjects], are physically equal to the results of these calls, [rs]. If
+     that is the case, then it returns the original data structure, [this].
+     Otherwise, it reconstructs a new data structure, like a [map] visitor. *)
+  method! ascend_Endo =
+    assert (arity = 1);
+    ifeqphys subjects rs (evar this) (self#ascend_Map)
+
+end
+
+(* The subclass [ascend_tuple] defines the desired behavior at tuple types. *)
+
+class ascend_tuple this subjects rs ss = object
+
+  inherit ascend_endo this subjects rs ss
+
+  (* A [map] visitor reconstructs a tuple. *)
+  method ascend_Map =
+    tuple (evars rs)
+
+end
+
+(* The subclass [ascend_algebraic] defines the desired behavior at a sum type
+   or record type. Its extra parameters are as follows:
+
+   [builder]  how to reconstruct a data constructor or record
+   [decl]     the type declaration under which we are working
+   [m]        the name of the virtual ascending method
+   [tys]      the types of the components of this data constructor or record *)
+
+class ascend_algebraic this subjects rs ss
   (builder : builder)
-  (fold : (unit -> expression) option)
-: expression
-=
-  let rec ascend scheme =
-    match scheme with
-    | Iter ->
-        (* An [iter] visitor returns a unit value. *)
-        unit()
-    | Map ->
-        (* A [map] visitor reconstructs a data structure, based on [rs],
-           the results of the recursive calls. *)
-        builder rs
-    | Endo ->
-        (* An [endo] visitor first tests if the arguments of the recursive
-           calls, [subjects], are physically equal to the results of these
-           calls, [rs]. If that is the case, then it returns the original
-           data structure, [this]. Otherwise, it reconstructs a new data
-           structure, just like a [map] visitor. *)
-        ifeqphys subjects rs (evar this) (ascend Map)
-    | Reduce ->
-        (* A [reduce] visitor uses [zero] and [plus] to combine the results
-           of the recursive calls, which are bound to the variables [ss]. *)
-        reduce (evars ss)
-    | MapReduce ->
-        (* A [mapreduce] visitor returns a pair of the results that would be
-           returned by a [map] visitor and by a [reduce] visitor. *)
-        tuple [ ascend Map; ascend Reduce ]
-    | Fold ->
-        (* If an expression [e] is provided, use it; otherwise, behave as a
-           [map] visitor. *)
-        match fold with None -> ascend Map | Some e -> e()
-  in
-  ascend X.scheme
+  (decl : type_declaration)
+  (m : methode)
+  (tys : core_types)
+= object
 
-(* [fold decl m rs tys] builds the code that forms the ascending part of a
-   visitor method, when this method is associated with a data constructor or
-   record, and when the scheme is [fold]. The parameters of the function
-   [ascend] are as follows:
+  inherit ascend_endo this subjects rs ss
 
-   [decl]       the type declaration under which we are working
-   [m]          the name of the virtual ascending method
-   [rs]         a vector of variables that denote the results of the calls
-   [tys]        the types of the components of this data constructor or record
+  (* A [map] visitor reconstructs a data structure using the results [rs] of
+     the recursive calls. *)
+  method ascend_Map =
+    builder rs
 
- *)
-
-let fold
-  (decl : type_declaration) (m : methode) (rs : variables) (tys : core_types)
-: (unit -> expression) option
-=
-  Some (fun () ->
-    (* Invoke the virtual ascending method, with [env] and [rs] as arguments.
-       As a side effect, declare the existence of this method. *)
-    vhook m (env :: rs)
+  (* A [fold] visitor invokes the virtual ascending method [m], with [env] and
+     [rs] as arguments. As a side effect, [ascend_Fold] declares this virtual
+     method. *)
+  method! ascend_Fold =
+    vhook m
+      (env :: rs)
       (ty_arrows
          (ty_env :: map fold_result_type tys)
          (decl_result_type decl)
       )
-  )
+
+end
 
 (* -------------------------------------------------------------------------- *)
 
@@ -839,18 +911,16 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
     Ptyp_tuple tys ->
       (* Construct a function that takes [arity] tuples as arguments. *)
       (* See [constructor_declaration] for comments. *)
-      (* Without loss of generality, when the scheme is [fold], we
-         re-build a tuple. *)
       let xss = componentss tys in
       let subjects = evarss xss in
       let rs = results xss
       and ss = summaries xss in
-      let builder rs = tuple (evars rs) in
+      let ascend = new ascend_tuple this subjects rs ss in
       plambdas
         (alias this (ptuples (transpose arity (pvarss xss))))
         (bind rs ss
           (visit_types tys subjects)
-          (ascend this subjects rs ss builder None)
+          (ascend#ascend)
         )
 
   (* If [env_in_scope] does not have the desired value, wrap a recursive call
@@ -866,25 +936,8 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
   | true, Opaque, _ ->
       (* Construct a function that takes [arity] arguments. *)
       let xs = things in
-      lambdas xs
-        (let rec body scheme =
-           match scheme with
-           | Iter      -> unit()        (* At arity > 1, NO EQUALITY TEST takes place. *)
-           | Map       -> evar (hd xs)  (* At arity > 1, this is an ARBITRARY choice. *)
-           | Endo      -> body Map      (* Arity is 1, so this is fine. *)
-           | Reduce    -> monoid_unit() (* This is fine. *)
-           | MapReduce -> tuple [ body Map; body Reduce ]
-           | Fold -> (* At arity 1, the best thing to do, without loss of
-                        generality, is to behave as the identity, that is,
-                        behave as in [map]. At arity > 1, it is debatable
-                        whether we should make an arbitrary choice (like
-                        [map] does) or invoke a virtual method whose
-                        parameters are [env :: xs]. The issue with the
-                        latter approach would be, how many distinct such
-                        methods do we need?, how do we name them?, etc. *)
-                     body Map
-         in body X.scheme
-        )
+      let ascend = new ascend_opaque xs in
+      lambdas xs (ascend#ascend)
 
   (* An unsupported construct. *)
   | _, _, Ptyp_any
@@ -993,6 +1046,12 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
      components of the existing block, then the address of the existing block is
      returned; otherwise a new block is allocated, as in [map]. *)
 
+  let ascend =
+    new ascend_algebraic
+        this subjects rs ss
+        builder decl (datacon_ascending_method cd) tys
+  in
+
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
     (hook X.data
@@ -1003,8 +1062,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
         (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
       (bind rs ss
         (visit_types tys subjects)
-        (ascend this subjects rs ss builder
-          (fold decl (datacon_ascending_method cd) rs tys))
+        (ascend#ascend)
       )
     )
 
@@ -1042,13 +1100,17 @@ let visit_decl (decl : type_declaration) : expression =
       let builder rs = record (combine labels (evars rs)) in
       let builder = ifbuild decl.ptype_attributes builder in
       let subjects = accesses xs labels in
+      let rs = results labels
+      and ss = summaries labels in
+      let ascend =
+        new ascend_algebraic
+          (hd xs) subjects rs ss
+          builder decl (tycon_ascending_method decl) tys
+      in
       lambdas xs (
-        let rs = results labels
-        and ss = summaries labels in
         bind rs ss
           (visit_types tys subjects)
-          (ascend (hd xs) subjects rs ss builder
-            (fold decl (tycon_ascending_method decl) rs tys))
+          (ascend#ascend)
       )
 
   (* A sum type. *)
