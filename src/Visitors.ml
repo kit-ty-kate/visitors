@@ -67,6 +67,18 @@ let datacon_opacity_warning (cd : constructor_declaration) : unit =
        It should be attached to a type. Please use parentheses."
       plugin
 
+(* [sum_build_warning decl] emits emits a warning (if necessary) about the
+   following issue. One should not attach a [@@build] attribute to a sum type.
+   Instead, one should attach a [@build] attribute to every data constructor.
+   Note that one can attach a [@@build] attribute to a record type. *)
+
+let sum_build_warning (decl : type_declaration) : unit =
+  if build decl.ptype_attributes <> None then
+    warning decl.ptype_loc
+      "%s: @@build, attached to a sum type, is ignored.\n\
+       Instead, @build should be attached to each data constructor."
+      plugin
+
 (* -------------------------------------------------------------------------- *)
 
 (* We support parameterized type declarations. We require them to be regular.
@@ -965,6 +977,7 @@ let visit_decl (decl : type_declaration) : expression =
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->
+      sum_build_warning decl;
       (* Generate one case per data constructor. Place these cases in a
          [match] construct, which itself is placed in a function body. *)
       (* If [arity] is greater than 1 and if there is more than one data
