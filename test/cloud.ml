@@ -8,7 +8,11 @@ type cloud =
   [@@name "nuage"]
   [@@deriving visitors { variety = "map"; ancestors = ["base"] }]
 
-type 'a mylist = 'a list =
-  | []                     [@name "nil"]
-  | (::) of 'a * 'a mylist [@name "cons"]
-  [@@deriving visitors { variety = "map" }]
+module List = struct
+
+  type 'a mylist = 'a list =
+    | []                     [@name "nil"]
+    | (::) of 'a * 'a mylist [@name "cons"]
+    [@@deriving visitors { variety = "map" }]
+
+end
