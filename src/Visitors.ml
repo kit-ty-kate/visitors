@@ -125,8 +125,18 @@ let tyvar_visitor_function (alpha : tyvar) : variable =
 (* For every data constructor [datacon], there is a descending visitor method,
    which is invoked on the way down, when this data constructor is discovered. *)
 
-let datacon_descending_method (datacon : datacon) : methode =
-  "visit_" ^ datacon
+(* The name of this method is normally [visit_Foo] if the data constructor is
+   named [Foo]. This convention can be overriden by the user via a [@name]
+   attribute, which must be attached to the data constructor. *)
+
+let datacon_descending_method (cd : constructor_declaration) : methode =
+  match name cd.pcd_attributes with
+  | None ->
+      (* No [@name] attribute. *)
+      let datacon = cd.pcd_name.txt in
+      "visit_" ^ datacon
+  | Some name ->
+      name
 
 (* For every data constructor [datacon], there is a ascending visitor method,
    which is invoked on the way up, in order to re-build some data structure.
@@ -855,7 +865,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   Exp.case
     (ptuple (alias this (map (pconstr datacon) pss)))
     (hook X.data
-      (datacon_descending_method datacon)
+      (datacon_descending_method cd)
       (map tyvar_visitor_function alphas @ env :: transmit this (flatten xss))
       (quantify alphas (ty_arrows
         (map visitor_param_type alphas)
