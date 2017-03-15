@@ -1,20 +1,31 @@
 open Hashcons
 
-(* Although we cannot implement the method [visit_hash_consed] yet, as we need
-   a hash-consing table to do that, we can announce what its type should be.
-   The key subtlety here is that this method must be monomorphic in ['b].
-   Indeed, we cannot hope to be able to build values of type ['b hash_consed]
-   for every ['b]. We can only hope to build values of type ['b hash_consed]
-   for a fixed (as yet undetermined) ['b], if we have a hash-consing table of
-   type ['b Hashcons.t]. *)
+module VisitorsHashcons = struct
 
-class virtual ['self] hashcons_map_placeholder = object (_ : 'self)
-  method virtual visit_hash_consed: 'env 'a .
-    ('env -> 'a -> 'b) ->
-    'env -> 'a hash_consed -> 'b hash_consed
+  (* We CAN implement the method [visit_hash_consed], but this method requires
+     a hash-consing table. We assume that this table is stored in the field
+     [_table], which we declare virtual. *)
+
+  (* A key subtlety is that the method [visit_hash_consed] must be monomorphic
+     in ['b]. Indeed, we cannot hope to build values of type ['b hash_consed]
+     for every ['b]. We can only hope to build values of type ['b hash_consed]
+     for a fixed ['b], where the hash-consing table has type ['b Hashcons.t].
+     For now, the type ['b] is undetermined. It will be fixed in a subclass,
+     where the field [_table] is initialized. *)
+
+  class virtual ['self] map = object (_ : 'self)
+    val virtual _table: 'b Hashcons.t
+    method visit_hash_consed: 'env 'a .
+      ('env -> 'a -> 'b) ->
+      'env -> 'a hash_consed -> 'b hash_consed
+    = fun visit_'a env { node = e; _ } ->
+        hashcons _table (visit_'a env e)
+  end
+
 end
 
-(* This allows us to define the types [expr] and [hexpr]... *)
+(* This allows us to define the types [expr] and [hexpr] and generate a
+   visitor class for them. *)
 
 type 'expr oexpr =
   | EConst of int
@@ -23,23 +34,19 @@ type 'expr oexpr =
 and hexpr =
   H of hexpr oexpr hash_consed [@@unboxed]
 
-(* ... and generate a visitor class for them, where [visit_hash_consed]
-   is a virtual method. So far, so good, it seems. *)
+[@@deriving visitors { variety = "map"; polymorphic = ["'expr"];
+                       ancestors = ["VisitorsHashcons.map"] }]
 
-[@@deriving visitors { variety = "map"; name = "map_incomplete";
-                       polymorphic = true;
-                       ancestors = ["hashcons_map_placeholder"] }]
+(* Once the type [hexpr] is defined, we can allocate a table. *)
 
-(* Assuming that a hash-consing table is given, we can then use this
-   table in a concrete definition of [visit_hash_consed]. *)
+let table : hexpr oexpr Hashcons.t =
+  Hashcons.create 128
 
-(* The type ['b] is instantiated here with [hexpr oexpr]. We do not
-   have a choice: this type is fixed by the definition of [hexpr].
-   The generated method [visit_hexpr] contains a call to
-   [visit_hash_consed] at this type. *)
+(* Inheriting [map] and defining [_table] yields a working visitor. *)
 
-class ['self] map (table : hexpr oexpr Hashcons.t) = object (_ : 'self)
-  inherit [_] map_incomplete
-  method visit_hash_consed visit_'a env { node = e; _ } =
-    hashcons table (visit_'a env e)
-end
+let id : hexpr -> hexpr =
+  let o = object
+    inherit [_] map
+    val _table = table
+  end in
+  o # visit_hexpr ()
