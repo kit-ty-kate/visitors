@@ -90,26 +90,50 @@ let check_regularity loc tycon (formals : tyvars) (actuals : core_types) =
 
 (* Public naming conventions. *)
 
+(* The names of the methods associated with the type [foo] are normally based
+   on (derived from) the name [foo]. This base name can be overriden by the
+   user via an attribute. For a local type, a [@@name] attribute must be
+   attached to the type declaration. For a nonlocal type, a [@name] attribute
+   must be attached to every reference to this type. *)
+
+let tycon_modified_name (attrs : attributes) (tycon : tycon) : tycon =
+  maybe (name attrs) tycon
+
+(* Similarly, the base name of the methods associated with a data constructor
+   can be altered via a [@name] attribute, which must be attached to the data
+   constructor declaration. *)
+
+let datacon_modified_name (cd : constructor_declaration) : datacon =
+  maybe (name cd.pcd_attributes) cd.pcd_name.txt
+
 (* For every type constructor [tycon], there is a visitor method, also called
    a descending method, as it is invoked when going down into the tree. *)
 
-let tycon_visitor_method (tycon : Longident.t) : methode =
-  (* We support qualified names, and, in that case, use the last part of the
-     qualified name to obtain the name of the visitor method. A qualified name
-     must denote a nonlocal type. *)
-  (* One might like to use [last tycon] directly as the name of the method, but
-     that could (in theory) create a conflict with the names of other methods.
-     In order to guarantee the absence of conflicts, we must use a nonempty
-     prefix. *)
-  "visit_" ^ Longident.last tycon
+(* The name of this method is normally [visit_foo] if the type is named [foo]
+   or [A.foo]. (A qualified name must denote a nonlocal type.) *)
+
+let tycon_visitor_method (attrs : attributes) (tycon : tycon) : methode =
+  "visit_" ^ tycon_modified_name attrs tycon
+
+let local_tycon_visitor_method (decl : type_declaration) : methode =
+  tycon_visitor_method decl.ptype_attributes decl.ptype_name.txt
+
+let nonlocal_tycon_visitor_method (ty : core_type) : methode =
+  match ty.ptyp_desc with
+  | Ptyp_constr (tycon, _) ->
+      tycon_visitor_method ty.ptyp_attributes (Longident.last tycon.txt)
+  | _ ->
+      assert false
 
 (* For every local record type constructor [tycon], there is an ascending
    method, which is invoked on the way up, in order to re-build some data
    structure. This method is virtual and exists only when the scheme is
    [fold]. *)
 
-let tycon_ascending_method (tycon : string) : methode =
-  "build_" ^ tycon
+(* The name of this method is normally [build_foo] if the type is named [foo]. *)
+
+let tycon_ascending_method (decl : type_declaration) : methode =
+  "build_" ^ tycon_modified_name decl.ptype_attributes decl.ptype_name.txt
 
 (* [mono] type variables have a virtual visitor method. We include a quote in
    the method name so as to ensure the absence of collisions. *)
@@ -117,40 +141,30 @@ let tycon_ascending_method (tycon : string) : methode =
 let tyvar_visitor_method (alpha : tyvar) : methode =
   "visit_'" ^ alpha
 
-(* [poly] type variables have a visitor function. We use the same name. *)
-
-let tyvar_visitor_function (alpha : tyvar) : variable =
-  tyvar_visitor_method alpha
-
 (* For every data constructor [datacon], there is a descending visitor method,
    which is invoked on the way down, when this data constructor is discovered. *)
 
 (* The name of this method is normally [visit_Foo] if the data constructor is
-   named [Foo]. This convention can be overriden by the user via a [@name]
-   attribute, which must be attached to the data constructor. *)
+   named [Foo]. *)
 
 let datacon_descending_method (cd : constructor_declaration) : methode =
-  match name cd.pcd_attributes with
-  | None ->
-      (* No [@name] attribute. *)
-      let datacon = cd.pcd_name.txt in
-      "visit_" ^ datacon
-  | Some name ->
-      name
+  "visit_" ^ datacon_modified_name cd
 
 (* For every data constructor [datacon], there is a ascending visitor method,
    which is invoked on the way up, in order to re-build some data structure.
    This method is virtual and exists only when the scheme is [fold]. *)
 
-let datacon_ascending_method (datacon : datacon) : methode =
-  "build_" ^ datacon
+let datacon_ascending_method (cd : constructor_declaration) : methode =
+  "build_" ^ datacon_modified_name cd
 
 (* At arity 2, for every sum type constructor [tycon] which has at least two
    data constructors, there is a failure method, which is invoked when the
    left-hand and right-hand arguments do not exhibit the same tags. *)
 
-let failure_method (tycon : tycon) : methode =
-  "fail_" ^ tycon
+(* The name of this method is normally [fail_foo] if the type is named [foo]. *)
+
+let failure_method (decl : type_declaration) : methode =
+  "fail_" ^ tycon_modified_name decl.ptype_attributes decl.ptype_name.txt
 
 (* When [scheme] is [Reduce], we need a monoid, that is, a unit [zero] and a
    binary operation [plus]. The names [zero] and [plus] are fixed. We assume
@@ -338,6 +352,11 @@ let tyvar_visitor_method_type =
     Typ.poly ["env"] (ty_arrow ty_env ty_any)
   else
     ty_any
+
+(* [poly] type variables have a visitor function. *)
+
+let tyvar_visitor_function (alpha : tyvar) : variable =
+  tyvar_visitor_method alpha
 
 (* -------------------------------------------------------------------------- *)
 
@@ -640,11 +659,11 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
      [env]. *)
   | false,
     NonOpaque,
-    Ptyp_constr ({ txt = (tycon : Longident.t); _ }, tys) ->
+    Ptyp_constr ({ txt = tycon; _ }, tys) ->
       (* [tycon] is a type constructor, applied to certain types [tys]. *)
       (* We must call the visitor method associated with [tycon],
          applied to the visitor functions associated with SOME of the [tys]. *)
-      let tys =
+      let m, tys =
         match is_local X.decls tycon with
         | Some decl ->
             let formals = decl_params decl in
@@ -658,6 +677,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
             (* The visitor method should be applied to the visitor functions
                associated with the subset of [tys] that corresponds to [poly]
                variables. *)
+            local_tycon_visitor_method decl,
             filter2 X.poly formals tys
         | None ->
             (* [tycon] is a nonlocal type constructor. *)
@@ -668,10 +688,11 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
                ensure that this method exists. (It may be virtual.) This
                method may be polymorphic, so multiple call sites do not
                pollute one another. *)
+            nonlocal_tycon_visitor_method ty,
             tys
       in
       app
-        (call (tycon_visitor_method tycon) [])
+        (call m [])
         (map (visit_type false) tys)
 
   (* A type variable [alpha] must be a formal parameter of the current
@@ -881,7 +902,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
            | Reduce    -> reduce (evars ss)
            | MapReduce -> tuple [ body Map; body Reduce ]
            | Fold      -> vhook
-                            (datacon_ascending_method datacon)
+                            (datacon_ascending_method cd)
                             (env :: rs)
                             (ty_arrows (ty_env :: map fold_result_type tys) (decl_result_type decl))
          in body X.scheme
@@ -906,7 +927,6 @@ let visit_decl (decl : type_declaration) : expression =
   );
 
   (* Bind the values to a vector of variables [xs]. *)
-  let tycon = decl.ptype_name.txt in
   let xs = things in
   assert (length xs = arity);
 
@@ -934,7 +954,7 @@ let visit_decl (decl : type_declaration) : expression =
              | Reduce    -> reduce (evars ss)
              | MapReduce -> tuple [ body Map; body Reduce ]
              | Fold      -> vhook
-                              (tycon_ascending_method tycon)
+                              (tycon_ascending_method decl)
                               (env :: rs)
                               (ty_arrows (ty_env :: map fold_result_type tys) (decl_result_type decl))
            in body X.scheme
@@ -953,10 +973,10 @@ let visit_decl (decl : type_declaration) : expression =
         Exp.case
           (ptuple (pvars xs))
           (hook true
-            (failure_method tycon)
+            (failure_method decl)
             (env :: xs)
             (quantify (poly_params decl) (visitor_method_type decl))
-            (efail (tycon_visitor_method (Lident tycon)))
+            (efail (local_tycon_visitor_method decl))
           )
       in
       let complete (cs : case list) : case list =
@@ -986,7 +1006,7 @@ let visit_decl (decl : type_declaration) : expression =
 let type_decl (decl : type_declaration) : unit =
   let alphas = poly_params decl in
   generate_concrete_method
-    (tycon_visitor_method (Lident decl.ptype_name.txt))
+    (local_tycon_visitor_method decl)
     (lambdas (map tyvar_visitor_function alphas @ [env]) (visit_decl decl))
     (quantify alphas (ty_arrows (map visitor_param_type alphas) (visitor_method_type decl)))
 
