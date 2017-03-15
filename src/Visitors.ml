@@ -817,6 +817,23 @@ and visit_types tys (ess : expressions list) : expressions =
 
 (* -------------------------------------------------------------------------- *)
 
+(* If a data constructor or record carries a [@build] attribute, then the
+   OCaml expression carried by this attribute should be used instead of the
+   default [builder] function, which rebuilds a data constructor or record.
+   This concerns [map], [endo], and [mapreduce] visitors. *)
+
+type builder =
+  variables -> expression
+
+let ifbuild (attrs : attributes) (builder : builder) : builder =
+  match build attrs with
+  | None ->
+      builder
+  | Some e ->
+      fun rs -> app e (evars rs)
+
+(* -------------------------------------------------------------------------- *)
+
 (* [constructor_declaration] turns a constructor declaration (as found in a
    declaration of a sum type) into a case, that is, a branch in the case
    analysis construct that forms the body of the visitor method for this sum
@@ -825,6 +842,7 @@ and visit_types tys (ess : expressions list) : expressions =
 
 let constructor_declaration decl (cd : constructor_declaration) : case =
   datacon_opacity_warning cd;
+  let datacon = cd.pcd_name.txt in
 
   (* This is either a traditional data constructor, whose components are
      anonymous, or a data constructor whose components form an ``inline
@@ -840,16 +858,17 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
                 this matrix has [arity] rows.
                 it has [length tys] columns in the case of tuples,
                 and 1 column in the case of inline records.
-     [build]    the expressions that rebuild a data constructor, on the way up.
+     [builder]  a function which, applied to the results [rs] of the
+                recursive calls, rebuilds a data constructor, on the way up.
   *)
 
-  let xss, tys, pss, (build : variables -> expressions) =
+  let xss, tys, pss, (builder : builder) =
   match cd.pcd_args with
     (* A traditional data constructor. *)
     | Pcstr_tuple tys ->
         let xss = componentss tys in
         let pss = transpose arity (pvarss xss) in
-        xss, tys, pss, evars
+        xss, tys, pss, fun rs -> constr datacon (evars rs)
     (* An ``inline record'' data constructor. *)
     | Pcstr_record lds ->
         let labels, tys = ld_labels lds, ld_tys lds in
@@ -857,11 +876,14 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
         let pss = transpose arity (pvarss xss) in
         xss, tys,
         map (fun ps -> [precord ~closed:Closed (combine labels ps)]) pss,
-        fun rs -> [record (combine labels (evars rs))]
+        fun rs -> constr datacon [record (combine labels (evars rs))]
   in
   assert (is_matrix (length tys) arity xss);
   assert (length pss = arity);
   let subjects = evarss xss in
+
+  (* Take a [@build] attribute into account. *)
+  let builder = ifbuild cd.pcd_attributes builder in
 
   (* Find out which type variables [alphas] are formal parameters of this
      declaration and are marked [poly]. We have to universally quantify over
@@ -872,8 +894,6 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   let alphas = poly_params decl in
   check_poly_under_opaque alphas tys;
 
-  (* Get the name of this data constructor. *)
-  let datacon = cd.pcd_name.txt in
   (* Create new names [rs] for the results of the recursive calls of visitor
      methods. *)
   let rs = results xss
@@ -911,7 +931,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
         (let rec body scheme =
            match scheme with
            | Iter      -> unit()
-           | Map       -> constr datacon (build rs)
+           | Map       -> builder rs
            | Endo      -> ifeqphys subjects rs (evar this) (body Map)
            | Reduce    -> reduce (evars ss)
            | MapReduce -> tuple [ body Map; body Reduce ]
@@ -956,6 +976,8 @@ let visit_decl (decl : type_declaration) : expression =
       let labels, tys = ld_labels lds, ld_tys (fix lds) in
       (* See [constructor_declaration] for comments. *)
       check_poly_under_opaque (poly_params decl) tys;
+      let builder rs = record (combine labels (evars rs)) in
+      let builder = ifbuild decl.ptype_attributes builder in
       let subjects = accesses xs labels in
       lambdas xs (
         let rs = results labels
@@ -964,7 +986,7 @@ let visit_decl (decl : type_declaration) : expression =
           (let rec body scheme =
              match scheme with
              | Iter      -> unit()
-             | Map       -> record (combine labels (evars rs))
+             | Map       -> builder rs
              | Endo      -> ifeqphys subjects rs (evar (hd xs)) (body Map)
              | Reduce    -> reduce (evars ss)
              | MapReduce -> tuple [ body Map; body Reduce ]
