@@ -679,30 +679,26 @@ let ifbuild (attrs : attributes) (builder : builder) : builder =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [ascend] builds the code that forms the ascending part of a visitor method
-   (associated with a data constructor or record). The ascending part of the
-   method is the code found after the recursive calls. The parameters of the
+(* [ascend] builds the code that forms the ascending part of a visitor method,
+   that is, the code found after the recursive calls. The parameters of the
    function [ascend] are as follows:
 
-   [decl]       the type declaration under which we are working
-   [tys]        the types of the components of the data constructor or record
    [this]       a variable that denotes the data structure that is visited
    [subjects]   the matrix of arguments to the recursive calls
    [rs], [ss]   vectors of variables that denote the results of the calls
    [builder]    code for reconstructing a data structure
-   [m]          the name of the virtual ascending method
+   [fold]       what to do if this is a [fold] visitor
 
  *)
 
 let ascend
-  (decl : type_declaration)
-  (tys : core_types)
   (this : variable)
   (subjects : expressions list)
   (rs : variables)
   (ss : variables)
   (builder : builder)
-  (m : methode)
+  (fold : unit -> expression)
+: expression
 =
   let rec ascend scheme =
     match scheme with
@@ -729,14 +725,33 @@ let ascend
            returned by a [map] visitor and by a [reduce] visitor. *)
         tuple [ ascend Map; ascend Reduce ]
     | Fold ->
-        (* A [fold] visitor invokes a virtual method, named [m], passing [env]
-           and [rs] as arguments. *)
-        vhook m (env :: rs)
-          (ty_arrows
-             (ty_env :: map fold_result_type tys)
-             (decl_result_type decl))
+        fold()
   in
   ascend X.scheme
+
+(* [fold decl m rs tys] builds the code that forms the ascending part of a
+   visitor method, when this method is associated with a data constructor or
+   record, and when the scheme is [fold]. The parameters of the function
+   [ascend] are as follows:
+
+   [decl]       the type declaration under which we are working
+   [m]          the name of the virtual ascending method
+   [rs]         a vector of variables that denote the results of the calls
+   [tys]        the types of the components of this data constructor or record
+
+ *)
+
+let fold
+  (decl : type_declaration) (m : methode) (rs : variables) (tys : core_types)
+  () (* delay the side effect! *)
+=
+  (* Invoke the virtual ascending method, with [env] and [rs] as arguments.
+     As a side effect, declare the existence of this method. *)
+  vhook m (env :: rs)
+    (ty_arrows
+       (ty_env :: map fold_result_type tys)
+       (decl_result_type decl)
+    )
 
 (* -------------------------------------------------------------------------- *)
 
@@ -989,7 +1004,8 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
         (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
       (bind rs ss
         (visit_types tys subjects)
-        (ascend decl tys this subjects rs ss builder (datacon_ascending_method cd))
+        (ascend this subjects rs ss builder
+          (fold decl (datacon_ascending_method cd) rs tys))
       )
     )
 
@@ -1032,7 +1048,8 @@ let visit_decl (decl : type_declaration) : expression =
         and ss = summaries labels in
         bind rs ss
           (visit_types tys subjects)
-          (ascend decl tys (hd xs) subjects rs ss builder (tycon_ascending_method decl))
+          (ascend (hd xs) subjects rs ss builder
+            (fold decl (tycon_ascending_method decl) rs tys))
       )
 
   (* A sum type. *)
