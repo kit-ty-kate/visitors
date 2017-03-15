@@ -62,10 +62,9 @@ include WarningStore(struct end)
 let datacon_opacity_warning (cd : constructor_declaration) : unit =
   if opacity cd.pcd_attributes = Opaque then
     warning cd.pcd_loc
-      (sprintf
-         "%s: @opaque, attached to a data constructor, is ignored.\n\
-          It should be attached to a type. Please use parentheses."
-         plugin)
+      "%s: @opaque, attached to a data constructor, is ignored.\n\
+       It should be attached to a type. Please use parentheses."
+      plugin
 
 (* -------------------------------------------------------------------------- *)
 

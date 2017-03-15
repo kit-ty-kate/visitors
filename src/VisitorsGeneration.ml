@@ -572,8 +572,8 @@ end
 
 module WarningStore (X : sig end) : sig
 
-  (* [warning loc msg] emits a warning. *)
-  val warning: loc -> string -> unit
+  (* [warning loc format ...] emits a warning. *)
+  val warning: loc -> ('a, unit, string, unit) format4 -> 'a
 
   (* [warnings()] returns a list of all warnings emitted so far. *)
   val warnings: unit -> structure
@@ -585,6 +585,9 @@ end = struct
 
   let warning loc msg =
     warnings := Ast_mapper.attribute_of_warning loc msg :: !warnings
+
+  let warning loc format =
+    Printf.ksprintf (warning loc) format
 
   let warnings () =
     let ws = !warnings in
