@@ -687,7 +687,8 @@ let ifbuild (attrs : attributes) (builder : builder) : builder =
    [subjects]   the matrix of arguments to the recursive calls
    [rs], [ss]   vectors of variables that denote the results of the calls
    [builder]    code for reconstructing a data structure
-   [fold]       what to do if this is a [fold] visitor
+   [fold]       what to do if this is a [fold] visitor;
+                if [None], behave as in a [map] visitor
 
  *)
 
@@ -697,7 +698,7 @@ let ascend
   (rs : variables)
   (ss : variables)
   (builder : builder)
-  (fold : unit -> expression)
+  (fold : (unit -> expression) option)
 : expression
 =
   let rec ascend scheme =
@@ -725,7 +726,9 @@ let ascend
            returned by a [map] visitor and by a [reduce] visitor. *)
         tuple [ ascend Map; ascend Reduce ]
     | Fold ->
-        fold()
+        (* If an expression [e] is provided, use it; otherwise, behave as a
+           [map] visitor. *)
+        match fold with None -> ascend Map | Some e -> e()
   in
   ascend X.scheme
 
@@ -743,15 +746,17 @@ let ascend
 
 let fold
   (decl : type_declaration) (m : methode) (rs : variables) (tys : core_types)
-  () (* delay the side effect! *)
+: (unit -> expression) option
 =
-  (* Invoke the virtual ascending method, with [env] and [rs] as arguments.
-     As a side effect, declare the existence of this method. *)
-  vhook m (env :: rs)
-    (ty_arrows
-       (ty_env :: map fold_result_type tys)
-       (decl_result_type decl)
-    )
+  Some (fun () ->
+    (* Invoke the virtual ascending method, with [env] and [rs] as arguments.
+       As a side effect, declare the existence of this method. *)
+    vhook m (env :: rs)
+      (ty_arrows
+         (ty_env :: map fold_result_type tys)
+         (decl_result_type decl)
+      )
+  )
 
 (* -------------------------------------------------------------------------- *)
 
@@ -834,24 +839,18 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
     Ptyp_tuple tys ->
       (* Construct a function that takes [arity] tuples as arguments. *)
       (* See [constructor_declaration] for comments. *)
+      (* Without loss of generality, when the scheme is [fold], we
+         re-build a tuple. *)
       let xss = componentss tys in
       let subjects = evarss xss in
       let rs = results xss
       and ss = summaries xss in
+      let builder rs = tuple (evars rs) in
       plambdas
         (alias this (ptuples (transpose arity (pvarss xss))))
-        (bind rs ss (visit_types tys subjects)
-          (let rec body scheme =
-             match scheme with
-             | Iter      -> unit()
-             | Map       -> tuple (evars rs)
-             | Endo      -> ifeqphys subjects rs (evar this) (body Map)
-             | Reduce    -> reduce (evars ss)
-             | MapReduce -> tuple [ body Map; body Reduce ]
-             | Fold      -> (* Without loss of generality, re-build a tuple. *)
-                            body Map
-           in body X.scheme
-          )
+        (bind rs ss
+          (visit_types tys subjects)
+          (ascend this subjects rs ss builder None)
         )
 
   (* If [env_in_scope] does not have the desired value, wrap a recursive call
