@@ -2186,6 +2186,62 @@ If desired, instead of \oc|[@opaque]|, one can use the more verbose forms
 
 % ------------------------------------------------------------------------------
 
+\subsection{Alternate method names}
+\label{sec:name}
+
+The methods associated with the type \oc|foo| are normally named after this
+type: this includes the visitor method \tyconvisitor{foo}, the build method
+\tyconascendingmethod{foo},
+% (in \oc|fold| visitors)
+and the failure method \tyconfail{foo}.
+% (when the arity is 2)
+This base name can be altered via an attribute. If \oc|foo| is a local type,
+then a \oc|[@@name]| attribute must be attached to the declaration of this
+type. If \oc|foo| is a nonlocal type, then a \oc|[@name]| attribute must be
+attached to every reference to this type. For instance, in the following
+example,
+the visitor method associated with the type \oc|cloud| is named
+\oc|visit_nuage| instead of \oc|visit_cloud|:
+%
+\begin{origenv}
+\begin{lstlisting}
+type cloud =
+  | Point of (float[@name "real"]) * (float[@name "real"])
+  | Clouds of cloud list
+  [@@name "nuage"]
+  [@@deriving visitors { variety = "map"; ancestors = ["base"] }]
+\end{lstlisting}
+\end{origenv}
+%
+Furthermore, the visitor method associated with the type \oc|float|
+(which is not generated, and should be inherited from the class \oc|base|)
+is assumed to be named \oc|visit_real| instead of \oc|visit_float|.
+
+The methods associated with the data constructor \oc|Foo| are normally named
+after it: this includes the visitor method \dataconvisitor{Foo} and the build
+method \dataconascendingmethod{Foo}.
+%
+This base name can be altered via a \oc|[@name]| attribute, which must be
+attached to the data constructor. For instance, in the following example,
+the visitor methods associated with the data constructors \oc|[]| and \oc|::|
+are named \dataconvisitor{nil} and \dataconvisitor{cons}:
+% instead of \dataconvisitor{[]} and \dataconvisitor{::},
+% which would be invalid names:
+%
+\begin{origenv}
+\begin{lstlisting}
+type 'a mylist = 'a list =
+  | []                     [@name "nil"]
+  | (::) of 'a * 'a mylist [@name "cons"]
+  [@@deriving visitors { variety = "map" }]
+\end{lstlisting}
+\end{origenv}
+
+If desired, instead of \oc|[@name]|, one can use
+\oc|[@visitors.name]| or \oc|[@deriving.visitors.name]|.
+
+% ------------------------------------------------------------------------------
+
 \bibliographystyle{plain}
 \bibliography{english,local}
 
