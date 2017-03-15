@@ -111,11 +111,25 @@ type opacity =
 let opacity (attrs : attributes) : opacity =
   if present "opaque" attrs then Opaque else NonOpaque
 
-(* [name attrs] tests for the presence of a [@name] attribute, carrying
-   a payload of type [string]. *)
+(* [name attrs] tests for the presence of a [@name] attribute, carrying a
+   payload of type [string]. We check that the payload is a valid (lowercase
+   or uppercase) identifier, because we intend to use it as the basis of a
+   method name. *)
+
+let identifier : string Arg.conv =
+  fun e ->
+    match Arg.string e with
+    | Error msg ->
+        Error msg
+    | Ok s ->
+        match classify s with
+        | LIDENT | UIDENT ->
+            Ok s
+        | OTHER ->
+            Error "identifier"
 
 let name (attrs : attributes) : string option =
-  Arg.get_attr ~deriver:plugin Arg.string (select "name" attrs)
+  Arg.get_attr ~deriver:plugin identifier (select "name" attrs)
 
 (* [constructor attrs] tests for the presence of a [@constructor] attribute,
    carrying a payload that is an arbitrary OCaml expression. *)
