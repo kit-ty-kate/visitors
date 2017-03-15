@@ -24,13 +24,13 @@ type tyvars = tyvar list
 (* [select name attrs] extracts the attribute named [name] from the attribute
    list [attrs]. *)
 
-let select (name : string) (attrs : attribute list) : attribute option =
+let select (name : string) (attrs : attributes) : attribute option =
   attr ~deriver:plugin name attrs
 
 (* [present name attrs] tests whether an attribute named [name] is present
    (with no argument) in the list [attrs]. *)
 
-let present (name : string) (attrs : attribute list) : bool =
+let present (name : string) (attrs : attributes) : bool =
   Arg.get_flag ~deriver:plugin (select name attrs)
 
 (* [opacity attrs] tests whether the attribute list [attrs] contains an
