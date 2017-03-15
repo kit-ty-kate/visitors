@@ -2,13 +2,14 @@
 
 TODO (REALLY)
 
+Continue to clean up near [ascend].
+  Inline some functions used only once? [ifeqphys], [ifbuild]
+  Share (bind rs ss (visit_types tys subjects) (ascend#ascend))
+
 beware of capture: code in @build can see some private variables
 
 Document @build for sum types and record types.
   Careful not to mis-spell it.
-
-Unify the [body] functions for sums and records?
-  Also hoist the [body] functions for tuples and opaque types, for clarity.
 
 Document hexpr_polymorphic.
 
