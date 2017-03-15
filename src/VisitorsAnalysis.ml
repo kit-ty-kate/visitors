@@ -17,24 +17,23 @@ type tyvars = tyvar list
 
 (* Testing for the presence of attributes. *)
 
-(* We use [Ppx_deriving] to extract attributes. By convention, an attribute
-   named [name] can also be referred to as [visitors.name] or
-   [deriving.visitors.name]. *)
+(* We use [ppx_deriving] to extract a specific attribute from an attribute
+   list. By convention, an attribute named [foo] can also be referred to as
+   [visitors.foo] or as [deriving.visitors.foo]. *)
 
-(* [select name attrs] extracts the attribute named [name] from the attribute
+(* [select foo attrs] extracts the attribute named [foo] from the attribute
    list [attrs]. *)
 
-let select (name : string) (attrs : attributes) : attribute option =
-  attr ~deriver:plugin name attrs
+let select (foo : string) (attrs : attributes) : attribute option =
+  attr ~deriver:plugin foo attrs
 
-(* [present name attrs] tests whether an attribute named [name] is present
+(* [present foo attrs] tests whether an attribute named [foo] is present
    (with no argument) in the list [attrs]. *)
 
-let present (name : string) (attrs : attributes) : bool =
-  Arg.get_flag ~deriver:plugin (select name attrs)
+let present (foo : string) (attrs : attributes) : bool =
+  Arg.get_flag ~deriver:plugin (select foo attrs)
 
-(* [opacity attrs] tests whether the attribute list [attrs] contains an
-   [@opaque] attribute. *)
+(* [opacity attrs] tests for the presence of an [@opaque] attribute. *)
 
 type opacity =
   | Opaque
@@ -42,6 +41,12 @@ type opacity =
 
 let opacity (attrs : attributes) : opacity =
   if present "opaque" attrs then Opaque else NonOpaque
+
+(* [name attrs] tests for the presence of a [@name] attribute, carrying
+   a payload of type [string]. *)
+
+let name (attrs : attributes) : string option =
+  Arg.get_attr ~deriver:plugin Arg.string (select "name" attrs)
 
 (* -------------------------------------------------------------------------- *)
 
