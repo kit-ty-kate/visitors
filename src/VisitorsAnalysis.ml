@@ -54,6 +54,11 @@ let name (attrs : attributes) : string option =
 let constructor (attrs : attributes) : expression option =
   Arg.get_attr ~deriver:plugin Arg.expr (select "constructor" attrs)
 
+(* [maybe ox y] returns [x] if present, otherwise [y]. *)
+
+let maybe (ox : 'a option) (y : 'a) : 'a =
+  match ox with Some x -> x | None -> y
+
 (* -------------------------------------------------------------------------- *)
 
 (* When parsing a record declaration, the OCaml parser attaches attributes
