@@ -48,6 +48,12 @@ let opacity (attrs : attributes) : opacity =
 let name (attrs : attributes) : string option =
   Arg.get_attr ~deriver:plugin Arg.string (select "name" attrs)
 
+(* [constructor attrs] tests for the presence of a [@constructor] attribute,
+   carrying a payload that is an arbitrary OCaml expression. *)
+
+let constructor (attrs : attributes) : expression option =
+  Arg.get_attr ~deriver:plugin Arg.expr (select "constructor" attrs)
+
 (* -------------------------------------------------------------------------- *)
 
 (* When parsing a record declaration, the OCaml parser attaches attributes
