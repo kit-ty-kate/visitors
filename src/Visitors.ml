@@ -662,6 +662,84 @@ let vhook (m : methode) (xs : variables) (ty : core_type) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
+(* If a data constructor or record carries a [@build] attribute, then the
+   OCaml expression carried by this attribute should be used instead of the
+   default [builder] function, which rebuilds a data constructor or record.
+   This concerns [map], [endo], and [mapreduce] visitors. *)
+
+type builder =
+  variables -> expression
+
+let ifbuild (attrs : attributes) (builder : builder) : builder =
+  match build attrs with
+  | None ->
+      builder
+  | Some e ->
+      fun rs -> app e (evars rs)
+
+(* -------------------------------------------------------------------------- *)
+
+(* [ascend] builds the code that forms the ascending part of a visitor method
+   (associated with a data constructor or record). The ascending part of the
+   method is the code found after the recursive calls. The parameters of the
+   function [ascend] are as follows:
+
+   [decl]       the type declaration under which we are working
+   [tys]        the types of the components of the data constructor or record
+   [this]       a variable that denotes the data structure that is visited
+   [subjects]   the matrix of arguments to the recursive calls
+   [rs], [ss]   vectors of variables that denote the results of the calls
+   [builder]    code for reconstructing a data structure
+   [m]          the name of the virtual ascending method
+
+ *)
+
+let ascend
+  (decl : type_declaration)
+  (tys : core_types)
+  (this : variable)
+  (subjects : expressions list)
+  (rs : variables)
+  (ss : variables)
+  (builder : builder)
+  (m : methode)
+=
+  let rec ascend scheme =
+    match scheme with
+    | Iter ->
+        (* An [iter] visitor returns a unit value. *)
+        unit()
+    | Map ->
+        (* A [map] visitor reconstructs a data structure, based on [rs],
+           the results of the recursive calls. *)
+        builder rs
+    | Endo ->
+        (* An [endo] visitor first tests if the arguments of the recursive
+           calls, [subjects], are physically equal to the results of these
+           calls, [rs]. If that is the case, then it returns the original
+           data structure, [this]. Otherwise, it reconstructs a new data
+           structure, just like a [map] visitor. *)
+        ifeqphys subjects rs (evar this) (ascend Map)
+    | Reduce ->
+        (* A [reduce] visitor uses [zero] and [plus] to combine the results
+           of the recursive calls, which are bound to the variables [ss]. *)
+        reduce (evars ss)
+    | MapReduce ->
+        (* A [mapreduce] visitor returns a pair of the results that would be
+           returned by a [map] visitor and by a [reduce] visitor. *)
+        tuple [ ascend Map; ascend Reduce ]
+    | Fold ->
+        (* A [fold] visitor invokes a virtual method, named [m], passing [env]
+           and [rs] as arguments. *)
+        vhook m (env :: rs)
+          (ty_arrows
+             (ty_env :: map fold_result_type tys)
+             (decl_result_type decl))
+  in
+  ascend X.scheme
+
+(* -------------------------------------------------------------------------- *)
+
 (* [visit_type env_in_scope ty] builds a small expression that represents the
    visiting code associated with the OCaml type [ty]. For instance, if [ty] is
    a local type constructor, this could be a call to the visitor method
@@ -817,23 +895,6 @@ and visit_types tys (ess : expressions list) : expressions =
 
 (* -------------------------------------------------------------------------- *)
 
-(* If a data constructor or record carries a [@build] attribute, then the
-   OCaml expression carried by this attribute should be used instead of the
-   default [builder] function, which rebuilds a data constructor or record.
-   This concerns [map], [endo], and [mapreduce] visitors. *)
-
-type builder =
-  variables -> expression
-
-let ifbuild (attrs : attributes) (builder : builder) : builder =
-  match build attrs with
-  | None ->
-      builder
-  | Some e ->
-      fun rs -> app e (evars rs)
-
-(* -------------------------------------------------------------------------- *)
-
 (* [constructor_declaration] turns a constructor declaration (as found in a
    declaration of a sum type) into a case, that is, a branch in the case
    analysis construct that forms the body of the visitor method for this sum
@@ -894,8 +955,8 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   let alphas = poly_params decl in
   check_poly_under_opaque alphas tys;
 
-  (* Create new names [rs] for the results of the recursive calls of visitor
-     methods. *)
+  (* Create new names [rs] and [ss] for the results of the recursive calls of
+     visitor methods. *)
   let rs = results xss
   and ss = summaries xss in
 
@@ -928,20 +989,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
         (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
       (bind rs ss
         (visit_types tys subjects)
-        (let rec body scheme =
-           match scheme with
-           | Iter      -> unit()
-           | Map       -> builder rs
-           | Endo      -> ifeqphys subjects rs (evar this) (body Map)
-           | Reduce    -> reduce (evars ss)
-           | MapReduce -> tuple [ body Map; body Reduce ]
-           | Fold      -> vhook
-                            (datacon_ascending_method cd)
-                            (env :: rs)
-                            (ty_arrows (ty_env :: map fold_result_type tys)
-                                       (decl_result_type decl))
-         in body X.scheme
-        )
+        (ascend decl tys this subjects rs ss builder (datacon_ascending_method cd))
       )
     )
 
@@ -982,21 +1030,9 @@ let visit_decl (decl : type_declaration) : expression =
       lambdas xs (
         let rs = results labels
         and ss = summaries labels in
-        bind rs ss (visit_types tys subjects)
-          (let rec body scheme =
-             match scheme with
-             | Iter      -> unit()
-             | Map       -> builder rs
-             | Endo      -> ifeqphys subjects rs (evar (hd xs)) (body Map)
-             | Reduce    -> reduce (evars ss)
-             | MapReduce -> tuple [ body Map; body Reduce ]
-             | Fold      -> vhook
-                              (tycon_ascending_method decl)
-                              (env :: rs)
-                              (ty_arrows (ty_env :: map fold_result_type tys)
-                                         (decl_result_type decl))
-           in body X.scheme
-          )
+        bind rs ss
+          (visit_types tys subjects)
+          (ascend decl tys (hd xs) subjects rs ss builder (tycon_ascending_method decl))
       )
 
   (* A sum type. *)
