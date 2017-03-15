@@ -53,6 +53,20 @@ let generate_virtual_method m ty =
 
 include WarningStore(struct end)
 
+(* [datacon_opacity_warning cd] emits a technical warning (if necessary). One
+   should not write "A of int[@opaque]". Instead, one should write "A of
+   (int[@opaque])". In the case of records fields, we fix this silently, by
+   moving the attribute from the record field to the type, but in the case of
+   data constructors with multiple fields, it is preferable to be strict. *)
+
+let datacon_opacity_warning (cd : constructor_declaration) : unit =
+  if opacity cd.pcd_attributes = Opaque then
+    warning cd.pcd_loc
+      (sprintf
+         "%s: @opaque, attached to a data constructor, is ignored.\n\
+          It should be attached to a type. Please use parentheses."
+         plugin)
+
 (* -------------------------------------------------------------------------- *)
 
 (* We support parameterized type declarations. We require them to be regular.
@@ -798,19 +812,7 @@ and visit_types tys (ess : expressions list) : expressions =
    and definitions. *)
 
 let constructor_declaration decl (cd : constructor_declaration) : case =
-
-  (* A technical warning. One should not write "A of int[@opaque]".
-     Instead, one should write "A of (int[@opaque])".
-     In the case of records fields, we fix this silently, but in
-     the case of data constructors with multiple fields, it is
-     preferable to be strict. *)
-
-  if opacity cd.pcd_attributes = Opaque then
-    warning cd.pcd_loc
-      (sprintf
-         "%s: @opaque, attached to a data constructor, is ignored.\n\
-          It should be attached to a type. Please use parentheses."
-         plugin);
+  datacon_opacity_warning cd;
 
   (* This is either a traditional data constructor, whose components are
      anonymous, or a data constructor whose components form an ``inline
