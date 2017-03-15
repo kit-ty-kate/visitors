@@ -918,7 +918,8 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
            | Fold      -> vhook
                             (datacon_ascending_method cd)
                             (env :: rs)
-                            (ty_arrows (ty_env :: map fold_result_type tys) (decl_result_type decl))
+                            (ty_arrows (ty_env :: map fold_result_type tys)
+                                       (decl_result_type decl))
          in body X.scheme
         )
       )
@@ -970,7 +971,8 @@ let visit_decl (decl : type_declaration) : expression =
              | Fold      -> vhook
                               (tycon_ascending_method decl)
                               (env :: rs)
-                              (ty_arrows (ty_env :: map fold_result_type tys) (decl_result_type decl))
+                              (ty_arrows (ty_env :: map fold_result_type tys)
+                                         (decl_result_type decl))
            in body X.scheme
           )
       )
