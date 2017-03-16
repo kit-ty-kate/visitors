@@ -907,10 +907,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
       let ascend = new ascend_tuple this subjects rs ss in
       plambdas
         (alias this (ptuples (transpose arity (pvarss xss))))
-        (bind rs ss
-          (visit_types tys subjects)
-          (ascend#ascend)
-        )
+        (bulk rs ss tys subjects ascend)
 
   (* If [env_in_scope] does not have the desired value, wrap a recursive call
      within an application or abstraction. At most one recursive call takes
@@ -948,6 +945,22 @@ and visit_types tys (ess : expressions list) : expressions =
   map2 (fun ty es ->
     app (visit_type true ty) es
   ) tys ess
+
+(* -------------------------------------------------------------------------- *)
+
+(* The expression [bulk rs ss tys subjects ascend] represents the bulk of a
+   visitor method or visitor function. It performs the recursive calls, binds
+   their results to [rs] and/or [ss], then runs the ascending code. *)
+
+and bulk
+  (rs : variables) (ss : variables)
+  (tys : core_types)
+  (subjects : expressions list)
+  (ascend : < ascend: expression; .. >)
+=
+  bind rs ss
+    (visit_types tys subjects)
+    (ascend#ascend)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -1049,10 +1062,7 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
       (quantify alphas (ty_arrows
         (map visitor_param_type alphas)
         (visitor_fun_type (transmit (decl_type decl) tys) (decl_type decl))))
-      (bind rs ss
-        (visit_types tys subjects)
-        (ascend#ascend)
-      )
+      (bulk rs ss tys subjects ascend)
     )
 
 (* -------------------------------------------------------------------------- *)
@@ -1096,11 +1106,7 @@ let visit_decl (decl : type_declaration) : expression =
           (hd xs) subjects rs ss
           builder decl (tycon_ascending_method decl) tys
       in
-      lambdas xs (
-        bind rs ss
-          (visit_types tys subjects)
-          (ascend#ascend)
-      )
+      lambdas xs (bulk rs ss tys subjects ascend)
 
   (* A sum type. *)
   | Ptype_variant (cds : constructor_declaration list), _ ->
