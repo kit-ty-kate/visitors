@@ -921,9 +921,10 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
      out appropriate action, based on the current scheme. *)
   | true, Opaque, _ ->
       (* Construct a function that takes [arity] arguments. *)
-      let xs = things in
-      let ascend = new ascend_opaque xs in
-      lambdas xs (ascend#ascend)
+      lambdas things (
+        let ascend = new ascend_opaque things in
+        ascend#ascend
+      )
 
   (* An unsupported construct. *)
   | _, _, Ptyp_any
