@@ -46,6 +46,20 @@ let pervasive (x : string) : Longident.t =
     Ldot (Lident "Pervasives", x)
       (* danger: the name [Pervasives] must not be shadowed. *)
 
+(* We normally place an improbable prefix in front of our private (local)
+   variables, so as to make sure that we do not shadow user variables that
+   are used in [@build] code fragments. *)
+
+(* When producing code for inclusion in the documentation, we remove this
+   prefix. *)
+
+let improbable (x : string) : string =
+  try
+    let _ = Sys.getenv "VISITORS_BUILDING_DOCUMENTATION" in
+    x
+  with Not_found ->
+    "_visitors_" ^ x
+
 (* -------------------------------------------------------------------------- *)
 
 (* Types. *)
