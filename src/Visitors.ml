@@ -550,23 +550,6 @@ let bind (rs : variables) (ss : variables)
 
 (* -------------------------------------------------------------------------- *)
 
-(* Assuming [ess] is a matrix of width [arity] and assuming [arity] is [1],
-   [column ess] returns the first column of [ess], represented as a list. *)
-
-let column (ess : 'a list list) : 'a list =
-  assert (for_all (fun es -> length es = arity) ess);
-  assert (arity = 1);
-  map hd ess
-
-(* Under the above assumptions about [ess], [ifeqphys ess rs e1 e2] constructs
-   an [if/then/else] construct whose condition is the pointwise conjunction of
-   physical equalities between [column ess] and [evars rs]. *)
-
-let ifeqphys (ess : expressions list) (rs : variables) e1 e2 =
-  Exp.ifthenelse (eqphys (column ess) (evars rs)) e1 (Some e2)
-
-(* -------------------------------------------------------------------------- *)
-
 (* [call m es] emits a method call of the form [self#m es]. *)
 
 let call (m : methode) (es : expressions) : expression =
@@ -778,8 +761,14 @@ class virtual ascend_endo
      that is the case, then it returns the original data structure, [this].
      Otherwise, it reconstructs a new data structure, like a [map] visitor. *)
   method! ascend_Endo =
+    (* [subjects] is a matrix of width [arity], and [arity] is [1]. The first
+       column of [subjects] is [map hd subjects]. *)
+    assert (for_all (fun es -> length es = arity) subjects);
     assert (arity = 1);
-    ifeqphys subjects rs (evar this) (self#ascend_Map)
+    Exp.ifthenelse
+      (eqphys (map hd subjects) (evars rs))
+      (evar this)
+      (Some self#ascend_Map)
 
 end
 
