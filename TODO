@@ -2,9 +2,7 @@
 
 TODO (REALLY)
 
-Continue to clean up near [ascend].
-  Inline some functions used only once? [ifeqphys], [ifbuild]
-  Share (bind rs ss (visit_types tys subjects) (ascend#ascend))
+Try to better clean up & share at the three call sites of [bulk].
 
 beware of capture: code in @build can see some private variables
 
