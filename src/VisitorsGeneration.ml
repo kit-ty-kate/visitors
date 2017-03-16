@@ -28,10 +28,14 @@ type expressions = expression list
 
 (* -------------------------------------------------------------------------- *)
 
+(* We normally place a [Pervasives] prefix in front of OCaml's operators, so as
+   to ensure that our code makes sense even if these operators are shadowed by
+   the user. (That said, we still run into trouble if the user shadows the name
+   [Pervasives] itself.) *)
+
 (* When producing code for inclusion in the documentation, we remove the
-   [Pervasives] prefix in front of some operators, just so that things look
-   pretty. We rely on an undocumented environment variable to toggle this
-   behavior. *)
+   [Pervasives] prefix, just so that things look pretty. We rely on an
+   undocumented environment variable to toggle this behavior. *)
 
 let pervasive (x : string) : Longident.t =
   try
