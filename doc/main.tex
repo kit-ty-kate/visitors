@@ -5,6 +5,7 @@
 \renewcommand{\rmdefault}{ptm} % Times.
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{enumitem}
 \usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,%
             linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{marginnote}
@@ -493,8 +494,13 @@ of the new expression. Because the overridden method \tyconvisitor{expr} does
 not call \tyconvisitor{'info}, the latter method is never called: we provide a
 dummy definition of it.
 
-Another application of a \mapreduce visitor, in the same style, would be to
-decorate every subterm of a $\lambda$-term with the set of its free variables.
+Other example applications of \mapreduce visitors include:
+\begin{itemize}[nosep]
+\item decorating every subterm of a $\lambda$-term with the set of its free
+  variables;
+\item decorating every internal node of abstract syntax tree with a region in
+  the source code (assuming that every leaf carries such a region already).
+\end{itemize}
 
 % ------------------------------------------------------------------------------
 
