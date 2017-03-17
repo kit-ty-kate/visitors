@@ -1,3 +1,9 @@
+2017/03/17:
+New attributes [@build] and [@@build] can be attached to record type
+declarations and data constructors, so as to alter the construction code that
+is used in map, endo, and mapreduce visitors. See the documentation for
+details. (This feature was suggested by Reuben Rowe.)
+
 2017/03/15:
 New attributes [@name] and [@@name] can be attached to types, type declarations,
 and data constructors, so as to alter the names of the generated methods. See
