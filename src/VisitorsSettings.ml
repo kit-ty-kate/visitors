@@ -152,6 +152,24 @@ let must_be_valid_class_longident loc c =
 
 (* -------------------------------------------------------------------------- *)
 
+type bool_or_strings =
+  | Bool of bool
+  | Strings of string list
+
+let bool_or_strings : bool_or_strings Arg.conv =
+  fun e ->
+    match Arg.bool e, Arg.list Arg.string e with
+    | Ok b, Error _ ->
+        Ok (Bool b)
+    | Error _, Ok alphas ->
+        Ok (Strings alphas)
+    | Error _, Error _ ->
+       Error "Boolean or string list"
+    | Ok _, Ok _ ->
+       assert false
+
+(* -------------------------------------------------------------------------- *)
+
 (* The option processing code constructs a module of type [SETTINGS]. *)
 
 module Parse (O : sig
@@ -168,6 +186,7 @@ end)
   let bool = Arg.get_expr ~deriver:plugin Arg.bool
   let string = Arg.get_expr ~deriver:plugin Arg.string
   let strings = Arg.get_expr ~deriver:plugin (Arg.list Arg.string)
+  let bool_or_strings = Arg.get_expr ~deriver:plugin bool_or_strings
 
   (* Default values. *)
 
@@ -207,18 +226,14 @@ end)
              of type variable names. If [true], then all type variables are
              considered polymorphic. If a list of type variables, then only
              the variables in the list are considered polymorphic. *)
-          begin match Arg.bool e, Arg.list Arg.string e with
-          | Ok b, Error _ ->
+          begin match bool_or_strings e with
+          | Bool b ->
               polymorphic := b;
               poly := (fun _ -> b)
-          | Error _, Ok alphas ->
+          | Strings alphas ->
               let alphas = List.map unquote alphas in
               polymorphic := true;
               poly := (fun alpha -> List.mem alpha alphas)
-          | Error _, Error _ ->
-              raise_errorf ~loc:e.pexp_loc "%s: Boolean or string list expected" plugin
-          | Ok _, Ok _ ->
-              assert false
           end
       | "public" ->
           public := Some (strings e)
