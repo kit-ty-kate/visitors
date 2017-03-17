@@ -1092,6 +1092,7 @@ from \oc|VisitorsRuntime|. This is done via the \nude parameter
 % ------------------------------------------------------------------------------
 
 \subsection{Generating visitors for preexisting types}
+\label{sec:import}
 
 Because the \derivingvisitors annotation must be attached to the type
 definition, it may seem as if it is impossible to generate a visitor for a
@@ -2239,6 +2240,67 @@ type 'a mylist = 'a list =
 %
 If desired, instead of \oc|[@name]|, one can use
 \oc|[@visitors.name]| or \oc|[@deriving.visitors.name]|.
+
+% ------------------------------------------------------------------------------
+
+\subsection{Alternate construction code in \map visitors}
+\label{sec:build}
+
+By default, a \map visitor for an algebraic data type constructs a new data
+structure, by applying a data constructor or by allocating a new record.
+Sometimes, though, it is illegal to do so: this is the case, for instance, if
+the type has been declared \oc|private|.
+%
+% Sometimes, the default behavior is well-typed, but is not the desired
+% behavior. In that case, it can be customized by overriding a method. Using
+% [@build] offers a little extra conciseness and efficiency in that case, but
+% this need not be advertised.
+%
+% Another solution would be to just write the visitor by hand for a private
+% type, but that would require more work from the user.
+%
+In such a situation, an alternate constructor can be provided via a
+\oc|[@build]| attribute (which must be attached to a data constructor) or via a
+\oc|[@@build]| attribute (which must be attached to a record type declaration).
+%
+Such an attribute carries an OCaml expression, which should represent a
+constructor function.
+
+For instance, suppose that the module \oc|Point| has the following signature:
+\begin{mdframed}[backgroundcolor=green!10]
+\lstinputlisting{point.mli}
+\end{mdframed}
+
+Suppose that, outside of this module, one wishes to generate a \map visitor
+for the type \oc|Point.point|. One would like to do this in the style that was
+presented earlier (\sref{sec:import}), but a naïve attempt fails: the
+generated visitor is illegal, because allocating a record of type
+\oc|Point.point| is forbidden. To circumvent this problem, one should
+indicate, via a \oc|[@@build]| attribute, that the constructor function
+\oc|Point.make| should be used:
+%
+\begin{origenv}
+\begin{lstlisting}
+type point = Point.point = private { x: int; y: int }
+  [@@build Point.make]
+  [@@deriving visitors { variety = "map" }]
+\end{lstlisting}
+\end{origenv}
+%
+
+The OCaml expression carried by a \oc|[@build]| attribute can refer to the
+local variable \oc|self|, which represents the visitor object, and to the
+local variable \oc|env|, which represents the environment received by the
+visitor method.
+
+\oc|[@build]| attributes influence not only \map visitors,
+but also \mapendo and \mapreduce visitors.
+
+Instead of \oc|[@build]|, one can use
+\oc|[@visitors.build]| or \oc|[@deriving.visitors.build]|.
+
+% Be careful not to misspell the attribute name,
+% as the attribute would then be silently ignored.
 
 % ------------------------------------------------------------------------------
 
