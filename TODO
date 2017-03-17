@@ -2,24 +2,13 @@
 
 TODO (REALLY)
 
-Try to better clean up & share at the three call sites of [bulk].
-
-beware of capture: code in @build can see some private variables
-
-Document @build for sum types and record types.
-  Careful not to mis-spell it.
-
-Document hexpr_polymorphic.
-
-Add a pointer to http://gallium.inria.fr/blog/from-visitors-to-iterators/
-
-mapreduce can serve to collect locations
-
-create a new opam package visitorshashcons?
+Better clean up & share code at the three call sites of [bulk].
 
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)
+
+Document hexpr_polymorphic. Make VisitorsHashcons available as a library.
 
 If there is an error, then the warnings are never seen,
   because they are placed in the generated code.
