@@ -76,9 +76,6 @@ Avoid generating beta-redexes.
 Re-introduce hoisting of closure allocations of the form [self#visit_foo]?
   If so, share them when they have several occurrences.
 
-Do something about ~path?
-  It seems connected to nested modules.
-
 Think about generating analyze_ methods
   which perform a bottom-up computation (at most once; memoized)
   based only on the type structure
