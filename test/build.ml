@@ -5,7 +5,6 @@ type foo =
   | B of int
   | C of foo * foo [@build fun x y -> C (x, y)]
 
-and point =
-  { x: int; y: int } [@@build fun x y -> { x; y }]
-
-[@@deriving visitors { variety = "map" }]
+and point = Point.point = private { x: int; y: int }
+  [@@build Point.make]
+  [@@deriving visitors { variety = "map" }]
