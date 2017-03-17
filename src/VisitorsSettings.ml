@@ -235,6 +235,20 @@ end)
               polymorphic := true;
               poly := (fun alpha -> List.mem alpha alphas)
           end
+      | "monomorphic" ->
+           (* The [monomorphic] parameter is provided as a facility for the user.
+              It means the reverse of [polymorphic]. This is particularly useful
+              when the parameter is a list of type variables: then, only the
+              variables *not* in the list are considered polymorphic. *)
+          begin match bool_or_strings e with
+          | Bool b ->
+              polymorphic := not b;
+              poly := (fun _ -> not b)
+          | Strings alphas ->
+              let alphas = List.map unquote alphas in
+              polymorphic := true; (* yes, [true] *)
+              poly := (fun alpha -> not (List.mem alpha alphas))
+          end
       | "public" ->
           public := Some (strings e)
       | "variety" ->
