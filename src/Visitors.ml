@@ -211,6 +211,12 @@ let plus =
 (* These conventions must be set up so as to avoid collisions within each name
    space separately: e.g., variables, methods, type variables, and so on. *)
 
+(* We use improbable variable names, because it is possible for user code to
+   be placed in the scope of these variables. (This is the case when the user
+   provides [@build] annotations.) As a couple exceptions, the names [self]
+   and [env] are not made improbable, and we document the existence of these
+   variables, which can be used in [@build] annotations. *)
+
 (* In a class, the variable [self] refers to self.
    The type variable [ty_self] denotes its type. *)
 
@@ -244,7 +250,7 @@ let copy (j : int) (x : string) : string =
    ranges over tuple components; the index [j] ranges in [0..arity). *)
 
 let component (i : int) (j : int) : variable =
-  copy j (sprintf "c%d" i)
+  improbable (copy j (sprintf "c%d" i))
 
 let components (i : int) : variables =
   map (component i) (interval 0 arity)
@@ -255,7 +261,7 @@ let componentss (xs : _ list) : variables list =
 (* The variable [thing j] denotes an input value. *)
 
 let thing (j : int) : variable =
-  copy j "this"
+  improbable (copy j "this")
 
 let things : variables =
   map thing (interval 0 arity)
@@ -268,7 +274,7 @@ let this =
 (* The variables [field label j] denote record fields. *)
 
 let field (label : label) (j : int) : variable =
-  copy j (sprintf "f%s" label)
+  improbable (copy j (sprintf "f%s" label))
 
 let fields (label : label) : variables =
   map (field label) (interval 0 arity)
@@ -279,7 +285,7 @@ let fieldss (labels : label list) : variables list =
 (* The variables [result i] denote results of recursive calls. *)
 
 let result (i : int) : variable =
-  sprintf "r%d" i
+  improbable (sprintf "r%d" i)
 
 let results (xs : _ list) : variables =
   mapi (fun i _ -> result i) xs
@@ -290,7 +296,7 @@ let results (xs : _ list) : variables =
    pair components. *)
 
 let summary (i : int) : variable =
-  sprintf "s%d" i
+  improbable (sprintf "s%d" i)
 
 let summaries (xs : _ list) : variables =
   mapi (fun i _ -> summary i) xs
