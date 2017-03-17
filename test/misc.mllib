@@ -5,6 +5,7 @@ dictionary
 fold
 mapReduce
 map_from_fold
+monomorphic
 monopoly
 opaque
 point
