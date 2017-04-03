@@ -710,6 +710,11 @@ these classes has visitor methods for every type (namely \tyconvisitor{unop},
 \tyconvisitor{binop}, \tyconvisitor{expr}) and for every data constructor
 (namely \dataconvisitor{UnaryMinus}, \dataconvisitor{BinaryMinus}, and so on).
 
+Note that, for the \derivingvisitors annotation to apply to the entire family,
+as opposed to just the type \oc|expr|, the types \oc|unop|, \oc|binop|, and
+\oc|expr| in \fref{fig:expr06} are declared simultaneously: that is, their
+declarations are separated with the keyword \oc|and|.
+
 % ------------------------------------------------------------------------------
 
 \subsection{Visitors for parameterized types}
