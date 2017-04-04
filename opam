@@ -20,5 +20,6 @@ depends: [
   "ocamlbuild" {build}
   "ppx_tools"
   "ppx_deriving" {>= "4.0"}
+  "result"
 ]
 available: [ ocaml-version >= "4.03" ]

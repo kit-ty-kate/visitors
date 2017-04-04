@@ -1,3 +1,4 @@
+open Result
 open Longident
 open Asttypes
 open Parsetree

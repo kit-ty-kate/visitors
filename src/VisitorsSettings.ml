@@ -1,3 +1,4 @@
+open Result
 open VisitorsString
 open List
 let sprintf = Printf.sprintf

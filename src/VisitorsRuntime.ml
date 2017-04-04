@@ -12,6 +12,14 @@
 
 (* -------------------------------------------------------------------------- *)
 
+(* For compatibility with OCaml 4.02, we take the type [('a, 'b) result] from
+   the package [result]. This type appeared in the standard library in OCaml
+   4.03. *)
+
+open Result
+
+(* -------------------------------------------------------------------------- *)
+
 (* [array_equal eq xs1 xs2] tests whether the arrays [xs1] and [xs2] have the
    same components. The arrays must have the same length. The components are
    compared using [eq]. *)
