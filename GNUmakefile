@@ -55,7 +55,8 @@ package:
 	@ echo "Setting version to $(DATE)."
 	@ echo version = \"$(DATE)\" >> $(PACKAGE)/src/META
 # Copy and compile the documentation.
-# This requires %.processed.ml files in the test/ directory.
+# This requires %.processed.ml files in the test/ directory,
+# which in turn requires building (and installing) in src/.
 	@ echo "Generating the documentation."
 	@ cp -r doc test $(PACKAGE)
 	@ make -C $(PACKAGE)/test clean processed
@@ -63,9 +64,10 @@ package:
 	@ make -C $(PACKAGE)/doc clean all
 	@ mv $(PACKAGE)/doc/main.pdf $(PACKAGE)/manual.pdf
 	@ rm -rf $(PACKAGE)/doc $(PACKAGE)/test
+	@ make -C $(PACKAGE)/src clean
 # Create the tarball.
 	@ echo "Creating a tarball."
-	tar --exclude=.gitignore -cvz -f $(TARBALL) $(PACKAGE)
+	tar --exclude-from=.gitignore -cvz -f $(TARBALL) $(PACKAGE)
 	@ echo "The package $(PACKAGE).tar.gz is ready."
 
 # -------------------------------------------------------------------------
