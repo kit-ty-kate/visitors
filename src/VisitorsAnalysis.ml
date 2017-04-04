@@ -25,6 +25,8 @@ type tyvars = tyvar list
    approach is to give us (at little cost) a correct criterion for deciding if
    an identifier is valid. *)
 
+(* Note: [Location.formatter_for_warnings] appeared in OCaml 4.02.2. *)
+
 type classification =
   | LIDENT
   | UIDENT
