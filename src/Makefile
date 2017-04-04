@@ -15,6 +15,7 @@ OCAMLBUILD := \
   ocamlbuild \
   -use-ocamlfind \
   -classic-display \
+  -plugin-tag 'package(cppo_ocamlbuild)' \
 
 # The targets that should be built (using ocamlbuild).
 # Not sure whether all of the following files are really required.

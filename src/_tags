@@ -2,7 +2,8 @@ true: \
   debug, \
   safe_string, \
   warn(A-4-44), \
-  package(result)
+  package(result), \
+  cppo_V_OCAML
 
 not <VisitorsRuntime.*>: \
   package(compiler-libs.common), \

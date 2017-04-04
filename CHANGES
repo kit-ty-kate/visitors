@@ -1,3 +1,6 @@
+2017/04/04:
+Extended backward compatibility to OCaml 4.02. (Thanks to Benjamin Farinier.)
+
 2017/03/17:
 New attributes [@build] and [@@build] can be attached to record type
 declarations and data constructors, so as to alter the construction code that

@@ -1,11 +1,12 @@
 open Longident
-open Location
+let mknoloc = Location.mknoloc
 open Asttypes
 open Parsetree
 open Ast_helper
 open Ast_convenience
 open VisitorsList
 open VisitorsAnalysis
+open VisitorsCompatibility
 
 (* This module offers helper functions for code generation. *)
 
@@ -76,8 +77,7 @@ let ty_any =
 let ty_unit =
   tconstr "unit" []
 
-let ty_arrow (a : core_type) (b : core_type) : core_type =
-  Typ.arrow Nolabel a b
+(* For [ty_arrow], see [VisitorsCompatibility]. *)
 
 let ty_arrows : core_types -> core_type -> core_type =
   List.fold_right ty_arrow
@@ -157,8 +157,7 @@ let wildcards xs =
 
 (* [plambda p e] constructs a function [fun p -> e]. *)
 
-let plambda (p : pattern) (e : expression) : expression =
-  Exp.fun_ Nolabel None p e
+(* For [plambda], see [VisitorsCompatibility]. *)
 
 (* [lambda x e] constructs a function [fun x -> e]. *)
 
@@ -380,7 +379,7 @@ let floating (s : string) (items : structure) : structure_item =
 
 let with_warnings (w : string) (items : structure_item list) : structure_item =
   include_ (Mod.structure (
-     floating "ocaml.warning" [ Str.eval (Exp.constant (Const.string w)) ]
+     floating "ocaml.warning" [ Str.eval (Exp.constant (const_string w)) ]
   :: items
   ))
 

@@ -18,8 +18,9 @@ remove: [
 depends: [
   "ocamlfind"
   "ocamlbuild" {build}
+  "cppo" {build}
   "ppx_tools"
   "ppx_deriving" {>= "4.0"}
   "result"
 ]
-available: [ ocaml-version >= "4.03" ]
+available: [ ocaml-version >= "4.02" ]

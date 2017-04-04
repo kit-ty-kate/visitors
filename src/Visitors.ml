@@ -7,6 +7,7 @@ open Ast_helper
 open Ast_convenience
 open Ppx_deriving
 open VisitorsPlugin
+open VisitorsCompatibility
 open VisitorsAnalysis
 open VisitorsGeneration
 open VisitorsSettings
@@ -1000,15 +1001,14 @@ let constructor_declaration decl (cd : constructor_declaration) : case =
   *)
 
   let xss, tys, pss, (builder : builder) =
-  match cd.pcd_args with
+  match data_constructor_variety cd with
     (* A traditional data constructor. *)
-    | Pcstr_tuple tys ->
+    | DataTraditional tys ->
         let xss = componentss tys in
         let pss = transpose arity (pvarss xss) in
         xss, tys, pss, fun rs -> constr datacon (evars rs)
     (* An ``inline record'' data constructor. *)
-    | Pcstr_record lds ->
-        let labels, tys = ld_labels lds, ld_tys lds in
+    | DataInlineRecord (labels, tys) ->
         let xss = fieldss labels in
         let pss = transpose arity (pvarss xss) in
         xss, tys,

@@ -162,21 +162,6 @@ let fix =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [ld_label] and [ld_ty] extract a label and type out of an OCaml record label
-   declaration. *)
-
-let ld_label (ld : label_declaration) : label =
-  ld.pld_name.txt
-
-let ld_labels =
-  List.map ld_label
-
-let ld_ty (ld : label_declaration) : core_type =
-  ld.pld_type
-
-let ld_tys =
-  List.map ld_ty
-
 (* [type_param_to_tyvar] expects a type parameter as found in the field
    [ptype_params] of a type definition, and returns the underlying type
    variable. *)
@@ -286,9 +271,9 @@ and occurs_quantifiers alpha qs =
 and occurs_payload alpha = function
   | PTyp ty ->
       occurs_type alpha ty
-  | PStr _
-  | PSig _
-  | PPat _ ->
+  (* | PStr _ | PPat _ *)
+  (* | PSig _ (* >= 4.03 *) *)
+  | _ ->
       (* We assume that these cases won't arise or won't have any free type
          variables in them. *)
       ()
