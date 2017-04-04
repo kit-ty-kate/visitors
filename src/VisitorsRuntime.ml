@@ -783,7 +783,9 @@ class ['self] map2 = object (self)
     ('env -> 'a -> 'b -> 'c) -> 'env -> 'a array -> 'b array -> 'c array
   = fun f env xs1 xs2 ->
       if Array.length xs1 = Array.length xs2 then
-        Array.map2 (f env) xs1 xs2
+        Array.mapi (fun i x1 -> f env x1 xs2.(i)) xs1
+        (* Array.map2 (f env) xs1 xs2 *)
+        (* We avoid [Array.map2] because it does not exist in OCaml 4.02. *)
       else
         fail()
 
