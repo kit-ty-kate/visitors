@@ -36,7 +36,7 @@ TARBALL  := $(CURRENT)/$(PACKAGE).tar.gz
 # This does not include the src/ and doc/ directories, which require
 # special treatment.
 
-DISTRIBUTED_FILES := AUTHORS CHANGES LICENSE Makefile
+DISTRIBUTED_FILES := AUTHORS CHANGES.md LICENSE Makefile
 
 # -------------------------------------------------------------------------
 
