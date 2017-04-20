@@ -1,5 +1,11 @@
 # Changes
 
+## 2017/04/20
+
+* New settings `visit_prefix`, `build_prefix`, and `fail_prefix` can be used
+  to control which prefixes are used in generated method names. (This feature
+  was suggested by Philip Hölzenspies.)
+
 ## 2017/04/04
 
 * Extended backward compatibility to OCaml 4.02.2. (Thanks to Benjamin Farinier.)
