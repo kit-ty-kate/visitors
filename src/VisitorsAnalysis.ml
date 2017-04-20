@@ -87,6 +87,14 @@ let is_valid_class_longident (m : string) : bool =
 
 (* -------------------------------------------------------------------------- *)
 
+(* Testing if a string is a valid method name prefix. *)
+
+let is_valid_method_name_prefix (m : string) : bool =
+  String.length m > 0 &&
+  classify m = LIDENT
+
+(* -------------------------------------------------------------------------- *)
+
 (* Testing for the presence of attributes. *)
 
 (* We use [ppx_deriving] to extract a specific attribute from an attribute

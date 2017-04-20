@@ -118,10 +118,15 @@ let check_regularity loc tycon (formals : tyvars) (actuals : core_types) =
 (* Public naming conventions. *)
 
 (* The names of the methods associated with the type [foo] are normally based
-   on (derived from) the name [foo]. This base name can be overriden by the
-   user via an attribute. For a local type, a [@@name] attribute must be
-   attached to the type declaration. For a nonlocal type, a [@name] attribute
-   must be attached to every reference to this type. *)
+   on (derived from) the name [foo].
+
+   This base name can be overriden by the user via an attribute. For a local
+   type, a [@@name] attribute must be attached to the type declaration. For a
+   nonlocal type, a [@name] attribute must be attached to every reference to
+   this type.
+
+   The prefix that is prepended to the base name can be controlled via the
+   settings [visit_prefix], [build_prefix], and [fail_prefix]. *)
 
 let tycon_modified_name (attrs : attributes) (tycon : tycon) : tycon =
   maybe (name attrs) tycon
@@ -140,7 +145,7 @@ let datacon_modified_name (cd : constructor_declaration) : datacon =
    or [A.foo]. (A qualified name must denote a nonlocal type.) *)
 
 let tycon_visitor_method (attrs : attributes) (tycon : tycon) : methode =
-  "visit_" ^ tycon_modified_name attrs tycon
+  X.visit_prefix ^ tycon_modified_name attrs tycon
 
 let local_tycon_visitor_method (decl : type_declaration) : methode =
   tycon_visitor_method decl.ptype_attributes decl.ptype_name.txt
@@ -160,13 +165,13 @@ let nonlocal_tycon_visitor_method (ty : core_type) : methode =
 (* The name of this method is normally [build_foo] if the type is named [foo]. *)
 
 let tycon_ascending_method (decl : type_declaration) : methode =
-  "build_" ^ tycon_modified_name decl.ptype_attributes decl.ptype_name.txt
+  X.build_prefix ^ tycon_modified_name decl.ptype_attributes decl.ptype_name.txt
 
 (* [mono] type variables have a virtual visitor method. We include a quote in
    the method name so as to ensure the absence of collisions. *)
 
 let tyvar_visitor_method (alpha : tyvar) : methode =
-  "visit_'" ^ alpha
+  sprintf "%s'%s" X.visit_prefix alpha
 
 (* For every data constructor [datacon], there is a descending visitor method,
    which is invoked on the way down, when this data constructor is discovered. *)
@@ -175,14 +180,14 @@ let tyvar_visitor_method (alpha : tyvar) : methode =
    named [Foo]. *)
 
 let datacon_descending_method (cd : constructor_declaration) : methode =
-  "visit_" ^ datacon_modified_name cd
+  X.visit_prefix ^ datacon_modified_name cd
 
 (* For every data constructor [datacon], there is a ascending visitor method,
    which is invoked on the way up, in order to re-build some data structure.
    This method is virtual and exists only when the scheme is [fold]. *)
 
 let datacon_ascending_method (cd : constructor_declaration) : methode =
-  "build_" ^ datacon_modified_name cd
+  X.build_prefix ^ datacon_modified_name cd
 
 (* At arity 2, for every sum type constructor [tycon] which has at least two
    data constructors, there is a failure method, which is invoked when the
@@ -191,7 +196,7 @@ let datacon_ascending_method (cd : constructor_declaration) : methode =
 (* The name of this method is normally [fail_foo] if the type is named [foo]. *)
 
 let failure_method (decl : type_declaration) : methode =
-  "fail_" ^ tycon_modified_name decl.ptype_attributes decl.ptype_name.txt
+  X.fail_prefix ^ tycon_modified_name decl.ptype_attributes decl.ptype_name.txt
 
 (* When [scheme] is [Reduce], we need a monoid, that is, a unit [zero] and a
    binary operation [plus]. The names [zero] and [plus] are fixed. We assume
