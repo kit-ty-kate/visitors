@@ -1791,6 +1791,11 @@ programming languages, but also in an object-oriented programming setting.
     Every ancestor class must have exactly \emph{one} type parameter,
     which is typically (but not necessarily) the type of ``self''.
 \\
+  \buildprefix & (string) &
+    The prefix that is used in the name of the build methods in \fold and
+    \foldtwo visitors (\sref{sec:intro:fold}).
+    This is an optional parameter, whose default value is ``\texttt{build\_}''.
+\\
   \concrete & (Boolean) &
     If \texttt{true}, the generated class is declared
     concrete; otherwise, it is declared virtual.
@@ -1800,6 +1805,11 @@ programming languages, but also in an object-oriented programming setting.
     If \texttt{true}, one visitor method is generated for every data constructor (\sref{sec:structure}).
     If \texttt{false}, this method is not generated (it is inlined instead).
     This is an optional parameter; its default value is \texttt{true}.
+\\
+  \failprefix & (string) &
+    The prefix that is used in the name of the failure methods in
+    visitors of arity two (\sref{sec:intro:aritytwo}).
+    This is an optional parameter, whose default value is ``\texttt{fail\_}''.
 \\
   \irregular & (Boolean) &
     If \texttt{true}, the regularity check (\sref{sec:regularity}) is disabled;
@@ -1845,6 +1855,12 @@ programming languages, but also in an object-oriented programming setting.
     \mapreducetwo,
     \foldtwo (\sref{sec:intro:aritytwo}).
 \\
+  \visitprefix & (string) &
+    The prefix that is used in the name of visitor methods.
+    This is an optional parameter, whose default value is ``\texttt{visit\_}''.
+    Be aware that, if this prefix is changed, then the classes provided by the
+    library \texttt{VisitorsRuntime} become useless: in that case, one might wish to
+    also specify \verb+nude = true+, so as to not inherit these classes.
 \end{tabular}
 \vspace{2.5mm}
 \hrule

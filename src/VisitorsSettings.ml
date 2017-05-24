@@ -50,6 +50,21 @@ module type SETTINGS = sig
      the string provided by the user. *)
   val variety: string
 
+  (* [visit_prefix] is the common prefix used to name the descending visitor
+     methods. It must be nonempty and a valid identifier by itself. Its
+     default value is "visit_". *)
+  val visit_prefix: string
+
+  (* [build_prefix] is the common prefix used to name the ascending visitor
+     methods. It must be nonempty and a valid identifier by itself. Its
+     default value is "build_". *)
+  val build_prefix: string
+
+  (* [fail_prefix] is the common prefix used to name the failure methods. It
+     must be nonempty and a valid identifier by itself. Its default value is
+     "fail_". *)
+  val fail_prefix: string
+
   (* The classes that the visitor should inherit. If [nude] is [false], the
      class [VisitorsRuntime.<scheme>] is implicitly prepended to this list.
      If [nude] is [true], it is not. *)
@@ -141,15 +156,20 @@ let parse_variety loc (s : string) : scheme * int =
 
 (* -------------------------------------------------------------------------- *)
 
+let must_be_valid_method_name_prefix loc p =
+  if not (is_valid_method_name_prefix p) then
+    raise_errorf ~loc
+      "%s: %S is not a valid method name prefix." plugin p
+
 let must_be_valid_mod_longident loc m =
   if not (is_valid_mod_longident m) then
     raise_errorf ~loc
-      "%s: %s is not a valid module identifier." plugin m
+      "%s: %S is not a valid module identifier." plugin m
 
 let must_be_valid_class_longident loc c =
   if not (is_valid_class_longident c) then
     raise_errorf ~loc
-      "%s: %s is not a valid class identifier." plugin c
+      "%s: %S is not a valid class identifier." plugin c
 
 (* -------------------------------------------------------------------------- *)
 
@@ -195,6 +215,9 @@ end)
   let arity = ref 1 (* dummy: [variety] is mandatory; see below *)
   let scheme = ref Iter (* dummy: [variety] is mandatory; see below *)
   let variety = ref None
+  let visit_prefix = ref "visit_"
+  let build_prefix = ref "build_"
+  let fail_prefix = ref "fail_"
   let ancestors = ref []
   let concrete = ref false
   let data = ref true
@@ -210,6 +233,15 @@ end)
     iter (fun (o, e) ->
       let loc = e.pexp_loc in
       match o with
+      | "visit_prefix" ->
+          visit_prefix := string e;
+          must_be_valid_method_name_prefix loc !visit_prefix
+      | "build_prefix" ->
+          build_prefix := string e;
+          must_be_valid_method_name_prefix loc !build_prefix
+      | "fail_prefix" ->
+          fail_prefix := string e;
+          must_be_valid_method_name_prefix loc !fail_prefix
       | "ancestors" ->
            ancestors := strings e
       | "concrete" ->
@@ -275,6 +307,9 @@ end)
   let decls = decls
   let arity = !arity
   let scheme = !scheme
+  let visit_prefix = !visit_prefix
+  let build_prefix = !build_prefix
+  let fail_prefix = !fail_prefix
   let ancestors = !ancestors
   let concrete = !concrete
   let data = !data

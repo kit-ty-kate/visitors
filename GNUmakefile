@@ -15,7 +15,8 @@ include Makefile
 
 # Utilities.
 
-MD5SUM  := $(shell if command -v md5  2>/dev/null ; then echo "md5 -r" ; else echo md5sum ; fi)
+MD5SUM  := $(shell if command -v md5 >/dev/null 2>/dev/null ; \
+                   then echo "md5 -r" ; else echo md5sum ; fi)
 
 # -------------------------------------------------------------------------
 
@@ -36,7 +37,7 @@ TARBALL  := $(CURRENT)/$(PACKAGE).tar.gz
 # This does not include the src/ and doc/ directories, which require
 # special treatment.
 
-DISTRIBUTED_FILES := AUTHORS CHANGES LICENSE Makefile
+DISTRIBUTED_FILES := AUTHORS CHANGES.md LICENSE Makefile
 
 # -------------------------------------------------------------------------
 
