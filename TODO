@@ -46,7 +46,15 @@ Once we have that, can we deal with GADTs?
 
 In [fold],
   the build_ methods could take not only the results of the recursive calls,
-  but also their arguments (for added expressive power).
+  but also their arguments (for added expressive power). That would be a
+  true "recursor" (David Chemouil).
+
+Could we have visitors where a state is explicitly threaded from left to right?
+  (David Chemouil.)
+For greater generality, maybe we should have monadic visitors.
+Currently, the environment monad (a reader monad) is built-in.
+Could we let the user choose which monad should be used,
+  without breaking compatibility?
 
 Develop a real test suite, with expected output.
   Check for left-to-right traversal order.
