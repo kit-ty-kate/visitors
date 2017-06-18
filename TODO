@@ -80,8 +80,10 @@ ppx_tools/genlifter.)
 Develop [@deriving zippers] to produce a type of zippers,
   and add an option for the environment to be a zipper
   that is extended at every recursive call. (Yann Régis-Gianas.)
-  If there is more than one type, fix a distinguished root type,
-  so that we get n zipper types out of n source types.
+  Parameterize the type of zippers by the type of their root
+  and allow the constructor Nil only when the root type and
+  the current type coincide. (GADT.)
+  So that we get n zipper types out of n source types.
 
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
