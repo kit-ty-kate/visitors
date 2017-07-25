@@ -17,17 +17,29 @@ OCAMLBUILD := \
   -classic-display \
   -plugin-tag 'package(cppo_ocamlbuild)' \
 
+# Detect whether ocamlopt is available.
+NATIVE := $(shell if env ocamlopt >/dev/null 2>/dev/null ; then \
+                  echo yes ; else echo no ; fi)
+
 # The targets that should be built (using ocamlbuild).
 # Not sure whether all of the following files are really required.
-TARGET := \
-  $(patsubst %,$(PLUGIN).%,a cma cmxa cmxs) \
-  $(patsubst %,$(RUNTIME).%,a cma cmi cmo cmx cmxa o) \
+ifeq ($(NATIVE),yes)
+  MSG := "Compiling for byte code and native code."
+  TARGETS := \
+    $(patsubst %,$(PLUGIN).%,cma a cmxa cmxs) \
+    $(patsubst %,$(RUNTIME).%,cmi cmo cma a cmx cmxa o)
+else
+  MSG := "Compiling for byte code only."
+  TARGETS := \
+    $(patsubst %,$(PLUGIN).%,cma) \
+    $(patsubst %,$(RUNTIME).%,cmi cmo cma)
+endif
 
 # The files that should be installed (using ocamlfind).
 FILES := \
   META \
   Makefile.preprocess \
-  $(patsubst %,_build/%,$(TARGET)) \
+  $(patsubst %,_build/%,$(TARGETS)) \
 
 # ------------------------------------------------------------------------------
 
@@ -36,7 +48,8 @@ FILES := \
 .PHONY: all clean install uninstall reinstall
 
 all:
-	$(OCAMLBUILD) $(TARGET)
+	@ echo $(MSG)
+	$(OCAMLBUILD) $(TARGETS)
 
 clean:
 	rm -f *~
