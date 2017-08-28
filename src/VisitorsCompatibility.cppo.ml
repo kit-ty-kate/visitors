@@ -1,3 +1,4 @@
+let mknoloc = Location.mknoloc
 open Asttypes
 open Parsetree
 open Ast_helper
@@ -68,3 +69,21 @@ let data_constructor_variety (cd : constructor_declaration) =
     | Pcstr_record lds ->
         DataInlineRecord (ld_labels lds, ld_tys lds)
   #endif
+
+(* Between OCaml 4.04 and OCaml 4.05, the types of several functions in [Ast_helper]
+   have changed. They used to take arguments of type [string], and now take arguments
+   of type [str], thus requiring a conversion. These functions include [Typ.object_],
+   [Typ.poly], [Exp.send], [Exp.newtype], [Ctf.val_], [Ctf.method_], [Cf.inherit_].  *)
+
+let string2str (s : string) =
+  #if OCAML_VERSION < (4, 05, 0)
+    s
+  #else
+    mknoloc s
+  #endif
+
+let typ_poly (tyvars : string list) (cty : core_type) : core_type =
+  Typ.poly (List.map string2str tyvars) cty
+
+let exp_send (e : expression) (m : string) : expression =
+  Exp.send e (string2str m)

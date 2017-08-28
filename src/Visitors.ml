@@ -387,7 +387,7 @@ let ty_env =
 
 let tyvar_visitor_method_type =
   if X.poly "env" then
-    Typ.poly ["env"] (ty_arrow ty_env ty_any)
+    typ_poly ["env"] (ty_arrow ty_env ty_any)
   else
     ty_any
 
@@ -538,7 +538,7 @@ let quantify (alphas : tyvars) (ty : core_type) : core_type =
       alphas
   in
   (* Done. *)
-  Typ.poly alphas ty
+  typ_poly alphas ty
 
 (* -------------------------------------------------------------------------- *)
 

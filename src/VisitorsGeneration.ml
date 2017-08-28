@@ -467,7 +467,7 @@ let is_virtual (Meth (_, _, oe, _)) : bool =
 (* [send o m es] produces a call to the method [o#m] with arguments [es]. *)
 
 let send (o : variable) (m : methode) (es : expressions) : expression =
-  app (Exp.send (evar o) m) es
+  app (exp_send (evar o) m) es
 
 (* -------------------------------------------------------------------------- *)
 
