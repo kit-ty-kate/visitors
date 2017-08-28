@@ -1,5 +1,14 @@
 # Changes
 
+## 2017/08/28
+
+* Added compatibility with OCaml 4.05.0.
+
+## 2017/07/25
+
+* Updated the `Makefile` to allow building on architectures where `ocamlopt`
+  is missing. (Thanks to Ralf Treinen.)
+
 ## 2017/04/20
 
 * New settings `visit_prefix`, `build_prefix`, and `fail_prefix` can be used
