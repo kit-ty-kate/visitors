@@ -6,8 +6,8 @@
 
 ## 2017/07/25
 
-* Updated the `Makefile` to allow building on architectures where `ocamlopt`
-  is missing. (Thanks to Ralf Treinen.)
+* Updated `src/Makefile` to allow compilation on systems where `ocamlopt` is
+  missing. (Suggested by Ralf Treinen.)
 
 ## 2017/04/20
 

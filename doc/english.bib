@@ -193,6 +193,8 @@
 
 @String{jfp    = "Journal of Functional Programming"}
 
+@String{jfr    = "Journal of Formalized Reasoning"}
+
 @String{jlap   = "Journal of Logic and Algebraic Programming"}
 
 @String{jlc    = "Journal of Logic and Computation"}
@@ -378,6 +380,9 @@
                  Systems"}
 
 @String{tose   = "IEEE Transactions on Software Engineering"}
+
+@String{tosem  = "ACM Transactions on Software Engineering and
+                 Methodology"}
 
 @String{tphol  = "Theorem Proving in Higher Order Logics (TPHOLs)"}
 
@@ -836,6 +841,16 @@
   series       = lncs,
   publisher    = springer,
   URL          = "http://www.cs.cornell.edu/talc/papers/alias.pdf",
+}
+
+@InProceedings{allais-cpp-17,
+  author       = "Guillaume Allais and James Chapman and Conor McBride
+                 and James McKinna",
+  title        = "Type-and-scope Safe Programs and Their Proofs",
+  booktitle    = cpp,
+  pages        = "195--207",
+  year         = "2017",
+  URL          = "http://gallais.github.io/pdf/cpp2017.pdf",
 }
 
 @InProceedings{almeida-97,
@@ -1311,7 +1326,6 @@
   series       = lncs,
   volume       = "9236",
   publisher    = springer,
-  year         = "2015",
   URL          = "https://www.ps.uni-saarland.de/Publications/documents/SchaeferEtAl_2015_Autosubst_-Reasoning.pdf",
 }
 
@@ -1571,6 +1585,20 @@
   URL          = "http://www.csl.sri.com/users/ruess/papers/Fixpoints/fixpoints-domains3.ps.gz",
 }
 
+@InProceedings{barthe-06,
+  author       = "Gilles Barthe and Julien Forest and David Pichardie
+                 and Vlad Rusu",
+  title        = "Defining and Reasoning About Recursive Functions: A
+                 Practical Tool for the {Coq} Proof Assistant",
+  booktitle    = flops,
+  pages        = "114--129",
+  year         = "2006",
+  series       = lncs,
+  volume       = "3945",
+  publisher    = springer,
+  URL          = "http://people.irisa.fr/David.Pichardie/papers/flops06.pdf",
+}
+
 @InProceedings{barthwal-norrish-09,
   author       = "Aditi Barthwal and Michael Norrish",
   title        = "Verified, Executable Parsing",
@@ -1614,6 +1642,32 @@
   pages        = "17--30",
   year         = "1993",
   URL          = "http://www.cs.fit.edu/~ryan/papers/explain.ps.gz",
+}
+
+@InProceedings{belanger-monnier-pientka-13,
+  author       = "Olivier {Savary Belanger} and Stefan Monnier and
+                 Brigitte Pientka",
+  title        = "Programming Type-Safe Transformations Using
+                 Higher-Order Abstract Syntax",
+  booktitle    = cpp,
+  pages        = "243--258",
+  year         = "2013",
+  series       = lncs,
+  volume       = "8307",
+  publisher    = springer,
+  URL          = "https://link.springer.com/chapter/10.1007/978-3-319-03545-1_16",
+}
+
+@Article{belanger-monnier-pientka-15,
+  author       = "Olivier {Savary Belanger} and Stefan Monnier and
+                 Brigitte Pientka",
+  title        = "Programming Type-Safe Transformations Using
+                 Higher-Order Abstract Syntax",
+  journal      = jfr,
+  year         = "2015",
+  volume       = "8",
+  number       = "1",
+  URL          = "https://jfr.unibo.it/article/view/5122/5330",
 }
 
 @InProceedings{bell-08,
@@ -3854,6 +3908,16 @@
   URL          = "http://www.cs.cmu.edu/~crary/papers/1998/thesis/thesis.ps.gz",
 }
 
+@TechReport{crary-standard-09,
+  author       = "Karl Crary",
+  title        = "A Simple Proof of Call-by-Value Standardization",
+  institution  = "Carnegie Mellon University",
+  year         = "2009",
+  type         = "Technical Report",
+  number       = "CMU-CS-09-137",
+  URL          = "https://www.cs.cmu.edu/~crary/papers/2009/standard.pdf",
+}
+
 @InProceedings{crary-weirich-00,
   author       = "Karl Crary and Stephanie Weirich",
   title        = "Resource bound certification",
@@ -4009,6 +4073,17 @@
   URL          = "http://www.brics.dk/RS/01/23/",
 }
 
+@Article{danvy-nielsen-03,
+  author       = "Olivier Danvy and Lasse R. Nielsen",
+  title        = "A first-order one-pass {CPS} transformation",
+  journal      = tcs,
+  volume       = "308",
+  number       = "1--3",
+  pages        = "239--257",
+  year         = "2003",
+  URL          = "http://dx.doi.org/10.1016/S0304-3975(02)00733-8",
+}
+
 @InProceedings{danvy-nielsen-ppdp-01,
   author       = "Olivier Danvy and Lasse R. Nielsen",
   title        = "Defunctionalization at Work",
@@ -4036,6 +4111,18 @@
   school       = "Université de la Méditerranée",
   year         = "2000",
   URL          = "http://www.univ-orleans.fr/SCIENCES/LIFO/Members/dao/papers/ts4dec.ps.gz",
+}
+
+@InProceedings{dargaye-leroy-cps-07,
+  author       = "Zaynah Dargaye and Xavier Leroy",
+  title        = "Mechanized verification of {CPS} transformations",
+  booktitle    = lpar,
+  year         = "2007",
+  series       = lnai,
+  volume       = "4790",
+  publisher    = springer,
+  pages        = "211--225",
+  URL          = "http://gallium.inria.fr/~xleroy/publi/cps-dargaye-leroy.pdf",
 }
 
 @TechReport{davies-05,
@@ -4609,6 +4696,18 @@
   number       = "4",
   pages        = "295--326",
   URL          = "http://www.cs.indiana.edu/~dyb/pubs/LaSC-5-4-pp295-326.pdf",
+}
+
+@Article{eberl-17,
+  author       = "Manuel Eberl",
+  title        = "Proving Divide and Conquer Complexities in
+                 {Isabelle/HOL}",
+  journal      = jar,
+  volume       = "58",
+  number       = "4",
+  pages        = "483--508",
+  year         = "2017",
+  URL          = "https://www21.in.tum.de/~eberlm/divide_and_conquer_isabelle.pdf",
 }
 
 @InProceedings{eifrig-smith-trifonov-94,
@@ -6402,7 +6501,7 @@
   volume       = "2741",
   series       = lncs,
   publisher    = springer,
-  URL          = "http://www.cs.ru.nl/~hendriks/publication/ps/adbmal_cade.ps",
+  URL          = "http://www.phil.uu.nl/~oostrom/publication/ps/adbmal_jfpsv.ps",
 }
 
 @InProceedings{henglein-91,
@@ -7060,6 +7159,18 @@
   year         = "1997",
   pages        = "549--554",
   URL          = "http://yquem.inria.fr/~huet/PUBLIC/zip.pdf",
+}
+
+@InProceedings{huffman-urban-10,
+  author       = "Brian Huffman and Christian Urban",
+  title        = "A New Foundation for {Nominal Isabelle}",
+  booktitle    = itp,
+  pages        = "35--50",
+  year         = "2010",
+  series       = lncs,
+  volume       = "6172",
+  publisher    = springer,
+  URL          = "http://nms.kcl.ac.uk/christian.urban/Publications/nominal-atoms.pdf",
 }
 
 @Article{hughes-arrows-00,
@@ -7883,6 +7994,17 @@
   year         = "2010",
   pages        = "107--115",
   URL          = "http://ertos.nicta.com.au/publications/papers/Klein_EHACDEEKNSTW_10.pdf",
+}
+
+@Article{klint-laemmel-verhoef-05,
+  author       = "Paul Klint and Ralf L{\"a}mmel and Chris Verhoef",
+  title        = "{Toward an engineering discipline for grammarware}",
+  journal      = tosem,
+  volume       = "14",
+  number       = "3",
+  year         = "2005",
+  pages        = "331--380",
+  URL          = "http://www.few.vu.nl/~x/gw/gw.pdf",
 }
 
 @InProceedings{kloos-majumdar-vafeiadis-15,
@@ -9372,6 +9494,14 @@
   URL          = "http://www.cs.cornell.edu/Info/People/jgm/papers/closure-summary.ps",
 }
 
+@InProceedings{minamide-okuma-03,
+  author       = "Yasuhiko Minamide and Koji Okuma",
+  title        = "Verifying {CPS} transformations in {Isabelle/HOL}",
+  booktitle    = merlin,
+  year         = "2003",
+  URL          = "http://doi.acm.org/10.1145/976571.976576",
+}
+
 @Article{mitchell-05,
   author       = "David G. Mitchell",
   title        = "A {SAT} Solver Primer",
@@ -9763,8 +9893,7 @@
   author       = "Andrew C. Myers and Barbara Liskov",
   title        = "Protecting Privacy using the Decentralized Label
                  Model",
-  journal      = "ACM Transactions on Software Engineering and
-                 Methodology",
+  journal      = tosem,
   volume       = "9",
   number       = "4",
   year         = "2000",
@@ -10995,6 +11124,18 @@
   year         = "2011",
   pages        = "828--831",
   URL          = "http://www.cs.cmu.edu/~aldrich/papers/plaid-NIER2010.pdf",
+}
+
+@Article{plotkin-75,
+  author       = "Gordon D. Plotkin",
+  title        = "Call-by-name, call-by-value and the
+                 $\lambda$-calculus",
+  journal      = tcs,
+  volume       = "1",
+  number       = "2",
+  pages        = "125--159",
+  year         = "1975",
+  URL          = "http://homepages.inf.ed.ac.uk/gdp/publications/cbn_cbv_lambda.pdf",
 }
 
 @InCollection{plotkin-90,
@@ -13587,6 +13728,19 @@
   URL          = "http://www.informatik.uni-freiburg.de/~thiemann/papers/clapf99.ps.gz",
 }
 
+@InProceedings{tian-06,
+  author       = "Ye Henry Tian",
+  title        = "Mechanically Verifying Correctness of {CPS}
+                 Compilation",
+  booktitle    = "Computing: The Australasian Theory Symposium (CATS)",
+  pages        = "41--51",
+  year         = "2006",
+  URL          = "http://crpit.com/confpapers/CRPITV51Tian.pdf",
+  series       = "{CRPIT}",
+  volume       = "51",
+  publisher    = "Australian Computer Society",
+}
+
 @InProceedings{tiuryn-92,
   author       = "Jerzy Tiuryn",
   title        = "Subtype inequalities",
@@ -13816,8 +13970,8 @@
   journal      = jar,
   volume       = "40",
   number       = "4",
-  year         = "2008",
   pages        = "327--356",
+  year         = "2008",
   URL          = "https://nms.kcl.ac.uk/christian.urban/Publications/nom-tech.pdf",
 }
 
@@ -14215,8 +14369,7 @@
                  Felten",
   title        = "Safkasi: {A} Security Mechanism for Language-based
                  Systems",
-  journal      = "ACM Transactions on Software Engineering and
-                 Methodology",
+  journal      = tosem,
   year         = "2000",
   volume       = "9",
   number       = "4",

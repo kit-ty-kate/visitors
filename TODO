@@ -79,6 +79,14 @@ Could define a fold visitor where the methods receive the names of the types,
 data constructors, and record fields that are being visited. (As in
 ppx_tools/genlifter.)
 
+Develop [@deriving zippers] to produce a type of zippers,
+  and add an option for the environment to be a zipper
+  that is extended at every recursive call. (Yann Régis-Gianas.)
+  Parameterize the type of zippers by the type of their root
+  and allow the constructor Nil only when the root type and
+  the current type coincide. (GADT.)
+  So that we get n zipper types out of n source types.
+
 Avoid generating beta-redexes.
   (fun (x, y) -> ...) z should be let (x, y) = z in ...
   See [visit_types].
