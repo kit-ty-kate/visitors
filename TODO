@@ -8,6 +8,8 @@ Better clean up & share code at the three call sites of [bulk].
 
 TODO (PERHAPS)
 
+Write a script to make sure that the code builds with 4.02.3, 4.03, 4.04, 4.05.
+
 Document hexpr_polymorphic. Make VisitorsHashcons available as a library.
 
 If there is an error, then the warnings are never seen,
