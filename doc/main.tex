@@ -132,6 +132,13 @@ Finally, a user of \merlin should add the following lines in her project's
   PKG visitors.ppx
   PKG visitors.runtime
 \end{lstlisting}
+To use the \visitors package in OCaml's interactive ``toplevel'' environment,
+launch \texttt{ocaml} and type the following commands:
+\begin{lstlisting}
+  #use "topfind";;
+  #require "visitors.ppx";;
+  #require "visitors.runtime";;
+\end{lstlisting}
 
 % ------------------------------------------------------------------------------
 
