@@ -1,18 +1,13 @@
 open Expr01
 
-let add e1 e2 =
-  match e1, e2 with
-  | EConst 0, e
-  | e, EConst 0 -> e
-  | _, _ ->        EAdd (e1, e2)
-
 let optimize : expr -> expr =
-  let o = object (self)
+  let o = object(self)
     inherit [_] map
     method! visit_EAdd env e1 e2 =
-      add
-        (self#visit_expr env e1)
-        (self#visit_expr env e2)
+      match self#visit_expr env e1, self#visit_expr env e2 with
+      | EConst 0, e
+      | e, EConst 0 -> e
+      | e1, e2      -> EAdd (e1, e2)
   end in
   o # visit_expr ()
 
