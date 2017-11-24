@@ -5,7 +5,7 @@
 SHELL := bash
 export CDPATH=
 
-.PHONY: package check export tag opam pin unpin
+.PHONY: package check export tag opam pin unpin versions
 
 # -------------------------------------------------------------------------
 
@@ -158,3 +158,16 @@ pin:
 
 unpin:
 	opam pin remove visitors
+
+# -------------------------------------------------------------------------
+
+# Trying out compilation under multiple versions of OCaml.
+
+versions:
+	for i in 4.02.3 4.03.0 4.04.0 4.05.0 4.06.0 ; do \
+	  opam switch $$i && eval `opam config env` && ocamlc -v && \
+	  opam install hashcons ppx_deriving ppx_import ocp-indent && \
+	  make clean && \
+	  make && \
+	  make reinstall ; \
+	done
