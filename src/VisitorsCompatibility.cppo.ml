@@ -75,11 +75,25 @@ let data_constructor_variety (cd : constructor_declaration) =
    of type [str], thus requiring a conversion. These functions include [Typ.object_],
    [Typ.poly], [Exp.send], [Exp.newtype], [Ctf.val_], [Ctf.method_], [Cf.inherit_].  *)
 
-let string2str (s : string) =
+type str =
+  #if OCAML_VERSION < (4, 05, 0)
+    string
+  #else
+    string Location.loc
+  #endif
+
+let string2str (s : string) : str =
   #if OCAML_VERSION < (4, 05, 0)
     s
   #else
     mknoloc s
+  #endif
+
+let str2string (s : str) : string =
+  #if OCAML_VERSION < (4, 05, 0)
+    s
+  #else
+    s.txt
   #endif
 
 let typ_poly (tyvars : string list) (cty : core_type) : core_type =
@@ -88,16 +102,6 @@ let typ_poly (tyvars : string list) (cty : core_type) : core_type =
 let exp_send (e : expression) (m : string) : expression =
   Exp.send e (string2str m)
 
-(* The function [str2string] converts from either [string] (<4.05) or [string loc] (4.05)
-   to [string]. *)
-
-let str2string s : string =
-  #if OCAML_VERSION < (4, 05, 0)
-    s
-  #else
-    s.txt
-  #endif
-
 (* In the data constructor [Ptyp_poly (qs, ty)], the type of [qs] has changed from
    [string list] to [string loc list] between OCaml 4.04 and 4.05.
    See commit b0e880c448c78ed0cedff28356fcaf88f1436eef.
@@ -105,3 +109,25 @@ let str2string s : string =
 
 let quantifiers qs : string list =
   List.map str2string qs
+
+(* In the data constructor [Ptyp_object (methods, _)], the type of [methods] has
+   changed from [(string loc * attributes * core_type) list] in OCaml 4.05 to
+                [object_field                          list] in OCaml 4.06. *)
+
+
+#if OCAML_VERSION < (4, 06, 0)
+type object_field =
+  str * attributes * core_type
+#endif
+
+let object_field_to_core_type : object_field -> core_type =
+  #if OCAML_VERSION < (4, 06, 0)
+    fun (_, _, ty) -> ty
+  #else
+    function
+    | Otag (_, _, ty) -> ty
+    | Oinherit ty     -> ty
+    (* this may seem nonsensical, but (so far) is used only in the
+       function [occurs_type], where we do not care what the types
+       mean *)
+  #endif
