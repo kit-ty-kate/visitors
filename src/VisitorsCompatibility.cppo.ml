@@ -87,3 +87,21 @@ let typ_poly (tyvars : string list) (cty : core_type) : core_type =
 
 let exp_send (e : expression) (m : string) : expression =
   Exp.send e (string2str m)
+
+(* The function [str2string] converts from either [string] (<4.05) or [string loc] (4.05)
+   to [string]. *)
+
+let str2string s : string =
+  #if OCAML_VERSION < (4, 05, 0)
+    s
+  #else
+    s.txt
+  #endif
+
+(* In the data constructor [Ptyp_poly (qs, ty)], the type of [qs] has changed from
+   [string list] to [string loc list] between OCaml 4.04 and 4.05.
+   See commit b0e880c448c78ed0cedff28356fcaf88f1436eef.
+   The function [quantifiers] compensates for this. *)
+
+let quantifiers qs : string list =
+  List.map str2string qs
