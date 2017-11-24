@@ -1,5 +1,11 @@
 # Changes
 
+## 2017/11/24
+
+* Fixed the internal function `occurs_type` in the case of polymorphic types.
+  This should make no observable difference, as this function is used only
+  to produce an error message in a corner case.
+
 ## 2017/08/28
 
 * Added compatibility with OCaml 4.05.0.

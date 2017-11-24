@@ -249,17 +249,11 @@ let rec occurs_type (alpha : tyvar) (ty : core_type) : unit =
       List.iter (fun (_, _, ty) -> occurs_type alpha ty) methods
   | Ptyp_variant (fields, _, _) ->
       List.iter (occurs_row_field alpha) fields
-  | Ptyp_poly (_qs, ty) ->
+  | Ptyp_poly (qs, ty) ->
+      let qs : string list = VisitorsCompatibility.quantifiers qs in
       (* The type variables in [qs] are bound. *)
-      (* Unfortunately, the type of [qs] has changed from [string list]
-         to [string loc list] between OCaml 4.04 and 4.05.
-         See commit b0e880c448c78ed0cedff28356fcaf88f1436eef.
-         I do not want to do conditional compilation,
-         nor do I want to require 4.05 (yet).
-         So, for now, I just assume that [alpha] does not appear in [qs].
-         This means that [occurs] can (on rare occasions) return [true]
-         when it should return [false]. *)
-      (* if not (occurs_quantifiers alpha qs) then *) occurs_type alpha ty
+      if not (occurs_quantifiers alpha qs) then
+        occurs_type alpha ty
   | Ptyp_package (_, ltys) ->
       List.iter (fun (_, ty) -> occurs_type alpha ty) ltys
   | Ptyp_extension (_, payload) ->
@@ -275,8 +269,8 @@ and occurs_row_field alpha field =
   | Rinherit ty ->
       occurs_type alpha ty
 
-and occurs_quantifiers alpha qs =
-  List.exists (fun q -> alpha = q.txt) qs
+and occurs_quantifiers alpha (qs : string list) =
+  List.mem alpha qs
 
 and occurs_payload alpha = function
   | PTyp ty ->
