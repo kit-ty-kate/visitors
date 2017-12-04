@@ -8,7 +8,9 @@ Better clean up & share code at the three call sites of [bulk].
 
 TODO (PERHAPS)
 
-Write a script to make sure that the code builds with 4.02.3, 4.03, 4.04, 4.05.
+Document Jonathan's example where every node in an "expression" carries a type
+and the visitor for expressions carries the type down (whereas the visitor for
+types doesn't).
 
 Document hexpr_polymorphic. Make VisitorsHashcons available as a library.
 
