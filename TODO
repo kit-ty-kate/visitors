@@ -8,6 +8,10 @@ Better clean up & share code at the three call sites of [bulk].
 
 TODO (PERHAPS)
 
+Philip's question: when you compose two transformations formulated as map
+visitors, can you deforest? (eliminate the allocation of the intermediate
+tree)
+
 Document Jonathan's example where every node in an "expression" carries a type
 and the visitor for expressions carries the type down (whereas the visitor for
 types doesn't).
