@@ -14,7 +14,7 @@ tree)
 
 Document Jonathan's example where every node in an "expression" carries a type
 and the visitor for expressions carries the type down (whereas the visitor for
-types doesn't).
+types doesn't). https://github.com/FStarLang/kremlin/blob/visitors/src/Ast.ml
 
 Document hexpr_polymorphic. Make VisitorsHashcons available as a library.
 
