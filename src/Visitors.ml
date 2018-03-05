@@ -80,6 +80,23 @@ let sum_build_warning (decl : type_declaration) : unit =
        Instead, @build should be attached to each data constructor."
       plugin
 
+(* A quick-and-dirty mechanism for registering the current type declaration
+   (the one that is being processed). We use it to obtain a location for
+   certain warnings. *)
+
+let current_decl : type_declaration option ref =
+  ref None
+
+let currently decl =
+  current_decl := Some decl
+
+let current () =
+  match !current_decl with
+  | None ->
+      Location.none (* should not happen *)
+  | Some decl ->
+      decl.ptype_loc
+
 (* -------------------------------------------------------------------------- *)
 
 (* We support parameterized type declarations. We require them to be regular.
@@ -1164,6 +1181,7 @@ let visit_decl (decl : type_declaration) : expression =
    no result. *)
 
 let type_decl (decl : type_declaration) : unit =
+  currently decl;
   let alphas = poly_params decl in
   generate_concrete_method
     (local_tycon_visitor_method decl)
