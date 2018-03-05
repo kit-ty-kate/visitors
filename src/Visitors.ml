@@ -142,6 +142,10 @@ let check_regularity loc tycon (formals : tyvars) (actuals : core_types) =
    nonlocal type, a [@name] attribute must be attached to every reference to
    this type.
 
+   The [@name] attribute can be misused: e.g., one can mistakenly use
+   different visitor method names for different occurrences of a single type.
+   We currently do not attempt to detect this situation.
+
    The prefix that is prepended to the base name can be controlled via the
    settings [visit_prefix], [build_prefix], and [fail_prefix]. *)
 
