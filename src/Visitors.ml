@@ -165,16 +165,45 @@ let datacon_modified_name (cd : constructor_declaration) : datacon =
 (* The name of this method is normally [visit_foo] if the type is named [foo]
    or [A.foo]. (A qualified name must denote a nonlocal type.) *)
 
-let tycon_visitor_method (attrs : attributes) (tycon : tycon) : methode =
-  X.visit_prefix ^ tycon_modified_name attrs tycon
+(* This convention can cause name clashes, as the types [foo] and [A.foo]
+   receive visitor methods by the same name. We warn if this happens.
+
+   A name clash can also be caused by incorrect use of the [@@name] or
+   [@name] attributes. We also warn if this happens. *)
+
+(* Step 1 -- the raw convention. *)
+
+let tycon_visitor_method : attributes * Longident.t -> methode =
+  fun (attrs, tycon) ->
+    X.visit_prefix ^ tycon_modified_name attrs (Longident.last tycon)
+
+(* Step 2 -- protect against name clashes. *)
+
+let tycon_visitor_method : attributes * Longident.t -> methode =
+  VisitorsString.protect
+    (fun (_, x1) (_, x2) -> x1 = x2)
+    tycon_visitor_method
+    (fun (_, x1) (_, x2) m ->
+      let loc = current() in
+      warning loc
+        "%s: name clash: the types %s and %s\n\
+         both have a visitor method named %s.\n\
+         Please consider using [@@name] at type declaration sites\n\
+         or [@name] at type reference sites."
+        plugin
+        (VisitorsString.print_longident x1)
+        (VisitorsString.print_longident x2)
+        m)
+
+(* Step 3 -- define auxiliary functions that are easier to use. *)
 
 let local_tycon_visitor_method (decl : type_declaration) : methode =
-  tycon_visitor_method decl.ptype_attributes decl.ptype_name.txt
+  tycon_visitor_method (decl.ptype_attributes, Lident decl.ptype_name.txt)
 
 let nonlocal_tycon_visitor_method (ty : core_type) : methode =
   match ty.ptyp_desc with
   | Ptyp_constr (tycon, _) ->
-      tycon_visitor_method ty.ptyp_attributes (Longident.last tycon.txt)
+      tycon_visitor_method (ty.ptyp_attributes, tycon.txt)
   | _ ->
       assert false
 
