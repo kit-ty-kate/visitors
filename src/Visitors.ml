@@ -1,3 +1,4 @@
+open VisitorsString
 open VisitorsList
 open Longident
 open List
@@ -84,14 +85,39 @@ let sum_build_warning (decl : type_declaration) : unit =
 
 (* Shared glue code for detecting and warning against name clashes. *)
 
-let protect3 (f : Location.t * attributes * Longident.t -> methode) format =
-  VisitorsString.protect f
-    (fun (_, _, x1) (loc, _, x2) -> x1 = x2)
-    (fun (_, _, x1) (loc, _, x2) m ->
-      let x1 = VisitorsString.print_longident x1
-      and x2 = VisitorsString.print_longident x2 in
-      warning loc format plugin x1 x2 m
-  )
+type 'a wrapper =
+  'a -> 'a
+
+type tycon_visitor_method =
+  Location.t * attributes * Longident.t -> methode
+
+let protect_tycon_visitor_method : tycon_visitor_method wrapper =
+  fun tycon_visitor_method ->
+    let format : (_, _, _, _) format4 =
+      "%s: name clash: the types %s and %s\n\
+       both have visitor methods named %s.\n\
+       Please consider using [@@name] at type declaration sites\n\
+       or [@name] at type reference sites."
+    in
+    let id = print_longident in
+    protect tycon_visitor_method
+      (fun (_, _, x) (_, _, y) -> x = y)
+      (fun (_, _, x) (loc, _, y) m -> warning loc format plugin (id x) (id y) m)
+
+type datacon_descending_method =
+  constructor_declaration -> methode
+
+let protect_datacon_descending_method : datacon_descending_method wrapper =
+  fun datacon_descending_method ->
+    let format : (_, _, _, _) format4 =
+      "%s: name clash: the data constructors %s and %s\n\
+       both have visitor methods named %s.\n\
+       Please consider using [@name] at data constructor declaration sites."
+    in
+    let id cd = cd.pcd_name.txt in
+    protect datacon_descending_method
+      (fun cd1 cd2 -> cd1 == cd2)
+      (fun cd1 cd2 m -> warning cd2.pcd_loc format plugin (id cd1) (id cd2) m)
 
 (* -------------------------------------------------------------------------- *)
 
@@ -169,18 +195,14 @@ let datacon_modified_name (cd : constructor_declaration) : datacon =
 
 (* Step 1 -- the raw convention. *)
 
-let tycon_visitor_method : Location.t * attributes * Longident.t -> methode =
+let tycon_visitor_method : tycon_visitor_method =
   fun (_, attrs, tycon) ->
     X.visit_prefix ^ tycon_modified_name attrs (Longident.last tycon)
 
 (* Step 2 -- protect against name clashes. *)
 
-let tycon_visitor_method : Location.t * attributes * Longident.t -> methode =
-  protect3 tycon_visitor_method
-    "%s: name clash: the types %s and %s\n\
-     both have a visitor method named %s.\n\
-     Please consider using [@@name] at type declaration sites\n\
-     or [@name] at type reference sites."
+let tycon_visitor_method =
+  protect_tycon_visitor_method tycon_visitor_method
 
 (* Step 3 -- define auxiliary functions that are easier to use. *)
 
@@ -218,6 +240,9 @@ let tyvar_visitor_method (alpha : tyvar) : methode =
 
 let datacon_descending_method (cd : constructor_declaration) : methode =
   X.visit_prefix ^ datacon_modified_name cd
+
+let datacon_descending_method =
+  protect_datacon_descending_method datacon_descending_method
 
 (* For every data constructor [datacon], there is a ascending visitor method,
    which is invoked on the way up, in order to re-build some data structure.
