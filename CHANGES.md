@@ -1,5 +1,11 @@
 # Changes
 
+## 2018/03/06
+
+* Warn when the visitor methods for two distinct types or two distinct data
+  constructors have the same name, as this results in an OCaml type error
+  or multiply-defined-method error. (Reported by Gabriel Radanne.)
+
 ## 2017/11/24
 
 * Added compatibility with OCaml 4.06.0.
