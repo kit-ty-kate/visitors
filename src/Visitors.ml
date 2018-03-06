@@ -101,14 +101,14 @@ let current () =
 
 (* -------------------------------------------------------------------------- *)
 
-(* Shared code for detecting and warning against name clashes. *)
+(* Shared glue code for detecting and warning against name clashes. *)
 
-let protect_attrs_longident (f : attributes * Longident.t -> methode) format =
-  VisitorsString.protect f (fun (_, x1) (_, x2) m ->
+let protect3 (f : Location.t * attributes * Longident.t -> methode) format =
+  VisitorsString.protect f (fun (_, _, x1) (loc, _, x2) m ->
     if x1 <> x2 then
       let x1 = VisitorsString.print_longident x1
       and x2 = VisitorsString.print_longident x2 in
-      warning (current()) format plugin x1 x2 m
+      warning loc format plugin x1 x2 m
   )
 
 (* -------------------------------------------------------------------------- *)
@@ -187,14 +187,14 @@ let datacon_modified_name (cd : constructor_declaration) : datacon =
 
 (* Step 1 -- the raw convention. *)
 
-let tycon_visitor_method : attributes * Longident.t -> methode =
-  fun (attrs, tycon) ->
+let tycon_visitor_method : Location.t * attributes * Longident.t -> methode =
+  fun (_, attrs, tycon) ->
     X.visit_prefix ^ tycon_modified_name attrs (Longident.last tycon)
 
 (* Step 2 -- protect against name clashes. *)
 
-let tycon_visitor_method : attributes * Longident.t -> methode =
-  protect_attrs_longident tycon_visitor_method
+let tycon_visitor_method : Location.t * attributes * Longident.t -> methode =
+  protect3 tycon_visitor_method
     "%s: name clash: the types %s and %s\n\
      both have a visitor method named %s.\n\
      Please consider using [@@name] at type declaration sites\n\
@@ -203,12 +203,12 @@ let tycon_visitor_method : attributes * Longident.t -> methode =
 (* Step 3 -- define auxiliary functions that are easier to use. *)
 
 let local_tycon_visitor_method (decl : type_declaration) : methode =
-  tycon_visitor_method (decl.ptype_attributes, Lident decl.ptype_name.txt)
+  tycon_visitor_method (decl.ptype_loc, decl.ptype_attributes, Lident decl.ptype_name.txt)
 
 let nonlocal_tycon_visitor_method (ty : core_type) : methode =
   match ty.ptyp_desc with
   | Ptyp_constr (tycon, _) ->
-      tycon_visitor_method (ty.ptyp_attributes, tycon.txt)
+      tycon_visitor_method (ty.ptyp_loc, ty.ptyp_attributes, tycon.txt)
   | _ ->
       assert false
 
