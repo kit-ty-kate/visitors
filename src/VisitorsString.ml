@@ -32,29 +32,39 @@ let print_longident (x : Longident.t) : string =
   String.concat "." (Longident.flatten x)
 
 (* Suppose the function [f] is a lossy (non-injective) mapping of ['a] to
-   [string]. Then, the function [protect f check] is also a function of ['a]
-   to [string], which behaves like [f], except it checks if [f] is applied to
-   two values of type ['a] that have the same image of type [string]. *)
+   [string]. Then, the function [protect f equal warn] is also a function of
+   ['a] to [string], which behaves like [f], except it warns if [f] is applied
+   to two values of type ['a] that have the same image of type [string]. *)
 
-(* [check x1 x2 y] is invoked when [f] is applied at two values [x1] and [x2]
-   that have the same image [y] through [f]. It is up to this function to
-   compare [x1] and [x2] and to take appropriate action if they are
-   distinct. *)
+(* [equal] must implement equality at type ['a]. *)
+
+(* [warn x1 x2 y] is invoked when [f] is applied at two distinct values [x1]
+   and [x2] that have the same image [y] through [f]. Precautions are taken
+   so that [f] is not invoked repeatedly if the same conflict is repeatedly
+   detected. *)
 
 module H = Hashtbl
 
 let protect
   (f : 'a -> string)
-  (check : 'a -> 'a -> string -> unit)
+  (equal : 'a -> 'a -> bool)
+  (warn : 'a -> 'a -> string -> unit)
 : 'a -> string =
   (* A hash table memoizes the inverse of [f]. *)
-  let table : (string, 'a) H.t = H.create 127 in
+  let table : (string, 'a list) H.t = H.create 127 in
   fun (x : 'a) ->
     let y = f x in
-    begin try
-      let x' = H.find table y in
-      check x' x y
-    with Not_found ->
-      H.add table y x
-    end;
-    y
+    let xs = try H.find table y with Not_found -> [] in
+    H.add table y (x :: xs);
+    if List.exists (equal x) xs || xs = [] then
+      (* If the mapping of [x] to [y] is known already,
+         or if no pre-image of [y] was previously known,
+         then no warning is needed. *)
+      y
+    else
+      (* The list [xs] is nonempty and does not contain [x],
+         so its head [x'] is distinct from [x] and is also
+         a pre-image of [y]. Warn. *)
+      let x' = List.hd xs in
+      warn x' x y;
+      y

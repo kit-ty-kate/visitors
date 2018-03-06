@@ -85,8 +85,9 @@ let sum_build_warning (decl : type_declaration) : unit =
 (* Shared glue code for detecting and warning against name clashes. *)
 
 let protect3 (f : Location.t * attributes * Longident.t -> methode) format =
-  VisitorsString.protect f (fun (_, _, x1) (loc, _, x2) m ->
-    if x1 <> x2 then
+  VisitorsString.protect f
+    (fun (_, _, x1) (loc, _, x2) -> x1 = x2)
+    (fun (_, _, x1) (loc, _, x2) m ->
       let x1 = VisitorsString.print_longident x1
       and x2 = VisitorsString.print_longident x2 in
       warning loc format plugin x1 x2 m
