@@ -32,22 +32,20 @@ let print_longident (x : Longident.t) : string =
   String.concat "." (Longident.flatten x)
 
 (* Suppose the function [f] is a lossy (non-injective) mapping of ['a] to
-   [string]. Then, the function [protect equal f warn] is also a function of
-   ['a] to [string], which behaves like [f], except it warns when [f] is
-   applied to two values of type ['a] that have the same image of type
-   [string]. *)
+   [string]. Then, the function [protect f check] is also a function of ['a]
+   to [string], which behaves like [f], except it checks if [f] is applied to
+   two values of type ['a] that have the same image of type [string]. *)
 
-(* [equal] should implement equality at type ['a]. *)
-
-(* [warn x1 x2 y] is invoked when [f] is applied at two values [x1] and [x2]
-   that have the same image [y] through [f]. *)
+(* [check x1 x2 y] is invoked when [f] is applied at two values [x1] and [x2]
+   that have the same image [y] through [f]. It is up to this function to
+   compare [x1] and [x2] and to take appropriate action if they are
+   distinct. *)
 
 module H = Hashtbl
 
 let protect
-  (equal : 'a -> 'a -> bool)
   (f : 'a -> string)
-  (warn : 'a -> 'a -> string -> unit)
+  (check : 'a -> 'a -> string -> unit)
 : 'a -> string =
   (* A hash table memoizes the inverse of [f]. *)
   let table : (string, 'a) H.t = H.create 127 in
@@ -55,8 +53,7 @@ let protect
     let y = f x in
     begin try
       let x' = H.find table y in
-      if not (equal x x') then
-        warn x' x y
+      check x' x y
     with Not_found ->
       H.add table y x
     end;

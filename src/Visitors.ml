@@ -80,6 +80,8 @@ let sum_build_warning (decl : type_declaration) : unit =
        Instead, @build should be attached to each data constructor."
       plugin
 
+(* -------------------------------------------------------------------------- *)
+
 (* A quick-and-dirty mechanism for registering the current type declaration
    (the one that is being processed). We use it to obtain a location for
    certain warnings. *)
@@ -96,6 +98,18 @@ let current () =
       Location.none (* should not happen *)
   | Some decl ->
       decl.ptype_loc
+
+(* -------------------------------------------------------------------------- *)
+
+(* Shared code for detecting and warning against name clashes. *)
+
+let protect_attrs_longident (f : attributes * Longident.t -> methode) format =
+  VisitorsString.protect f (fun (_, x1) (_, x2) m ->
+    if x1 <> x2 then
+      let x1 = VisitorsString.print_longident x1
+      and x2 = VisitorsString.print_longident x2 in
+      warning (current()) format plugin x1 x2 m
+  )
 
 (* -------------------------------------------------------------------------- *)
 
@@ -180,20 +194,11 @@ let tycon_visitor_method : attributes * Longident.t -> methode =
 (* Step 2 -- protect against name clashes. *)
 
 let tycon_visitor_method : attributes * Longident.t -> methode =
-  VisitorsString.protect
-    (fun (_, x1) (_, x2) -> x1 = x2)
-    tycon_visitor_method
-    (fun (_, x1) (_, x2) m ->
-      let loc = current() in
-      warning loc
-        "%s: name clash: the types %s and %s\n\
-         both have a visitor method named %s.\n\
-         Please consider using [@@name] at type declaration sites\n\
-         or [@name] at type reference sites."
-        plugin
-        (VisitorsString.print_longident x1)
-        (VisitorsString.print_longident x2)
-        m)
+  protect_attrs_longident tycon_visitor_method
+    "%s: name clash: the types %s and %s\n\
+     both have a visitor method named %s.\n\
+     Please consider using [@@name] at type declaration sites\n\
+     or [@name] at type reference sites."
 
 (* Step 3 -- define auxiliary functions that are easier to use. *)
 
