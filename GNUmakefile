@@ -98,7 +98,6 @@ check:
 
 RSYNC   := scp -p -C
 TARGET  := yquem.inria.fr:public_html/visitors/
-PAGE    := $(HOME)/dev/page
 
 export:
 # Copier l'archive et la doc vers yquem.
