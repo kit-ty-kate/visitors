@@ -18,6 +18,9 @@ package "ppx" (
   archive(ppx_driver, byte) = "ppx_deriving_visitors.cma"
   archive(ppx_driver, native) = "ppx_deriving_visitors.cmxa"
 
+# This is what jbuilder uses to find out the runtime dependencies of
+# a preprocessor
+  ppx_runtime_deps = "visitors.runtime"
 )
 
 # The runtime support library.
