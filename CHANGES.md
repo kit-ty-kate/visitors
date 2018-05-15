@@ -1,5 +1,11 @@
 # Changes
 
+## 2018/05/13
+
+* Fixes in `_tags` and `META` so as to allow `visitors`
+  to be used in `jbuilder` (`dune`) projects.
+  (Contributed by Armaël Guéneau.)
+
 ## 2018/03/06
 
 * Warn when the visitor methods for two distinct types or two distinct data
