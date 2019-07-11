@@ -331,29 +331,6 @@ let efail (_ : string) : expression =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [letopen m e] produces a single [let open!] binding. The bang character
-   indicates intentional shadowing and disables OCaml's warning 44. *)
-
-let letopen (m : Longident.t) (e : expression) : expression =
-  Exp.open_ Override (mknoloc m) e
-
-(* [letopen ms e] produces a series of [let open!] bindings. *)
-
-let letopen (ms : Longident.t list) (e : expression) : expression =
-  List.fold_right letopen ms e
-
-(* [stropen m] produces a single [open!] declaration. *)
-
-let stropen (m : Longident.t) : structure_item =
-  Str.open_ (Opn.mk ~override:Override (mknoloc m))
-
-(* [stropen ms] produces a series of [open!] declarations. *)
-
-let stropen (ms : Longident.t list) : structure =
-  List.map stropen ms
-
-(* -------------------------------------------------------------------------- *)
-
 (* [include_ e] constructs an [include] declaration. *)
 
 let include_ (e : module_expr) : structure_item =
