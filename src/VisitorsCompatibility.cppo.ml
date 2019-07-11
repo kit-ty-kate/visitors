@@ -120,14 +120,34 @@ type object_field =
   str * attributes * core_type
 #endif
 
-let object_field_to_core_type : object_field -> core_type =
+let object_field_to_core_type (field : object_field) : core_type =
   #if OCAML_VERSION < (4, 06, 0)
-    fun (_, _, ty) -> ty
-  #else
-    function
+    match field with
+    | (_, _, ty)      -> ty
+  #elif OCAML_VERSION < (4, 08, 0)
+    match field with
     | Otag (_, _, ty) -> ty
     | Oinherit ty     -> ty
     (* this may seem nonsensical, but (so far) is used only in the
        function [occurs_type], where we do not care what the types
        mean *)
+  #else
+    match field.pof_desc with
+    | Otag (_, ty)  -> ty
+    | Oinherit ty   -> ty
+  #endif
+
+let row_field_to_core_types (field : row_field) : core_type list =
+  #if OCAML_VERSION < (4, 08, 0)
+  match field with
+  | Rtag (_, _, _, tys) ->
+      tys
+  | Rinherit ty ->
+      [ ty ]
+  #else
+  match field.prf_desc with
+  | Rtag (_, _, tys) ->
+      tys
+  | Rinherit ty ->
+      [ ty ]
   #endif

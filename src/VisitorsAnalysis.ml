@@ -246,10 +246,9 @@ let rec occurs_type (alpha : tyvar) (ty : core_type) : unit =
   | Ptyp_class (_, tys) ->
       occurs_types alpha tys
   | Ptyp_object (fields, _) ->
-      let tys : core_type list =
-        List.map VisitorsCompatibility.object_field_to_core_type fields
-      in
-      List.iter (occurs_type alpha) tys
+      fields
+      |> List.map VisitorsCompatibility.object_field_to_core_type
+      |> occurs_types alpha
   | Ptyp_variant (fields, _, _) ->
       List.iter (occurs_row_field alpha) fields
   | Ptyp_poly (qs, ty) ->
@@ -266,11 +265,9 @@ and occurs_types alpha tys =
   List.iter (occurs_type alpha) tys
 
 and occurs_row_field alpha field =
-  match field with
-  | Rtag (_, _, _, tys) ->
-      occurs_types alpha tys
-  | Rinherit ty ->
-      occurs_type alpha ty
+  field
+  |> VisitorsCompatibility.row_field_to_core_types
+  |> occurs_types alpha
 
 and occurs_quantifiers alpha (qs : string list) =
   List.mem alpha qs
