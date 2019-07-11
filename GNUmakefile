@@ -162,10 +162,12 @@ unpin:
 
 # Trying out compilation under multiple versions of OCaml.
 
+# TEMPORARY (ppx_import currently unavailable on 4.08)
+
 versions:
-	for i in 4.02.3 4.03.0 4.04.0 4.05.0 4.06.0 ; do \
+	for i in 4.02.3 4.03.0 4.04.0 4.05.0 4.06.0 4.07.0 4.08.0 ; do \
 	  opam switch $$i && eval `opam config env` && ocamlc -v && \
-	  opam install hashcons ppx_deriving ppx_import ocp-indent && \
+	  opam install hashcons ppx_deriving ocp-indent && \
 	  make clean && \
 	  make && \
 	  make reinstall ; \
