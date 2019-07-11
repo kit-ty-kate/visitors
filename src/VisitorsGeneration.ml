@@ -342,14 +342,6 @@ let include_ (e : module_expr) : structure_item =
 
 (* -------------------------------------------------------------------------- *)
 
-(* [floating s items] produces a floating attribute whose name is [s] and
-   whose payload is the list of structure items [items]. *)
-
-let floating (s : string) (items : structure) : structure_item =
-  Str.attribute (mknoloc s, PStr items)
-
-(* -------------------------------------------------------------------------- *)
-
 (* [with_warnings w items] wraps the structure items [items] in such a way
    that the warning directive [w] is applied to these items. Technically, this
    is done by emitting [include struct [@@@ocaml.warning <w>] <items> end]. *)

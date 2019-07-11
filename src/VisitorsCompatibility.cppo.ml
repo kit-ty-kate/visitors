@@ -151,3 +151,21 @@ let row_field_to_core_types (field : row_field) : core_type list =
   | Rinherit ty ->
       [ ty ]
   #endif
+
+(* -------------------------------------------------------------------------- *)
+
+(* [floating s items] produces a floating attribute whose name is [s] and
+   whose payload is the list of structure items [items]. *)
+
+(* The type [attribute] is defined in 4.07 as [string loc * payload], but in
+   4.08 its definition changes to a record type and the function [Attr.mk]
+   appears. *)
+
+let floating (s : string) (items : structure) : structure_item =
+  let name = mknoloc s
+  and payload = PStr items in
+  #if OCAML_VERSION < (4, 08, 0)
+  Str.attribute (name, payload)
+  #else
+  Str.attribute (Attr.mk name payload)
+  #endif
