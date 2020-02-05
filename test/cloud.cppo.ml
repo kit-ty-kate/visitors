@@ -8,6 +8,8 @@ type cloud =
   [@@name "nuage"]
   [@@deriving visitors { variety = "map"; ancestors = ["base"] }]
 
+#if OCAML_VERSION >= (4, 03, 0)
+
 module List = struct
 
   type 'a mylist = 'a list =
@@ -16,3 +18,5 @@ module List = struct
     [@@deriving visitors { variety = "map" }]
 
 end
+
+#endif

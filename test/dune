@@ -1,3 +1,21 @@
+;; Some files must be preprocessed by cppo.
+(rule
+  (targets cloud.ml)
+  (deps cloud.cppo.ml)
+  (action (run %{bin:cppo} -V OCAML:%{ocaml_version} %{deps} -o %{targets})))
+(rule
+  (targets test02.ml)
+  (deps test02.cppo.ml)
+  (action (run %{bin:cppo} -V OCAML:%{ocaml_version} %{deps} -o %{targets})))
+(rule
+  (targets testallprims.ml)
+  (deps testallprims.cppo.ml)
+  (action (run %{bin:cppo} -V OCAML:%{ocaml_version} %{deps} -o %{targets})))
+(rule
+  (targets VisitorsRuntimeBootstrap.ml)
+  (deps VisitorsRuntimeBootstrap.cppo.ml)
+  (action (run %{bin:cppo} -V OCAML:%{ocaml_version} %{deps} -o %{targets})))
+
 (executable
   (name bench)
   (modules bench)

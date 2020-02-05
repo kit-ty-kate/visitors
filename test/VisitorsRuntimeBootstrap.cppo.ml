@@ -1,17 +1,21 @@
-type 'a list =
-  | []
-  | (::) of 'a * 'a list
-
-and 'a option =
+type 'a option =
   | None
   | Some of 'a
 
 and 'a ref =
   { mutable contents: 'a }
 
+#if OCAML_VERSION >= (4, 03, 0)
+
+and 'a list =
+  | Nil
+  | Cons of 'a * 'a list
+
 and ('a, 'b) result =
   | Ok of 'a
   | Error of 'b
+
+#endif
 
 [@@deriving
 visitors { variety = "iter"; public = []; polymorphic = true; data = false; nude = true },

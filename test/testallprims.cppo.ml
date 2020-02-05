@@ -12,7 +12,9 @@ type t =
   | Nativeint of nativeint
   | Option of t option
   | Ref of t ref
+#if OCAML_VERSION >= (4, 08, 0)
   | Result of (t, t) result
+#endif
   | String of string
   | Unit of unit
   | Tuple2 of (t * t)

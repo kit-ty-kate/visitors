@@ -4,7 +4,9 @@ type term =
   | TVar of string
   | TLambda of string * term
   | TApp of term * term
+#if OCAML_VERSION >= (4, 03, 0)
   | TPair of { fst: term; snd: term }
+#endif
   | TTuple of term_list
 
 and term_list =
