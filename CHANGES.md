@@ -1,5 +1,11 @@
 # Changes
 
+## 2020/02/XX
+
+* Avoid references to `Pervasives` in the generated code.
+
+* Switch from `ocamlbuild` to `dune` to compile `visitors`.
+
 ## 2018/05/13
 
 * Fixes in `_tags` and `META` so as to allow `visitors`

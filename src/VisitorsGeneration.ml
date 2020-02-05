@@ -29,30 +29,33 @@ type expressions = expression list
 
 (* -------------------------------------------------------------------------- *)
 
-(* We normally place a [Pervasives] prefix in front of OCaml's operators, so as
-   to ensure that our code makes sense even if these operators are shadowed by
-   the user. (That said, we still run into trouble if the user shadows the name
-   [Pervasives] itself.) *)
+(* We should in principle ensure that our code makes sense even if the
+   standard names that we rely upon are shadowed by the user. *)
 
-(* When producing code for inclusion in the documentation, we remove the
-   [Pervasives] prefix, just so that things look pretty. We rely on an
-   undocumented environment variable to toggle this behavior. *)
+(* This is made slightly difficult by the fact that the name [Pervasives]
+   has been deprecated in favor of [Stdlib] in OCaml 4.07. *)
+
+(* One viable approach would be to define the names that we need in the
+   library [VisitorsRuntime], then refer to this library in the generated
+   code. *)
+
+(* One problem is that defining an alias for the standard operator (&&)
+   causes it to become strict instead of lazy! So we cannot define an
+   alias for it. *)
+
+(* Let's just cross our fingers and assume that the user won't shadow
+   the standard names that we need. *)
 
 let pervasive (x : string) : Longident.t =
-  try
-    let _ = Sys.getenv "VISITORS_BUILDING_DOCUMENTATION" in
-    Lident x
-      (* danger: the name [x] must not be shadowed. *)
-  with Not_found ->
-    Ldot (Lident "Pervasives", x)
-      (* danger: the name [Pervasives] must not be shadowed. *)
+  Lident x
 
 (* We normally place an improbable prefix in front of our private (local)
    variables, so as to make sure that we do not shadow user variables that
    are used in [@build] code fragments. *)
 
 (* When producing code for inclusion in the documentation, we remove this
-   prefix. *)
+   prefix, just so that things look pretty. We rely on an undocumented
+   environment variable to toggle this behavior. *)
 
 let improbable (x : string) : string =
   try
