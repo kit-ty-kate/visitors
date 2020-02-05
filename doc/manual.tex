@@ -115,6 +115,8 @@ hand-written visitor classes, making the framework quite powerful.
 \subsection{Setup}
 \label{sec:intro:setup}
 
+\enlargethispage{\baselineskip}
+
 In order to install the \visitors package, an \opam user should issue the
 following commands:
 \begin{lstlisting}[keywords={}]
@@ -124,20 +126,24 @@ following commands:
 To use the package, an \ocamlbuild user should add the
 following line in her project's \texttt{\_tags} file:
 \begin{lstlisting}[keywords={}]
-  true: package(visitors.ppx), package(visitors.runtime)
+  true: package(visitors.ppx)
 \end{lstlisting}
-Finally, a user of \merlin should add the following lines in her project's
-\texttt{.merlin} file:
+while a user of \dune should add the following incantation
+to her project's \texttt{dune} file,
+inside a \texttt{library} or \texttt{executable} stanza:
 \begin{lstlisting}[keywords={}]
-  PKG visitors.ppx
-  PKG visitors.runtime
+  (preprocess (pps visitors.ppx))
 \end{lstlisting}
+%% A user of \merlin should add the following lines in her project's
+%% \texttt{.merlin} file:
+%% \begin{lstlisting}[keywords={}]
+%%   PKG visitors.ppx
+%% \end{lstlisting}
 To use the \visitors package in OCaml's interactive ``toplevel'' environment,
 launch \texttt{ocaml} and type the following commands:
 \begin{lstlisting}
   #use "topfind";;
   #require "visitors.ppx";;
-  #require "visitors.runtime";;
 \end{lstlisting}
 
 % ------------------------------------------------------------------------------
@@ -1058,7 +1064,7 @@ module \oc|VisitorsRuntime|. This module contains several classes named
 \footnote{As an exception to this rule, the classes \runtime{fold}
   and \runtime{fold2} do not supply any methods, because we do not
   wish to prematurely fix the types of the visitor methods. Please consult
-  \srcFile{VisitorsRuntime.ml} to check which methods exist and what they
+  \runtimeFile{VisitorsRuntime.ml} to check which methods exist and what they
   do.} %
 %
 As is evident in Figures~\ref{fig:expr00}, \ref{fig:expr01}, and so on, the
@@ -1899,7 +1905,7 @@ be especially useful when the generated code is ill-typed (which can happen,
 for instance, when arbitrary user code is inherited via the \ancestors
 parameter).
 
-The file \srcFile{Makefile.preprocess} offers a recipe that builds a file
+The file \repoFile{Makefile.preprocess} offers a recipe that builds a file
 named \verb|%.processed.ml| out of the source file \verb|%.ml|. This file contains
 just the generated code. The recipe relies on \oc|sed|, \oc|perl|, and
 \oc|ocp-indent| to extract and beautify the code. This file is installed
@@ -1927,7 +1933,7 @@ has \emph{one type parameter}, namely \oc|'self|, the type of ``self''
 \runtime{<variety>} (unless the parameter \nude is \texttt{true}, \sref{sec:params})
 and from the classes listed via the \ancestors parameter (\sref{sec:params}),
 in that order. To find out which methods exist in the class
-\runtime{<variety>}, please consult \srcFile{VisitorsRuntime.ml}.
+\runtime{<variety>}, please consult \runtimeFile{VisitorsRuntime.ml}.
 
 In the following, the index~\oc|i| ranges from 0 (included) to \oc|<arity>|
 (excluded), where \oc|<arity>| is the arity of the generated visitor (thus,

@@ -4,10 +4,6 @@ TODO (REALLY)
 
 Better clean up & share code at the three call sites of [bulk].
 
-Update the release scripts so that no .tar.gz archive is explicitly created
-(i.e., installation takes place directly based on the repository contents)
-and the release is hosted on gitlab.inria.fr.
-
 ------------------------------------------------------------------------------
 
 TODO (PERHAPS)

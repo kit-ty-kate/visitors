@@ -1,15 +1,15 @@
 export VISITORS_BUILDING_DOCUMENTATION=true
 
-include ../src/Makefile.preprocess
+include ../Makefile.preprocess
 
 export TEXINPUTS=.:../test:
 
 .PHONY: all loop clean
 
-all: main.pdf
+all: manual.pdf
 
 SOURCES   := $(wildcard *.tex) $(wildcard *.bib) $(wildcard *.sty)
-ML        := $(shell ls ../test/*.ml | grep -v processed)
+ML        := $(shell ls ../test/*.ml | grep -v cppo | grep -v processed)
 PROCESSED := $(patsubst %.ml,%.processed.ml,$(ML))
 
 %.pdf: %.tex $(SOURCES) $(ML) $(PROCESSED)
@@ -19,7 +19,7 @@ PROCESSED := $(patsubst %.ml,%.processed.ml,$(ML))
 	pdflatex $*
 
 loop: $(SOURCES) $(ML) $(PROCESSED)
-	latexmk -pdf -pvc main
+	latexmk -pdf -pvc manual
 
 clean:
-	rm -f *.log *.aux *.bbl *.blg *.out *.toc *~ main.pdf
+	rm -f *.log *.aux *.bbl *.blg *.out *.toc *~ manual.pdf

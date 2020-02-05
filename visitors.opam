@@ -7,20 +7,15 @@ homepage: "https://gitlab.inria.fr/fpottier/visitors"
 dev-repo: "git+https://gitlab.inria.fr/fpottier/visitors.git"
 bug-reports: "francois.pottier@inria.fr"
 build: [
-  [make]
-]
-install: [
-  [make "install"]
+  ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "ocaml" {>= "4.02.2" }
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
+  "ocaml" {>= "4.02.3" }
   "cppo" {build}
-  "cppo_ocamlbuild" {build}
   "ppx_tools"
   "ppx_deriving" {>= "4.0"}
   "result"
+  "dune" {>= "2.0"}
 ]
 synopsis: "An OCaml syntax extension for generating visitor classes"
 description: """

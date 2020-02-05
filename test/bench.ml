@@ -1,5 +1,5 @@
-module Bench = Core_bench.Std.Bench
-module Command = Core.Std.Command
+module Bench = Core_bench.Bench
+module Command = Core.Command
 
 let run tests =
   let tests =

@@ -6,7 +6,7 @@
 
 # The rewriting command.
 PPX          := `ocamlfind query ppx_deriving`/ppx_deriving \
-                `ocamlfind query visitors`/ppx_deriving_visitors.cma
+                `ocamlfind query visitors`/ppx/ppx_deriving_visitors.cma
 REWRITE      := ocamlfind ppx_tools/rewriter -ppx '$(PPX)'
 
 # Use GNU sed to extract the generated code.

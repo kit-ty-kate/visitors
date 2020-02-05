@@ -21,6 +21,6 @@ To install the latest development version, outside of `opam`, please proceed as 
 ```bash
   git clone https://gitlab.inria.fr/fpottier/visitors.git
   cd visitors
+  opam install . --deps-only
   make install
 ```
-This requires `ocamlfind`, `ocamlbuild`, `ppx_tools`, and `ppx_deriving`.

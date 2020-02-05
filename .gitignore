@@ -1,12 +1,5 @@
-# Editing:
 *~
-
-# Compilation:
-*.native
-_build*
-*.processed.ml
-
-# MacOS:
-.DS_Store
-
-doc/auto
+_build
+.merlin
+test/*.processed.ml
+doc/manual.pdf
