@@ -122,7 +122,6 @@ release:
 # This requires creating the files test/*.processed.ml,
 # so the package must be installed.
 # We have just installed it above.
-# Also, the test/ directory must exist. We remove it below.
 	@ echo "Building the documentation..."
 	@ make --quiet -C doc clean >/dev/null
 	@ make --quiet -C doc all   >/dev/null
@@ -130,7 +129,10 @@ release:
 	@ echo '(include dune.manual)' >> doc/dune
 	@ git add doc/dune
 # Remove subdirectories that need not (or must not) be distributed.
-	@ git rm -rf --quiet releases test
+# The test/ directory could in principle be removed at this point.
+# However, it is needed in order to build the manual, and Debian
+# says the manual is not free unless it can be rebuilt. So, keep it.
+	@ git rm -rf --quiet releases
 # Remove files that need not (or must not) be distributed.
 	@ git rm --quiet \
 	    Makefile dune-workspace.versions \
