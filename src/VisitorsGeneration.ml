@@ -482,7 +482,7 @@ let hoisted2cf (Hoisted (x, e)) : class_field list =
 
 (* A facility for generating a class. *)
 
-module ClassFieldStore (X : sig end) : sig
+module ClassFieldStore () : sig
 
   (* [generate meth] adds [meth] to the list of methods. *)
   val generate: meth -> unit
@@ -559,7 +559,7 @@ end
    in the generated code. This is not very convenient; we must store these
    warnings, waiting for a convenient time to emit them. *)
 
-module WarningStore (X : sig end) : sig
+module WarningStore () : sig
 
   (* [warning loc format ...] emits a warning. *)
   val warning: loc -> ('a, unit, string, unit) format4 -> 'a
