@@ -38,12 +38,37 @@ test:
 bench: test
 	@ _build/default/test/bench.exe
 
+# [make versions] compiles the package under many versions of OCaml,
+# whose list is specified below.
+
+# This requires appropriate opam switches to exist. A missing switch
+# can be created like this:
+#   opam switch create 4.03.0
+
+# Each opam switch should have the following packages installed:
+# ppx_deriving result hashcons ocp-indent ppx_import
+
+VERSIONS := \
+  4.02.3 \
+  4.03.0 \
+  4.04.2 \
+  4.05.0 \
+  4.06.1 \
+  4.07.1 \
+  4.08.1 \
+  4.09.0 \
+  4.10.0 \
+
+# Disable this switch for now, as core_bench does not seem to work under it.
+# 4.09.0+bytecode-only \
+
 .PHONY: versions
 versions:
+	@(echo "(lang dune 2.0)" && \
+	  for v in $(VERSIONS) ; do \
+	    echo "(context (opam (switch $$v)))" ; \
+	  done) > dune-workspace.versions
 	@ dune build --workspace dune-workspace.versions @all
-# Each opam switch listed in the file dune-workspace.versions
-# should exist and should have the following packages installed:
-# ppx_deriving result hashcons ocp-indent ppx_import
 
 .PHONY: pin
 pin:

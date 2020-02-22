@@ -3,3 +3,4 @@ _build
 .merlin
 test/*.processed.ml
 doc/manual.pdf
+dune-workspace.versions
