@@ -56,7 +56,7 @@ VERSIONS := \
   4.06.1 \
   4.07.1 \
   4.08.1 \
-  4.09.0 \
+  4.09.1 \
   4.10.0 \
 
 # Disable this switch for now, as core_bench does not seem to work under it.
