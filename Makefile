@@ -70,6 +70,15 @@ versions:
 	  done) > dune-workspace.versions
 	@ dune build --workspace dune-workspace.versions @all
 
+# [make handiwork] runs a command in every opam switch.
+
+.PHONY: handiwork
+handiwork:
+	@ for v in $(VERSIONS) ; do \
+	    echo "Dealing with switch $$v..." ; \
+	    opam install --switch $$v --yes hashcons core_bench ; \
+	  done
+
 .PHONY: pin
 pin:
 	opam pin --yes add $(THIS).dev .
