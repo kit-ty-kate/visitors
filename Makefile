@@ -68,7 +68,7 @@ versions:
 	  for v in $(VERSIONS) ; do \
 	    echo "(context (opam (switch $$v)))" ; \
 	  done) > dune-workspace.versions
-	@ dune build --workspace dune-workspace.versions @all
+	@ dune build --workspace dune-workspace.versions src # or: @all
 
 # [make handiwork] runs a command in every opam switch.
 
