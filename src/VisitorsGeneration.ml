@@ -297,7 +297,7 @@ let eassertfalse : expression =
 (* [eforce e] is the expression [Lazy.force e]. *)
 
 let eforce : expression =
-  eident (Longident.parse "Lazy.force")
+  eident (parse "Lazy.force")
     (* danger: the module name [Lazy] must not be shadowed. *)
 
 let eforce (e : expression) : expression =

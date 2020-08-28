@@ -61,12 +61,27 @@ let classify (s : string) : classification =
 (* We might wish to use OCaml's parser for this purpose, but [mod_longident] is
    not declared as a start symbol. Furthermore, that would be perhaps slightly
    too lenient, e.g., allowing whitespace and comments inside. Our solution is
-   to split at the dots using [Longident.parse], then check that every piece
-   is a valid module name. *)
+   to split at the dots and check that every piece is a valid module name. *)
+
+(* We used to use [Longident.parse] to do the splitting, but this function has
+   been deprecated as of 4.11.0, and its suggested replacements do not go as
+   far back in time as we need. So, we use our own variant of this code. *)
+
+let rec parse s n =
+  (* Parse the substring that extends from offset 0 to offset [n] excluded. *)
+  try
+    let i = String.rindex_from s (n - 1) '.' in
+    let segment = String.sub s (i + 1) (n - (i + 1)) in
+    Ldot (parse s i, segment)
+  with Not_found ->
+    Lident (String.sub s 0 n)
+
+let parse s =
+  parse s (String.length s)
 
 let is_valid_mod_longident (m : string) : bool =
   String.length m > 0 &&
-  let ms = Longident.flatten (Longident.parse m) in
+  let ms = Longident.flatten (parse m) in
   List.for_all (fun m -> classify m = UIDENT) ms
 
 (* -------------------------------------------------------------------------- *)
@@ -76,7 +91,7 @@ let is_valid_mod_longident (m : string) : bool =
 
 let is_valid_class_longident (m : string) : bool =
   String.length m > 0 &&
-  match Longident.parse m with
+  match parse m with
   | Lident c ->
       classify c = LIDENT
   | Ldot (m, c) ->

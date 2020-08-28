@@ -355,7 +355,7 @@ end)
   let ancestors =
     if nude then ancestors else ("VisitorsRuntime." ^ variety) :: ancestors
   let ancestors =
-    map Longident.parse ancestors
+    map parse ancestors
 
   (* If [scheme] is [Fold], then [polymorphic] must be [false]. Indeed,
      we currently cannot generate polymorphic type annotations in that
