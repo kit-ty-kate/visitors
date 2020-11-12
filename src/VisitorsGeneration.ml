@@ -1,5 +1,5 @@
+let stdlib_compare = compare
 open Ppxlib
-open Longident
 let mknoloc = Ocaml_common.Location.mknoloc
 open Asttypes
 open Parsetree
@@ -518,7 +518,7 @@ end = struct
        a virtual method declaration to be generated several times. In fact,
        OCaml supports this, but it looks tidier if we remove duplicates. *)
     let virtual_methods, concrete_methods = List.partition is_virtual methods in
-    let cmp meth1 meth2 = Stdlib.compare (method_name meth1) (method_name meth2) in
+    let cmp meth1 meth2 = stdlib_compare (method_name meth1) (method_name meth2) in
     let virtual_methods = VisitorsList.weed cmp virtual_methods in
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods

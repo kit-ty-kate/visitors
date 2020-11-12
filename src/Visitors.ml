@@ -1,7 +1,6 @@
 open VisitorsString
 open VisitorsList
 open Ppxlib
-open Longident
 open List
 open Asttypes
 open Parsetree
@@ -933,7 +932,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
                polymorphic manner. The function [X.poly], applied to a type
                variable [formal], tells how it should be treated. *)
             (* The regularity check is applied only to [mono] parameters. *)
-            check_regularity ty.ptyp_loc (last_exn tycon) formals tys;
+            check_regularity ty.ptyp_loc (Longident.last_exn tycon) formals tys;
             (* The visitor method should be applied to the visitor functions
                associated with the subset of [tys] that corresponds to [poly]
                variables. *)

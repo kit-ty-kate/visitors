@@ -7,11 +7,6 @@
   (ppx_runtime_libraries visitors.runtime)
 )
 
-(rule
-  (targets VisitorsCompatibility.ml)
-  (deps VisitorsCompatibility.cppo.ml)
-  (action (run %{bin:cppo} -V OCAML:%{ocaml_version} %{deps} -o %{targets})))
-
 (env
   (dev (flags
     :standard

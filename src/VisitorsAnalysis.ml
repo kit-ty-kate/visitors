@@ -1,6 +1,5 @@
 open Ppxlib
 open Result
-open Longident
 open Asttypes
 open Parsetree
 open Ast_helper
