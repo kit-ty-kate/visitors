@@ -3,7 +3,7 @@
   (public_name visitors.ppx)
   (synopsis "Compile-time support for generating visitors")
   (kind ppx_deriver)
-  (libraries result compiler-libs.common ppx_tools ppx_deriving.api)
+  (libraries result compiler-libs.common ppxlib ppx_deriving.api)
   (ppx_runtime_libraries visitors.runtime)
 )
 

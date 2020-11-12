@@ -12,7 +12,7 @@ build: [
 depends: [
   "ocaml" {>= "4.02.3" }
   "cppo" {build}
-  "ppx_tools"
+  "ppxlib"
   "ppx_deriving" {>= "4.4"}
   "result"
   "dune" {>= "2.0"}

@@ -2,6 +2,7 @@ open Result
 open VisitorsString
 open List
 let sprintf = Printf.sprintf
+open Ppxlib
 open Parsetree
 open Ppx_deriving
 open VisitorsPlugin

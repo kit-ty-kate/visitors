@@ -1,4 +1,5 @@
 let mknoloc = Location.mknoloc
+open Ppxlib
 open Asttypes
 open Parsetree
 open Ast_helper
@@ -8,10 +9,6 @@ open Ast_helper
    construct it (that is, we generate code). This module gathers the ugly bits
    whose definition varies depending on the version of OCaml that we are
    working with. *)
-
-#if OCAML_VERSION < (4, 03, 0)
-#define Nolabel ""
-#endif
 
 (* Constructing an arrow type. *)
 
@@ -26,11 +23,7 @@ let plambda (p : pattern) (e : expression) : expression =
 (* Constructing a string literal. *)
 
 let const_string (w : string) =
-#if OCAML_VERSION < (4, 03, 0)
-  Const_string (w, None)
-#else
   Const.string w
-#endif
 
 (* [ld_label] and [ld_ty] extract a label and type out of an OCaml record label
    declaration. *)
@@ -58,9 +51,6 @@ type data_constructor_variety =
   | DataInlineRecord of label list * core_type list
 
 let data_constructor_variety (cd : constructor_declaration) =
-  #if OCAML_VERSION < (4, 03, 0)
-    DataTraditional cd.pcd_args
-  #else
     match cd.pcd_args with
     (* A traditional data constructor. *)
     | Pcstr_tuple tys ->
@@ -68,7 +58,6 @@ let data_constructor_variety (cd : constructor_declaration) =
     (* An ``inline record'' data constructor. *)
     | Pcstr_record lds ->
         DataInlineRecord (ld_labels lds, ld_tys lds)
-  #endif
 
 (* Between OCaml 4.04 and OCaml 4.05, the types of several functions in [Ast_helper]
    have changed. They used to take arguments of type [string], and now take arguments
