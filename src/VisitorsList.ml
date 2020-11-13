@@ -1,3 +1,4 @@
+let stdlib_compare = compare
 open List
 
 (* [last xs] returns the last element of the nonempty list [xs]. *)
@@ -71,7 +72,7 @@ let rec uniq1 cmp x ys =
       []
   | y :: ys ->
       if cmp x y = 0 then
-        uniq1 compare x ys
+        uniq1 stdlib_compare x ys
       else
         y :: uniq1 cmp y ys
 

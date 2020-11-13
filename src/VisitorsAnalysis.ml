@@ -1,5 +1,5 @@
+open Ppxlib
 open Result
-open Longident
 open Asttypes
 open Parsetree
 open Ast_helper
@@ -34,9 +34,9 @@ type classification =
 
 let classify (s : string) : classification =
   let lexbuf = Lexing.from_string s in
-  let backup = !Location.formatter_for_warnings in
+  let backup = !Ocaml_common.Location.formatter_for_warnings in
   let null = Format.formatter_of_buffer (Buffer.create 0) in
-  Location.formatter_for_warnings := null;
+  Ocaml_common.Location.formatter_for_warnings := null;
   let result = try
       let token1 = Lexer.token lexbuf in
       let token2 = Lexer.token lexbuf in
@@ -50,7 +50,7 @@ let classify (s : string) : classification =
     with Lexer.Error _ ->
       OTHER
   in
-  Location.formatter_for_warnings := backup;
+  Ocaml_common.Location.formatter_for_warnings := backup;
   result
 
 (* -------------------------------------------------------------------------- *)
@@ -81,7 +81,7 @@ let parse s =
 
 let is_valid_mod_longident (m : string) : bool =
   String.length m > 0 &&
-  let ms = Longident.flatten (parse m) in
+  let ms = Longident.flatten_exn (parse m) in
   List.for_all (fun m -> classify m = UIDENT) ms
 
 (* -------------------------------------------------------------------------- *)
@@ -95,7 +95,7 @@ let is_valid_class_longident (m : string) : bool =
   | Lident c ->
       classify c = LIDENT
   | Ldot (m, c) ->
-      List.for_all (fun m -> classify m = UIDENT) (Longident.flatten m) &&
+      List.for_all (fun m -> classify m = UIDENT) (Longident.flatten_exn m) &&
       classify c = LIDENT
   | Lapply _ ->
       assert false (* this cannot happen *)

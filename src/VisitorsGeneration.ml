@@ -1,9 +1,10 @@
-open Longident
-let mknoloc = Location.mknoloc
+let stdlib_compare = compare
+open Ppxlib
+let mknoloc = Ocaml_common.Location.mknoloc
 open Asttypes
 open Parsetree
 open Ast_helper
-open Ast_convenience
+open Ppx_deriving.Ast_convenience
 open VisitorsList
 open VisitorsAnalysis
 open VisitorsCompatibility
@@ -517,7 +518,7 @@ end = struct
        a virtual method declaration to be generated several times. In fact,
        OCaml supports this, but it looks tidier if we remove duplicates. *)
     let virtual_methods, concrete_methods = List.partition is_virtual methods in
-    let cmp meth1 meth2 = compare (method_name meth1) (method_name meth2) in
+    let cmp meth1 meth2 = stdlib_compare (method_name meth1) (method_name meth2) in
     let virtual_methods = VisitorsList.weed cmp virtual_methods in
     let methods = virtual_methods @ concrete_methods in
     List.map meth2cf methods
@@ -573,7 +574,7 @@ end = struct
     ref []
 
   let warning loc msg =
-    warnings := Ast_mapper.attribute_of_warning loc msg :: !warnings
+    warnings := attribute_of_warning loc msg :: !warnings
 
   let warning loc format =
     Printf.ksprintf (warning loc) format

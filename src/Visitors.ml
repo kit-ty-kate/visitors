@@ -1,11 +1,11 @@
 open VisitorsString
 open VisitorsList
-open Longident
+open Ppxlib
 open List
 open Asttypes
 open Parsetree
 open Ast_helper
-open Ast_convenience
+open Ppx_deriving.Ast_convenience
 open Ppx_deriving
 open VisitorsPlugin
 open VisitorsCompatibility
@@ -197,7 +197,7 @@ let datacon_modified_name (cd : constructor_declaration) : datacon =
 
 let tycon_visitor_method : tycon_visitor_method =
   fun (_, attrs, tycon) ->
-    X.visit_prefix ^ tycon_modified_name attrs (Longident.last tycon)
+    X.visit_prefix ^ tycon_modified_name attrs (Longident.last_exn tycon)
 
 (* Step 2 -- protect against name clashes. *)
 
@@ -667,7 +667,7 @@ let alias (x : variable) (ps : patterns) : patterns =
   | Endo ->
       assert (arity = 1);
       map (fun p ->
-        Pat.alias p (Location.mknoloc x)
+        Pat.alias p (Ocaml_common.Location.mknoloc x)
       ) ps
   | _ ->
       ps
@@ -932,7 +932,7 @@ let rec visit_type (env_in_scope : bool) (ty : core_type) : expression =
                polymorphic manner. The function [X.poly], applied to a type
                variable [formal], tells how it should be treated. *)
             (* The regularity check is applied only to [mono] parameters. *)
-            check_regularity ty.ptyp_loc (last tycon) formals tys;
+            check_regularity ty.ptyp_loc (Longident.last_exn tycon) formals tys;
             (* The visitor method should be applied to the visitor functions
                associated with the subset of [tys] that corresponds to [poly]
                variables. *)
